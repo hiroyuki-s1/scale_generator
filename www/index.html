@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guitar Scale Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:  #b54a1f;
+      --bg:      #f5f3ee;
+      --surface: #ffffff;
+      --border:  #e2ddd6;
+      --divider: #f0ece6;
+      --text:    #1c1917;
+      --muted:   #78716c;
+      --faint:   #a8a29e;
+      --purple:  #6d28d9;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+      color: var(--accent); border: 2px solid var(--accent);
+      padding: 2px 7px; border-radius: 3px; flex-shrink: 0;
+    }
+    .header-sep { color: #d4cdc6; font-size: 18px; font-weight: 300; }
+    .header-title { font-size: 13px; font-weight: 600; color: #57534e; }
+    .print-btn {
+      margin-left: auto; flex-shrink: 0;
+      padding: 5px 14px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      border-radius: 5px; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .print-btn:hover { background: var(--bg); border-color: #aaa; color: var(--text); }
+
+    /* ── Controls ── */
+    .controls {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .ctrl-row {
+      display: flex; align-items: flex-start;
+      flex-wrap: wrap; gap: 24px;
+    }
+    .ctrl-row + .ctrl-row {
+      padding-top: 16px;
+      border-top: 1px solid var(--divider);
+    }
+    .ctrl-divider {
+      width: 1px; align-self: stretch;
+      background: var(--divider); flex-shrink: 0;
+    }
+    .ctrl-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--faint); margin-bottom: 8px;
+    }
+
+    /* ── Piano keyboard ── */
+    .piano-wrap {
+      position: relative;
+      width: 322px; height: 64px;
+      flex-shrink: 0; user-select: none;
+    }
+    .wkey {
+      position: absolute; top: 0;
+      width: 44px; height: 64px;
+      border: 1px solid #d0cac0;
+      background: var(--surface);
+      border-radius: 0 0 6px 6px;
+      cursor: pointer;
+      display: flex; align-items: flex-end;
+      justify-content: center; padding-bottom: 6px;
+      font-size: 12px; font-weight: 600;
+      color: #78716c; font-family: inherit;
+      transition: background 0.08s, color 0.08s;
+      z-index: 1;
+    }
+    .wkey:hover { background: #f5f3ee; }
+    .wkey.active { background: #1c1917; border-color: #1c1917; color: #fff; }
+    .bkey {
+      position: absolute; top: 0;
+      width: 30px; height: 40px;
+      background: #292524; border: 1px solid #1c1917;
+      border-radius: 0 0 4px 4px;
+      cursor: pointer;
+      display: flex; align-items: flex-end;
+      justify-content: center; padding-bottom: 5px;
+      font-size: 9px; font-weight: 700;
+      color: #a8a29e; font-family: inherit;
+      transition: background 0.08s, color 0.08s;
+      z-index: 2;
+    }
+    .bkey:hover { background: #44403c; }
+    .bkey.active { background: var(--accent); border-color: #9a3d18; color: #fff; }
+
+    /* ── Scale presets ── */
+    .scale-groups { display: flex; flex-direction: column; gap: 6px; }
+    .scale-group { display: flex; align-items: center; gap: 8px; }
+    .sg-label {
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #c0b9b0; width: 52px; flex-shrink: 0;
+    }
+    .sg-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+    .scale-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: var(--surface); color: #57534e;
+      border-radius: 8px; cursor: pointer;
+      font-size: 12px; font-weight: 500;
+      font-family: inherit; white-space: nowrap;
+      transition: background 0.08s, border-color 0.08s, color 0.08s;
+    }
+    .scale-btn:hover { background: var(--bg); border-color: #aaa; color: var(--text); }
+    .scale-btn.active {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff; font-weight: 600;
+    }
+
+    /* ── Degree toggles ── */
+    .deg-btns { display: flex; flex-wrap: wrap; gap: 5px; }
+    .deg-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      background: var(--surface); color: #a8a29e;
+      border-radius: 8px; cursor: pointer;
+      font-size: 12px; font-weight: 700;
+      font-family: 'Courier New', monospace;
+      transition: all 0.08s;
+    }
+    .deg-btn:hover:not(.root) { border-color: #aaa; color: var(--text); }
+    .deg-btn.root { cursor: default; }
+    .deg-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid #cbd5e1; background: #e2e8f0;
+    }
+
+    /* ── Mask ── */
+    .mask-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .mask-toggle {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 700;
+      font-family: inherit; min-height: 44px;
+      transition: all 0.08s;
+    }
+    .mask-toggle:hover { border-color: #aaa; }
+    .mask-toggle.on { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .mask-sliders { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .mslider-group { display: flex; align-items: center; gap: 6px; }
+    .mslider-lbl {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--faint); width: 24px;
+    }
+    .mslider-group input[type=range] {
+      width: 100px; accent-color: var(--purple);
+      cursor: pointer; height: 6px;
+    }
+    .mval {
+      width: 22px; text-align: center;
+      font-family: 'Courier New', monospace;
+      font-weight: 700; font-size: 14px;
+      color: var(--purple);
+    }
+    .msep { color: var(--border); font-size: 14px; margin: 0 2px; }
+
+    /* ── Fretboard ── */
+    main { flex: 1; padding: 20px 20px 24px; }
+    .fb-title {
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.4px; color: var(--text);
+      margin-bottom: 14px;
+    }
+    svg.fb { width: 100%; height: auto; display: block; }
+
+    /* ── Legend ── */
+    .legend { margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace; font-weight: 700;
+    }
+
+    /* ── Print ── */
+    @media print {
+      @page { size: A4 landscape; margin: 12mm 14mm; }
+      body { background: #fff; }
+      header, .controls { display: none !important; }
+      main { padding: 0; }
+      .fb-title { font-size: 15px; margin-bottom: 10px; }
+      .legend { margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">GST</div>
+  <span class="header-sep">|</span>
+  <h1 class="header-title">Guitar Scale Trainer</h1>
+  <button class="print-btn" onclick="window.print()">Print A4</button>
+</header>
+
+<div class="controls">
+
+  <!-- Row 1: Key + Scale -->
+  <div class="ctrl-row">
+    <section>
+      <div class="ctrl-label">Key</div>
+      <div class="piano-wrap" id="piano"></div>
+    </section>
+    <div class="ctrl-divider"></div>
+    <section>
+      <div class="ctrl-label">Scale</div>
+      <div class="scale-groups" id="scaleGroups"></div>
+    </section>
+  </div>
+
+  <!-- Row 2: Degrees + Mask -->
+  <div class="ctrl-row">
+    <section>
+      <div class="ctrl-label">Degrees</div>
+      <div class="deg-btns" id="degBtns"></div>
+    </section>
+    <div class="ctrl-divider"></div>
+    <section>
+      <div class="ctrl-label">Fret Mask</div>
+      <div class="mask-row">
+        <button class="mask-toggle" id="maskToggle" onclick="toggleMask()">Mask OFF</button>
+        <div class="mask-sliders" id="maskSliders" style="display:none">
+          <div class="mslider-group">
+            <span class="mslider-lbl">Min</span>
+            <input type="range" id="maskMin" min="1" max="15" value="1" oninput="onMaskInput(event)">
+            <span class="mval" id="mMinVal">1</span>
+          </div>
+          <span class="msep">—</span>
+          <div class="mslider-group">
+            <span class="mslider-lbl">Max</span>
+            <input type="range" id="maskMax" min="1" max="15" value="15" oninput="onMaskInput(event)">
+            <span class="mval" id="mMaxVal">15</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<main>
+  <div class="fb-title" id="fbTitle"></div>
+  <svg class="fb" id="fretboard" viewBox="0 0 940 240" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="legend" id="legend"></div>
+</main>
+
+<script>
+// ═══════════════════════════════════════
+// Data
+// ═══════════════════════════════════════
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const DEGREES = [
+  { name:'R',   semi:0,  col:{ fill:'#fde8e8', stroke:'#c0392b', text:'#c0392b' } },
+  { name:'b9',  semi:1,  col:{ fill:'#f3e8fd', stroke:'#7c3aed', text:'#7c3aed' } },
+  { name:'9',   semi:2,  col:{ fill:'#e8f4fd', stroke:'#2980b9', text:'#2980b9' } },
+  { name:'m3',  semi:3,  col:{ fill:'#ede8fd', stroke:'#5b2d91', text:'#5b2d91' } },
+  { name:'M3',  semi:4,  col:{ fill:'#edfdf3', stroke:'#1e8449', text:'#1e8449' } },
+  { name:'11',  semi:5,  col:{ fill:'#e8f7fd', stroke:'#1a7fa8', text:'#1a7fa8' } },
+  { name:'#11', semi:6,  col:{ fill:'#fdf3e8', stroke:'#d35400', text:'#d35400' } },
+  { name:'P5',  semi:7,  col:{ fill:'#e8fdf0', stroke:'#1a8c5a', text:'#1a8c5a' } },
+  { name:'b13', semi:8,  col:{ fill:'#f9e8fd', stroke:'#9b2dbf', text:'#9b2dbf' } },
+  { name:'13',  semi:9,  col:{ fill:'#e8fdf5', stroke:'#148f6e', text:'#148f6e' } },
+  { name:'m7',  semi:10, col:{ fill:'#f0f0f0', stroke:'#555',    text:'#333'    } },
+  { name:'M7',  semi:11, col:{ fill:'#fdf0e8', stroke:'#b94a1c', text:'#b94a1c' } },
+];
+
+const PRESET_GROUPS = [
+  { label:'Penta', presets:[
+    { name:'Major Penta', degrees:[0,2,4,7,9]    },
+    { name:'Minor Penta', degrees:[0,3,5,7,10]   },
+    { name:'Blues',       degrees:[0,3,5,6,7,10] },
+  ]},
+  { label:'Diatonic', presets:[
+    { name:'Major',         degrees:[0,2,4,5,7,9,11] },
+    { name:'Natural Minor', degrees:[0,2,3,5,7,8,10] },
+    { name:'Dorian',        degrees:[0,2,3,5,7,9,10] },
+    { name:'Mixolydian',    degrees:[0,2,4,5,7,9,10] },
+  ]},
+  { label:'Advanced', presets:[
+    { name:'Lydian Dom',   degrees:[0,2,4,6,7,9,10] },
+    { name:'Altered',      degrees:[0,1,3,4,6,8,10] },
+    { name:'Harmonic Min', degrees:[0,2,3,5,7,8,11] },
+  ]},
+];
+
+const WHITE_KEYS = [
+  { note:'C',index:0 },{ note:'D',index:2 },{ note:'E',index:4 },
+  { note:'F',index:5 },{ note:'G',index:7 },{ note:'A',index:9 },{ note:'B',index:11 },
+];
+const BLACK_KEYS = [
+  { note:'C#',index:1,wi:0 },{ note:'D#',index:3,wi:1 },
+  { note:'F#',index:6,wi:3 },{ note:'G#',index:8,wi:4 },{ note:'A#',index:10,wi:5 },
+];
+const WW=46, WH=64, BW=30, BH=40;
+
+const TUNING = [64,59,55,50,45,40]; // E4 B3 G3 D3 A2 E2
+const STR_LABELS = ['E4','B3','G3','D3','A2','E2'];
+
+const SVG_W=940, SVG_H=240;
+const ML=52, MT=22, MR=12, MB=44;
+const F0=1, F1=15;
+const BW2 = SVG_W-ML-MR, BH2 = SVG_H-MT-MB;
+const FW  = BW2/(F1-F0+1);
+const SH  = BH2/5;
+const CR  = 13;
+
+// ═══════════════════════════════════════
+// State
+// ═══════════════════════════════════════
+let rootIdx    = 9;                        // A
+let active     = new Set([0,3,5,7,10]);    // Minor Penta
+let presetName = 'Minor Penta';
+let maskOn     = false;
+let maskLo     = F0;
+let maskHi     = F1;
+
+// ═══════════════════════════════════════
+// SVG helpers
+// ═══════════════════════════════════════
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, txt) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (txt !== undefined) e.textContent = txt;
+  return e;
+}
+const fx = f => ML + (f-F0)*FW + FW/2;
+const sy = s => MT + s*SH;
+
+// ═══════════════════════════════════════
+// Render fretboard
+// ═══════════════════════════════════════
+function renderFretboard() {
+  const svg = document.getElementById('fretboard');
+  svg.innerHTML = '';
+
+  svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:SVG_H,fill:'#fff'}));
+
+  svg.appendChild(el('rect',{
+    x:ML,y:MT,width:BW2,height:BH2,
+    fill:'#fdf6e3',stroke:'#d4b896','stroke-width':'1.5',rx:'3'
+  }));
+
+  // inlay dots
+  [3,5,7,9].forEach(f => svg.appendChild(el('circle',{cx:fx(f),cy:MT+BH2/2,r:5,fill:'#e8d5b0'})));
+  [MT+BH2/3, MT+BH2*2/3].forEach(cy => svg.appendChild(el('circle',{cx:fx(12),cy,r:5,fill:'#e8d5b0'})));
+
+  // nut
+  svg.appendChild(el('rect',{x:ML-4,y:MT,width:5,height:BH2,fill:'#c8b898',rx:'1'}));
+
+  // fret lines
+  for (let f=F0; f<=F1+1; f++) {
+    const x = ML+(f-F0)*FW;
+    svg.appendChild(el('line',{
+      x1:x,y1:MT,x2:x,y2:MT+BH2,
+      stroke: f===12?'#9c7a50':'#c4a870',
+      'stroke-width': f===12?2.5:1
+    }));
+  }
+
+  // fret numbers
+  [3,5,7,9,12,15].forEach(f => {
+    if (f<F0||f>F1) return;
+    svg.appendChild(el('text',{x:fx(f),y:MT+BH2+16,'text-anchor':'middle',fill:'#999','font-size':'11','font-family':'monospace'},String(f)));
+  });
+
+  // position dots
+  [3,5,7,9].forEach(f => {
+    if (f<F0||f>F1) return;
+    svg.appendChild(el('circle',{cx:fx(f),cy:MT+BH2+28,r:4,fill:'#ccc'}));
+  });
+  [-6,6].forEach(dx => svg.appendChild(el('circle',{cx:fx(12)+dx,cy:MT+BH2+28,r:4,fill:'#ccc'})));
+
+  // strings
+  for (let s=0;s<6;s++) {
+    const y=sy(s), thick=0.7+s*0.45, g=Math.round(140+s*10);
+    svg.appendChild(el('line',{x1:ML,y1:y,x2:ML+BW2,y2:y,stroke:`rgb(${g},${g},${g})`,'stroke-width':thick}));
+  }
+
+  // string labels
+  for (let s=0;s<6;s++) {
+    svg.appendChild(el('text',{x:ML-6,y:sy(s)+4,'text-anchor':'end',fill:'#bbb','font-size':'10','font-family':'monospace'},STR_LABELS[s]));
+  }
+
+  // note circles
+  for (let s=0;s<6;s++) {
+    for (let f=F0;f<=F1;f++) {
+      const midi = TUNING[s]+f;
+      const deg  = ((midi%12)-rootIdx+12)%12;
+      if (!active.has(deg)) continue;
+
+      const cx=fx(f), cy=sy(s);
+      const { col, name } = DEGREES[deg];
+      const isRoot = deg===0;
+
+      svg.appendChild(el('circle',{cx:cx+1,cy:cy+1.5,r:CR,fill:'rgba(0,0,0,0.07)'}));
+      svg.appendChild(el('circle',{cx,cy,r:CR,fill:col.fill,stroke:col.stroke,'stroke-width':isRoot?2.5:1.8}));
+      if (isRoot) svg.appendChild(el('circle',{cx,cy,r:CR-3.5,fill:'none',stroke:col.stroke,'stroke-width':'1',opacity:'0.5'}));
+
+      const fs = name.length>=4?'9':name.length===1?'17':'13';
+      svg.appendChild(el('text',{x:cx,y:cy+4.5,'text-anchor':'middle',fill:col.text,'font-size':fs,'font-weight':'bold','font-family':"'Courier New', monospace"},name));
+    }
+  }
+
+  // mask overlay
+  if (maskOn) {
+    if (maskLo>F0) {
+      const x1=ML, x2=ML+(maskLo-F0)*FW;
+      svg.appendChild(el('rect',{x:x1,y:MT,width:x2-x1,height:BH2,fill:'rgba(200,200,200,0.72)'}));
+    }
+    if (maskHi<F1) {
+      const x1=ML+(maskHi-F0+1)*FW, x2=ML+BW2;
+      svg.appendChild(el('rect',{x:x1,y:MT,width:x2-x1,height:BH2,fill:'rgba(200,200,200,0.72)'}));
+    }
+    const rx=ML+(maskLo-F0)*FW, rw=(maskHi-maskLo+1)*FW;
+    svg.appendChild(el('rect',{x:rx,y:MT-2,width:rw,height:BH2+4,fill:'none',stroke:'#7c3aed','stroke-width':'2.5',rx:'3'}));
+  }
+}
+
+// ═══════════════════════════════════════
+// Legend
+// ═══════════════════════════════════════
+function renderLegend() {
+  const c = document.getElementById('legend');
+  c.innerHTML = '';
+  [...active].sort((a,b)=>a-b).forEach(i => {
+    const { col, name } = DEGREES[i];
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+
+    const s = document.createElementNS(NS,'svg');
+    s.setAttribute('width','20'); s.setAttribute('height','20'); s.setAttribute('viewBox','0 0 20 20');
+    const circle = document.createElementNS(NS,'circle');
+    Object.entries({cx:'10',cy:'10',r:'9',fill:col.fill,stroke:col.stroke,'stroke-width':'2'}).forEach(([k,v])=>circle.setAttribute(k,v));
+    const txt = document.createElementNS(NS,'text');
+    Object.entries({x:'10',y:'14','text-anchor':'middle','font-size':name.length>2?'7':'8.5','font-weight':'bold','font-family':"'Courier New', monospace",fill:col.text}).forEach(([k,v])=>txt.setAttribute(k,v));
+    txt.textContent = name;
+    s.appendChild(circle); s.appendChild(txt);
+
+    const lbl = document.createElement('span');
+    lbl.style.color = col.text;
+    lbl.textContent = i===0 ? `R (${NOTES[rootIdx]})` : name;
+
+    item.appendChild(s); item.appendChild(lbl);
+    c.appendChild(item);
+  });
+}
+
+function renderTitle() {
+  const key = NOTES[rootIdx];
+  document.getElementById('fbTitle').textContent = presetName
+    ? `${key} ${presetName}`
+    : `${key} — Custom (${[...active].sort((a,b)=>a-b).map(i=>DEGREES[i].name).join(', ')})`;
+}
+
+function refresh() { renderTitle(); renderFretboard(); renderLegend(); }
+
+// ═══════════════════════════════════════
+// Piano keyboard
+// ═══════════════════════════════════════
+function buildPiano() {
+  const wrap = document.getElementById('piano');
+  WHITE_KEYS.forEach((k,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'wkey' + (k.index===rootIdx?' active':'');
+    btn.dataset.ni = k.index;
+    btn.style.left = `${i*WW}px`;
+    btn.textContent = k.note;
+    btn.onclick = () => setRoot(k.index);
+    wrap.appendChild(btn);
+  });
+  BLACK_KEYS.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'bkey' + (k.index===rootIdx?' active':'');
+    btn.dataset.ni = k.index;
+    btn.style.left   = `${(k.wi+1)*WW - BW/2 - 1}px`;
+    btn.style.width  = `${BW}px`;
+    btn.style.height = `${BH}px`;
+    btn.textContent  = k.note;
+    btn.onclick = () => setRoot(k.index);
+    wrap.appendChild(btn);
+  });
+}
+
+function setRoot(index) {
+  rootIdx = index;
+  document.querySelectorAll('.wkey,.bkey').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.ni)===index);
+  });
+  refresh();
+}
+
+// ═══════════════════════════════════════
+// Scale presets
+// ═══════════════════════════════════════
+function buildScaleGroups() {
+  const c = document.getElementById('scaleGroups');
+  PRESET_GROUPS.forEach(group => {
+    const row = document.createElement('div');
+    row.className = 'scale-group';
+    const lbl = document.createElement('span');
+    lbl.className = 'sg-label'; lbl.textContent = group.label;
+    row.appendChild(lbl);
+    const btns = document.createElement('div');
+    btns.className = 'sg-btns';
+    group.presets.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'scale-btn' + (p.name===presetName?' active':'');
+      btn.dataset.pn = p.name;
+      btn.textContent = p.name;
+      btn.onclick = () => applyPreset(p);
+      btns.appendChild(btn);
+    });
+    row.appendChild(btns);
+    c.appendChild(row);
+  });
+}
+
+function applyPreset(p) {
+  presetName = p.name;
+  active = new Set(p.degrees);
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.toggle('active', b.dataset.pn===p.name));
+  syncDegBtns();
+  refresh();
+}
+
+// ═══════════════════════════════════════
+// Degree toggles
+// ═══════════════════════════════════════
+function buildDegBtns() {
+  const c = document.getElementById('degBtns');
+  DEGREES.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'deg-btn' + (i===0?' root':'');
+    btn.dataset.di = i;
+    const dot = document.createElement('span');
+    dot.className = 'deg-dot';
+    dot.dataset.dd = i;
+    btn.appendChild(dot);
+    btn.appendChild(document.createTextNode(d.name));
+    if (i!==0) btn.onclick = () => toggleDeg(i);
+    c.appendChild(btn);
+  });
+}
+
+function syncDegBtns() {
+  document.querySelectorAll('.deg-btn').forEach(btn => {
+    const i   = parseInt(btn.dataset.di);
+    const dot = btn.querySelector('.deg-dot');
+    const col = DEGREES[i].col;
+    if (active.has(i)) {
+      btn.style.cssText = `background:${col.fill};border-color:${col.stroke};color:${col.text}`;
+      dot.style.cssText = `background:${col.stroke};border-color:${col.stroke}`;
+    } else {
+      btn.style.cssText = '';
+      dot.style.cssText = '';
+    }
+  });
+}
+
+function toggleDeg(i) {
+  if (active.has(i)) active.delete(i); else active.add(i);
+  presetName = null;
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+  syncDegBtns();
+  refresh();
+}
+
+// ═══════════════════════════════════════
+// Mask
+// ═══════════════════════════════════════
+function toggleMask() {
+  maskOn = !maskOn;
+  const btn = document.getElementById('maskToggle');
+  btn.textContent = maskOn ? 'Mask ON' : 'Mask OFF';
+  btn.classList.toggle('on', maskOn);
+  document.getElementById('maskSliders').style.display = maskOn ? 'flex' : 'none';
+  refresh();
+}
+
+function onMaskInput(e) {
+  const minEl = document.getElementById('maskMin');
+  const maxEl = document.getElementById('maskMax');
+  let lo = parseInt(minEl.value), hi = parseInt(maxEl.value);
+  if (lo > hi) {
+    if (e.target===minEl) { maxEl.value=lo; hi=lo; }
+    else                  { minEl.value=hi; lo=hi; }
+  }
+  maskLo = lo; maskHi = hi;
+  document.getElementById('mMinVal').textContent = lo;
+  document.getElementById('mMaxVal').textContent = hi;
+  refresh();
+}
+
+// ═══════════════════════════════════════
+// Init
+// ═══════════════════════════════════════
+buildPiano();
+buildScaleGroups();
+buildDegBtns();
+syncDegBtns();
+refresh();
+</script>
+</body>
+</html>

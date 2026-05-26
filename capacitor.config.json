@@ -1,0 +1,11 @@
+{
+  "appId": "com.guitarscaletrainer.app",
+  "appName": "Guitar Scale Trainer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

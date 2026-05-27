@@ -199,9 +199,12 @@ function updateMaskOverlay(svgEl, scale) {
   }
   const rx = SVG.ML + (m.min - SVG.F0) * SVG.FW;
   const rw = (m.max - m.min + 1) * SVG.FW;
+  // Extend border to fully enclose dot circles on edge strings (CR = 12.5)
+  // so the stroke never crosses through dot labels
+  const bpad = SVG.CR + 2;
   insert(el('rect', {
-    x: rx, y: SVG.MT - 2, width: rw, height: SVG.FBH + 4,
-    fill: 'none', stroke: '#7c3aed', 'stroke-width': '2', rx: '4', opacity: '.9',
+    x: rx, y: SVG.MT - bpad, width: rw, height: SVG.FBH + bpad * 2,
+    fill: 'none', stroke: '#7c3aed', 'stroke-width': '2', rx: '5', opacity: '.9',
     'data-mask': 'border',
   }));
 }

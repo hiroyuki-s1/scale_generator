@@ -607,13 +607,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .saved-card { animation: fadeUp .3s ease both; }
 
 .fb-dot {
-  transform-box: fill-box;
-  transform-origin: center;
   animation: dotPop .3s cubic-bezier(.34,1.56,.64,1) both;
 }
 .fb-dot-exit {
-  transform-box: fill-box;
-  transform-origin: center;
   animation: dotExit .18s ease-in forwards !important;
 }
 

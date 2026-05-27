@@ -142,7 +142,11 @@ function appendDot(svgEl, n, colors) {
   const fs = name.length >= 4 ? '8.5' : name.length === 1 ? '15' : '12';
   const delay = `${(f - SVG.F0) * 22}ms`;
   const pos = noteKey(n);
-  const common = { class: 'fb-dot', 'data-deg': deg, 'data-pos': pos, style: `animation-delay:${delay}` };
+  // Set transform-origin explicitly in SVG user-space coordinates so that
+  // scale() animates from the dot centre on all browsers (incl. iOS Safari
+  // where transform-box:fill-box is unreliable for <text> elements).
+  const common = { class: 'fb-dot', 'data-deg': deg, 'data-pos': pos,
+    style: `animation-delay:${delay};transform-origin:${cx}px ${cy}px` };
 
   svgEl.appendChild(el('circle', {
     cx: cx + 0.5, cy: cy + 1.5, r: SVG.CR, fill: 'rgba(0,0,0,.10)', ...common,

@@ -14,7 +14,7 @@ import { cloneColors } from '../state/snapshot.js';
  * - Scale selector and degree toggle buttons to customise
  * - Save button saves the current chord/scale as a snapshot
  */
-export function initIrealTab(store) {
+export function initIrealTab(store, openFullscreen) {
   const fileBtn      = document.getElementById('irealFileBtn');
   const input        = document.getElementById('irealInput');
   const parseBtn     = document.getElementById('irealParseBtn');
@@ -23,12 +23,12 @@ export function initIrealTab(store) {
   const songNameEl   = document.getElementById('irealSongName');
   const gridEl       = document.getElementById('irealChordGrid');
   const editPanel    = document.getElementById('irealEditPanel');
-  const backBtn      = document.getElementById('irealBackBtn');
   const editChordEl  = document.getElementById('irealEditChord');
   const scaleSelect  = document.getElementById('irealScaleSelect');
   const saveBtn      = document.getElementById('irealSaveBtn');
   const degBtnsEl    = document.getElementById('irealDegBtns');
   const fbEl         = document.getElementById('irealFretboard');
+  const fbWrapEl     = fbEl.closest('.ireal-fb-wrap');
   const legendEl     = document.getElementById('irealLegend');
 
   // Local state
@@ -71,16 +71,12 @@ export function initIrealTab(store) {
     if (file) loadFile(file);
   });
 
-  // ── Close overlay (back button + ESC) ────────────────────────────────────
-  function closeOverlay() {
-    editPanel.classList.add('hidden');
-    const active = gridEl.querySelector('.ireal-chip.active');
-    if (active) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+  // ── Fretboard click: open fullscreen ─────────────────────────────────────
+  if (openFullscreen) {
+    fbWrapEl.addEventListener('click', () => {
+      if (currentIdx >= 0) openFullscreen(getFbState());
+    });
   }
-  backBtn.addEventListener('click', closeOverlay);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !editPanel.classList.contains('hidden')) closeOverlay();
-  });
 
   // ── Parse trigger ────────────────────────────────────────────────────────
   parseBtn.addEventListener('click', parse);
@@ -187,19 +183,23 @@ export function initIrealTab(store) {
     gridEl.querySelectorAll('.ireal-chip').forEach((el, i) => {
       el.classList.toggle('active', i === idx);
     });
-    const activeChip = gridEl.querySelector('.ireal-chip.active');
-    if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
     editChordEl.textContent = c.displayName;
     scaleSelect.value = '__chord__';
 
+    const wasHidden = editPanel.classList.contains('hidden');
     updateDegBtns();
     editPanel.classList.remove('hidden');
     updateFretboard();
+
+    // Scroll edit panel into view when first shown (user tap)
+    if (wasHidden) {
+      editPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
-  function updateFretboard() {
-    const state = {
+  function getFbState() {
+    return {
       rootIndex: currentRoot,
       activeDegrees: currentDegrees,
       presetName: currentIdx >= 0 ? chords[currentIdx].displayName : '',
@@ -207,6 +207,10 @@ export function initIrealTab(store) {
       mask: { enabled: false, min: 1, max: 15 },
       degreeColors: store.get().edit.degreeColors,
     };
+  }
+
+  function updateFretboard() {
+    const state = getFbState();
     applyFretboardDiff(fbEl, state, prevFbState);
     prevFbState = state;
     renderLegend(legendEl, state);

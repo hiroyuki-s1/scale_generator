@@ -1,4 +1,4 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
 
 :root {
   --accent:      #c0511f;
@@ -18,7 +18,7 @@
   --radius:      10px;
 }
 
-html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -498,27 +498,16 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .ireal-chip-scale { font-size: 8px; color: var(--text-3); font-weight: 600; }
 .ireal-chip.active .ireal-chip-sym { color: var(--accent); }
 
-/* ─ Edit panel (fullscreen overlay) ─ */
+/* ─ Edit panel (inline, no navigation) ─ */
 .ireal-edit-panel {
-  position: fixed; inset: 0; z-index: 200;
-  background: var(--bg);
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 14px 16px 28px;
-  display: flex; flex-direction: column;
-  animation: fadeUp .18s ease both;
+  border-top: 1px solid var(--border-2);
+  padding: 14px 16px 24px;
+  animation: fadeUp .2s ease both;
 }
 .ireal-edit-panel.hidden { display: none; }
 .ireal-edit-header {
   display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
 }
-.ireal-back-btn {
-  display: flex; /* always visible */
-  padding: 6px 12px; border: 1.5px solid var(--border);
-  border-radius: 7px; background: var(--surface); color: var(--text-2);
-  font-size: 12px; font-weight: 600; font-family: inherit;
-  cursor: pointer; flex-shrink: 0; transition: all .1s; align-items: center; gap: 4px;
-}
-.ireal-back-btn:hover { border-color: var(--accent); color: var(--accent); }
 .ireal-edit-chord-name {
   font-size: 22px; font-weight: 800; color: var(--accent);
   font-family: 'Courier New', monospace; letter-spacing: -.5px;
@@ -537,7 +526,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   cursor: pointer; flex-shrink: 0; transition: opacity .1s;
 }
 .ireal-save-btn:hover { opacity: .85; }
-.ireal-fb-wrap { margin: 12px 0 8px; }
+/* Fretboard in iReal panel: click to enlarge */
+.ireal-fb-wrap { margin: 12px 0 8px; cursor: pointer; }
+.ireal-fb-wrap:hover { border-color: #c8bfb5; }
 
 /* ── iReal Pro mobile overrides ─────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -546,21 +537,19 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .ireal-file-btn  { font-size: 11px; padding: 7px 9px; }
   .ireal-song-section { padding: 8px 12px 10px; }
 
-  /* Single-row horizontal scrolling chip strip — no wrapping */
-  .ireal-chord-grid {
-    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; gap: 6px;
-  }
-  .ireal-chord-grid::-webkit-scrollbar { height: 3px; }
-  .ireal-chord-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  /* Wrapping chip grid on mobile */
+  .ireal-chord-grid { gap: 5px; }
+  .ireal-chip { padding: 5px 8px; min-width: 48px; }
+  .ireal-chip-sym { font-size: 12px; }
 
-  /* Fullscreen overlay: compact header */
+  /* Edit panel: tighter padding */
   .ireal-edit-panel { padding: 10px 12px 20px; }
-  .ireal-edit-header { margin-bottom: 8px; flex-wrap: nowrap; gap: 8px; overflow: hidden; }
-  .ireal-edit-chord-name { font-size: 18px; flex-shrink: 0; }
+  .ireal-edit-header { margin-bottom: 8px; flex-wrap: nowrap; gap: 6px; overflow: hidden; }
+  .ireal-edit-chord-name { font-size: 17px; flex-shrink: 0; }
   .ireal-scale-select { font-size: 11px; padding: 5px 8px; flex: 1; min-width: 0; }
-  .ireal-save-btn { margin-left: 0; padding: 7px 12px; font-size: 11px; flex-shrink: 0; }
+  .ireal-save-btn { margin-left: 0; padding: 7px 10px; font-size: 11px; flex-shrink: 0; }
 
-  /* Compact 6-col degree buttons inside iReal overlay */
+  /* Compact 6-col degree buttons inside iReal panel */
   #irealDegBtns.deg-btns { grid-template-columns: repeat(6, 1fr); max-width: none; gap: 4px; }
   #irealDegBtns .deg-btn { padding: 8px 2px; font-size: 11px; min-height: 36px; border-radius: 7px; }
 
@@ -659,6 +648,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 @media (max-width: 600px) {
   body { height: auto; overflow: auto; }
   .tabs { flex: none; min-height: calc(100vh - 52px); }
+  /* Allow tabs/panes to grow tall so body scroll handles everything */
+  .tab-pane { overflow: visible; height: auto; }
+  #tabIreal { overflow-y: visible; }
 
   /* Header: hide non-essential controls */
   #layoutPicker, .hdr-group { display: none; }
@@ -667,29 +659,32 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* Tab nav: tighter */
   .tab-btn { padding: 0 10px; font-size: 12px; }
 
-  /* Edit panel */
-  .panel { padding: 12px; gap: 12px; }
+  /* Edit panel: compact */
+  .panel { padding: 10px 12px; gap: 10px; }
   .panel-row { gap: 10px; }
+  .panel-row + .panel-row { padding-top: 10px; }
+  .section-label { margin-bottom: 6px; }
+  .preset-select { min-height: 38px; font-size: 13px; padding: 8px 28px 8px 12px; }
 
   /* Mask section: compact */
   .btn-mask { padding: 6px 10px; font-size: 11px; min-height: 36px; }
   input[type=range].mslider { width: 72px; }
 
-  .fb-wrap { padding: 12px 8px 6px; }
-  .fb-title { font-size: 18px; }
-  .saved-title-input { font-size: 17px; }
+  .fb-wrap { padding: 10px 8px 4px; }
+  .fb-title { font-size: 16px; }
+  .saved-title-input { font-size: 16px; }
 
-  /* Edit fretboard area */
-  .edit-fb-area { padding: 10px 10px 12px; }
-  .edit-fb-area .fb-wrap { min-height: 280px; flex: none; }
-  svg.fb { min-width: 0; }
-  .edit-fb-area svg.fb { width: 100%; height: auto; }
-  /* Legend hidden on mobile — saves ~40px */
+  /* Edit fretboard area: full-size SVG, horizontal scroll */
+  .edit-fb-area { padding: 8px 10px 12px; }
+  .edit-fb-area .fb-wrap { flex: none; }
+  /* Override the desktop min-width:0 so fretboard stays readable and scrolls */
+  .edit-fb-area svg.fb { min-width: 640px !important; width: auto !important; height: auto; }
+  /* Legend hidden on mobile */
   #legend { display: none; }
 
   /* Saved tab: tighter padding */
-  #tabSaved { padding: 12px; }
-  #savedGrid { gap: 14px; }
+  #tabSaved { padding: 10px; }
+  #savedGrid { gap: 12px; }
 }
 
 /* PRESET DROPDOWN */

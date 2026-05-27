@@ -126,6 +126,7 @@ body {
   cursor: pointer; transition: all .12s; flex-shrink: 0;
 }
 .btn-color:hover, .btn-print:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
+.btn-reset { padding: 6px 9px; }
 .btn-reset:hover { background: var(--bg); border-color: #e07070; color: #e07070; }
 .btn-save {
   display: flex; align-items: center; gap: 5px;

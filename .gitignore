@@ -17,6 +17,9 @@ dist-ssr
 *.jpg
 *.jpeg
 *.png
+# Exclude HTML files except index.html
+*.html
+!index.html
 
 # Editor directories and files
 .vscode/*

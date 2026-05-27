@@ -7,6 +7,7 @@ const editForJson = e => ({
   rootIndex: e.rootIndex,
   activeDegrees: [...e.activeDegrees],
   presetName: e.presetName,
+  mode: e.mode || 'scale',
   mask: { ...e.mask },
   degreeColors: cloneColors(e.degreeColors),
 });
@@ -30,10 +31,12 @@ export function restoreFromStorage() {
       edit: {
         ...data.edit,
         activeDegrees: new Set(data.edit.activeDegrees),
+        mode: data.edit.mode || 'scale',
       },
       saved: data.saved.map(s => ({
         ...s,
         activeDegrees: new Set(s.activeDegrees),
+        mode: s.mode || 'scale',
       })),
       layout: data.layout,
       activeTab: data.activeTab || 'edit',

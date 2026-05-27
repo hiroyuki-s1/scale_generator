@@ -6,6 +6,7 @@ export function cloneEditAsSnapshot(edit) {
     rootIndex: edit.rootIndex,
     activeDegrees: new Set(edit.activeDegrees),
     presetName: edit.presetName,
+    mode: edit.mode,
     mask: { ...edit.mask },
     degreeColors: cloneColors(edit.degreeColors),
   };

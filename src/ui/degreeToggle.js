@@ -1,7 +1,6 @@
 import { DEGREES } from '../domain/constants.js';
-import { appendDegreeDots } from './fretboardSvg.js';
 
-export function initDegreeToggle(container, store, fretboardEl) {
+export function initDegreeToggle(container, store) {
   container.innerHTML = '';
   DEGREES.forEach((d, i) => {
     const btn = document.createElement('button');
@@ -16,24 +15,11 @@ export function initDegreeToggle(container, store, fretboardEl) {
   });
 
   function toggle(i) {
-    let wasActive = false;
     store.updateEdit(edit => {
-      wasActive = edit.activeDegrees.has(i);
       const next = new Set(edit.activeDegrees);
-      if (wasActive) next.delete(i); else next.add(i);
+      if (next.has(i)) next.delete(i); else next.add(i);
       return { activeDegrees: next, presetName: null };
     });
-
-    if (wasActive) {
-      // animate-out only this degree's dots, then remove
-      fretboardEl.querySelectorAll(`[data-deg="${i}"]`).forEach(el => {
-        el.style.animationDelay = '0s';
-        el.classList.add('fb-dot-exit');
-        el.addEventListener('animationend', () => el.remove(), { once: true });
-      });
-    } else {
-      appendDegreeDots(fretboardEl, store.get().edit, i);
-    }
   }
 
   function sync() {

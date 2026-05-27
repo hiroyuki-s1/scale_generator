@@ -15,7 +15,7 @@ export const DEGREES = [
   { name: 'M7',  semi: 11 },
 ];
 
-export const PRESET_GROUPS = [
+export const SCALE_GROUPS = [
   {
     label: 'Penta',
     presets: [
@@ -42,6 +42,59 @@ export const PRESET_GROUPS = [
     ],
   },
 ];
+
+export const CHORD_GROUPS = [
+  {
+    label: 'Triad',
+    presets: [
+      { name: 'maj',  degrees: [0, 4, 7]  },
+      { name: 'min',  degrees: [0, 3, 7]  },
+      { name: 'dim',  degrees: [0, 3, 6]  },
+      { name: 'aug',  degrees: [0, 4, 8]  },
+      { name: 'sus4', degrees: [0, 5, 7]  },
+      { name: 'sus2', degrees: [0, 2, 7]  },
+    ],
+  },
+  {
+    label: '7th',
+    presets: [
+      { name: 'maj7',  degrees: [0, 4, 7, 11] },
+      { name: '7',     degrees: [0, 4, 7, 10] },
+      { name: 'm7',    degrees: [0, 3, 7, 10] },
+      { name: 'm7b5',  degrees: [0, 3, 6, 10] },
+      { name: 'dim7',  degrees: [0, 3, 6, 9]  },
+      { name: 'mMaj7', degrees: [0, 3, 7, 11] },
+    ],
+  },
+  {
+    label: 'Extended',
+    presets: [
+      { name: '9',    degrees: [0, 2, 4, 7, 10] },
+      { name: 'maj9', degrees: [0, 2, 4, 7, 11] },
+      { name: 'm9',   degrees: [0, 2, 3, 7, 10] },
+      { name: '13',   degrees: [0, 4, 7, 9, 10] },
+    ],
+  },
+];
+
+export const PRESETS_BY_MODE = {
+  scale: SCALE_GROUPS,
+  chord: CHORD_GROUPS,
+};
+
+/**
+ * Return { preset, mode } looking up the name across both scale and chord
+ * groups. Returns null if not found.
+ */
+export function findPresetEverywhere(name) {
+  for (const [mode, groups] of Object.entries(PRESETS_BY_MODE)) {
+    for (const g of groups) {
+      const p = g.presets.find(x => x.name === name);
+      if (p) return { preset: p, mode };
+    }
+  }
+  return null;
+}
 
 export const TUNING = [64, 59, 55, 50, 45, 40];
 export const STRING_LABELS = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];

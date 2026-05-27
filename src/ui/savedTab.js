@@ -1,5 +1,5 @@
 import { SVG } from '../domain/constants.js';
-import { drawFretboard } from './fretboardSvg.js';
+import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -83,7 +83,8 @@ function renderCard(snap, store) {
   leg.className = 'legend';
   card.appendChild(leg);
 
-  drawFretboard(svg, snap);
+  drawFretboardBase(svg);
+  applyFretboardDiff(svg, snap, null);
   renderLegend(leg, snap);
 
   return card;

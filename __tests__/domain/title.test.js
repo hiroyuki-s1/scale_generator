@@ -15,12 +15,21 @@ describe('keyLabel', () => {
 });
 
 describe('buildTitle', () => {
-  it('uses preset name when present', () => {
+  it('uses preset name with space for scales', () => {
     expect(buildTitle({
       rootIndex: 9,
       activeDegrees: new Set([0, 3, 5, 7, 10]),
       presetName: 'Minor Penta',
+      mode: 'scale',
     })).toBe('A Minor Penta');
+  });
+  it('uses tight format (no space) for chords', () => {
+    expect(buildTitle({
+      rootIndex: 0,
+      activeDegrees: new Set([0, 4, 7, 11]),
+      presetName: 'maj7',
+      mode: 'chord',
+    })).toBe('Cmaj7');
   });
   it('falls back to custom listing when presetName is null', () => {
     expect(buildTitle({

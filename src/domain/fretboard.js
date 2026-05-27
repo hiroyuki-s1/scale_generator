@@ -25,3 +25,22 @@ export function computeFretNotes(state) {
   }
   return notes;
 }
+
+export function noteKey(n) {
+  return `${n.string}-${n.fret}-${n.degree}`;
+}
+
+/**
+ * 2つの状態間で表示するノートの差分 (追加/削除) を計算する。
+ * UIはこれを使って差分アニメーションのみ走らせる (全dot消えて再登場を避ける)。
+ */
+export function diffFretNotes(prevState, nextState) {
+  const prevNotes = prevState ? computeFretNotes(prevState) : [];
+  const nextNotes = computeFretNotes(nextState);
+  const prevByKey = new Map(prevNotes.map(n => [noteKey(n), n]));
+  const nextByKey = new Map(nextNotes.map(n => [noteKey(n), n]));
+
+  const added = nextNotes.filter(n => !prevByKey.has(noteKey(n)));
+  const removed = prevNotes.filter(n => !nextByKey.has(noteKey(n)));
+  return { added, removed };
+}

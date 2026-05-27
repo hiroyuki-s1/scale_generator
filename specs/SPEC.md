@@ -62,9 +62,12 @@ TUNING (MIDI, 1弦→6弦) = [64, 59, 55, 50, 45, 40]   // E4 B3 G3 D3 A2 E2
 
 固定 `1〜15` フレット。0フレット（開放弦）は描画しない。
 
-### 3.5 スケールプリセット
+### 3.5 プリセット — スケール & コードトーン
 
-3グループ・10種:
+プリセットは **mode** で `'scale'` と `'chord'` に分かれる。UIでは単一の
+optgroup付き `<select>` で全グループ・全プリセットを選択する。
+
+**スケール** (mode: 'scale')
 
 | Group     | Name           | Degrees                         |
 |-----------|----------------|---------------------------------|
@@ -78,6 +81,29 @@ TUNING (MIDI, 1弦→6弦) = [64, 59, 55, 50, 45, 40]   // E4 B3 G3 D3 A2 E2
 | Advanced  | Lydian Dom     | 0, 2, 4, 6, 7, 9, 10            |
 | Advanced  | Altered        | 0, 1, 3, 4, 6, 8, 10            |
 | Advanced  | Harmonic Min   | 0, 2, 3, 5, 7, 8, 11            |
+
+**コードトーン** (mode: 'chord')
+
+| Group     | Name      | Degrees           |
+|-----------|-----------|-------------------|
+| Triad     | maj       | 0, 4, 7           |
+| Triad     | min       | 0, 3, 7           |
+| Triad     | dim       | 0, 3, 6           |
+| Triad     | aug       | 0, 4, 8           |
+| Triad     | sus4      | 0, 5, 7           |
+| Triad     | sus2      | 0, 2, 7           |
+| 7th       | maj7      | 0, 4, 7, 11       |
+| 7th       | 7         | 0, 4, 7, 10       |
+| 7th       | m7        | 0, 3, 7, 10       |
+| 7th       | m7b5      | 0, 3, 6, 10       |
+| 7th       | dim7      | 0, 3, 6, 9        |
+| 7th       | mMaj7     | 0, 3, 7, 11       |
+| Extended  | 9         | 0, 2, 4, 7, 10    |
+| Extended  | maj9      | 0, 2, 4, 7, 11    |
+| Extended  | m9        | 0, 2, 3, 7, 10    |
+| Extended  | 13        | 0, 4, 7, 9, 10    |
+
+タイトル表示: `${key} ${name}` (例: `A Minor Penta`, `C maj7`)
 
 ### 3.6 度数カラー（デフォルト）
 
@@ -101,6 +127,7 @@ editState = {
   rootIndex: 9,                   // 0-11 (A)
   activeDegrees: Set([0,3,5,7,10]),
   presetName: 'Minor Penta',      // string | null (手動でnullに)
+  mode: 'scale',                  // 'scale' | 'chord' (presetがどちら由来か)
   mask: { enabled: false, min: 1, max: 15 },
   degreeColors: Array(12)         // 上記DEFAULT_COLORS
 }
@@ -146,7 +173,7 @@ scale_generator/
 │   │   ├─ header.js
 │   │   ├─ tabs.js
 │   │   ├─ piano.js
-│   │   ├─ scaleSelector.js
+│   │   ├─ presetSelector.js
 │   │   ├─ degreeToggle.js
 │   │   ├─ maskControl.js
 │   │   ├─ fretboardSvg.js       # SVG描画（純粋: state -> SVG要素群）
@@ -255,7 +282,9 @@ export function createStore(initialState) {
 | 1 | Key選択 | ピアノクリックで指板の表示音が即切替 |
 | 2 | プリセット | プリセットクリックで度数群とタイトル更新 |
 | 3 | 度数トグル | R以外をクリックでON/OFF、presetName→null、タイトル "カスタム" |
-| 4 | マスク | ON時、範囲外がグレー、範囲が紫枠 |
+| 4 | マスク (画面) | ON時、範囲外がグレー、範囲が紫枠 |
+| 4b | マスク (アニメ) | マスク min/max 変更時はドットが全消えして再登場せず、増減差分だけアニメ |
+| 4c | マスク (印刷) | mask.enabled の保存スケールは印刷時に範囲だけにトリミング+拡大 (`beforeprint` で SVG viewBox を絞る) |
 | 5 | 色変更 | モーダルで色変更→指板・凡例・トグル全て即反映 |
 | 6 | 保存 | モーダルでタイトル入力→保存→保存済みタブにカード追加、バッジ更新 |
 | 7 | 保存編集 | カードのタイトル input で名前変更、削除ボタン動作 |

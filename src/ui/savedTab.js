@@ -21,19 +21,26 @@ export function initSavedTab(container, store) {
     }
 
     container.innerHTML = '';
-    saved.forEach(snap => container.appendChild(renderCard(snap, store)));
+    // Update lastIdsKey BEFORE the loop so a renderCard error doesn't
+    // leave it stale and cause infinite re-render attempts on next store update.
     lastIdsKey = saved.map(s => s.id).join(',');
     lastCols = layout.cols;
+    saved.forEach(snap => {
+      try {
+        container.appendChild(renderCard(snap, store));
+      } catch (e) {
+        console.warn('savedTab: failed to render card', snap.id, e);
+      }
+    });
   }
 
   render();
-  // Avoid clobbering the active title input by only rebuilding when the
-  // structure (added/removed cards) or layout columns change. Saved scale
-  // snapshots are immutable post-creation; titles live in the input itself
-  // (committed back to store on input) and don't need DOM round-trips.
-  store.subscribe(s => {
+  // Rebuild when cards are added/removed, layout changes, OR the saved tab
+  // becomes active (in case render was called while the pane was hidden).
+  store.subscribe((s, p) => {
     const idsKey = s.saved.map(c => c.id).join(',');
-    if (idsKey === lastIdsKey && s.layout.cols === lastCols) return;
+    const tabOpened = s.activeTab === 'saved' && p?.activeTab !== 'saved';
+    if (!tabOpened && idsKey === lastIdsKey && s.layout.cols === lastCols) return;
     render();
   });
 }

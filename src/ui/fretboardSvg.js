@@ -79,6 +79,9 @@ export function drawFretboardBase(svgEl) {
       fill: '#c5bfb5', 'font-size': '9', 'font-family': 'monospace',
     }, STRING_LABELS[s]));
   }
+
+  // Dot layer is always the last child so dots always render above mask overlays
+  svgEl.appendChild(el('g', { class: 'dot-layer' }));
 }
 
 /**
@@ -148,20 +151,22 @@ function appendDot(svgEl, n, colors) {
   const common = { class: 'fb-dot', 'data-deg': deg, 'data-pos': pos,
     style: `animation-delay:${delay};transform-origin:${cx}px ${cy}px` };
 
-  svgEl.appendChild(el('circle', {
+  // Append into the dot-layer group (always last child) so dots render above mask overlays
+  const layer = svgEl.querySelector('.dot-layer') || svgEl;
+  layer.appendChild(el('circle', {
     cx: cx + 0.5, cy: cy + 1.5, r: SVG.CR, fill: 'rgba(0,0,0,.10)', ...common,
   }));
-  svgEl.appendChild(el('circle', {
+  layer.appendChild(el('circle', {
     cx, cy, r: SVG.CR, fill: dotFill, stroke: dc.color,
     'stroke-width': isRoot ? 2.5 : 1.8, ...common,
   }));
   if (isRoot) {
-    svgEl.appendChild(el('circle', {
+    layer.appendChild(el('circle', {
       cx, cy, r: SVG.CR - 3.5, fill: 'none', stroke: dc.color,
       'stroke-width': '1', opacity: '.45', ...common,
     }));
   }
-  svgEl.appendChild(el('text', {
+  layer.appendChild(el('text', {
     x: cx, y: cy + 4.5, 'text-anchor': 'middle', fill: dc.text,
     'font-size': fs, 'font-weight': 'bold', 'font-family': "'Courier New',monospace",
     ...common,
@@ -172,11 +177,14 @@ function updateMaskOverlay(svgEl, scale) {
   svgEl.querySelectorAll('[data-mask]').forEach(e => e.remove());
   const m = scale.mask;
   if (!m?.enabled) return;
+  // Insert mask elements BEFORE the dot-layer so dots always render on top
+  const dotLayer = svgEl.querySelector('.dot-layer');
+  const insert = elem => dotLayer ? svgEl.insertBefore(elem, dotLayer) : svgEl.appendChild(elem);
   const mf = 'rgba(215,210,205,.75)';
   if (m.min > SVG.F0) {
     const x1 = SVG.ML;
     const x2 = SVG.ML + (m.min - SVG.F0) * SVG.FW;
-    svgEl.appendChild(el('rect', {
+    insert(el('rect', {
       x: x1, y: SVG.MT, width: x2 - x1, height: SVG.FBH, fill: mf, rx: '3',
       'data-mask': 'left',
     }));
@@ -184,14 +192,14 @@ function updateMaskOverlay(svgEl, scale) {
   if (m.max < SVG.F1) {
     const x1 = SVG.ML + (m.max - SVG.F0 + 1) * SVG.FW;
     const x2 = SVG.ML + SVG.FBW;
-    svgEl.appendChild(el('rect', {
+    insert(el('rect', {
       x: x1, y: SVG.MT, width: x2 - x1, height: SVG.FBH, fill: mf, rx: '3',
       'data-mask': 'right',
     }));
   }
   const rx = SVG.ML + (m.min - SVG.F0) * SVG.FW;
   const rw = (m.max - m.min + 1) * SVG.FW;
-  svgEl.appendChild(el('rect', {
+  insert(el('rect', {
     x: rx, y: SVG.MT - 2, width: rw, height: SVG.FBH + 4,
     fill: 'none', stroke: '#7c3aed', 'stroke-width': '2', rx: '4', opacity: '.9',
     'data-mask': 'border',

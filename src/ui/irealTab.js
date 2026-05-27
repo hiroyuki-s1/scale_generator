@@ -1,33 +1,35 @@
 import { parseIrealUrl } from '../domain/ireal.js';
-import { NOTES } from '../domain/constants.js';
-import {
-  drawFretboardBase,
-  applyFretboardDiff,
-} from './fretboardSvg.js';
+import { cloneEditAsSnapshot } from '../state/snapshot.js';
 
 /**
- * iReal Pro タブ。
+ * iReal Pro バー（編集タブ内に統合）。
+ * - 折りたたみ/展開
  * - URL貼り付け → コード進行表示
- * - 各コードセルをクリック or [<][>] でナビゲート
- * - 内蔵フレットボードにスケールを表示
- * - store.edit を更新してメインフレットボードにも反映
+ * - コードチップまたは[←][→]でナビゲート
+ * - ナビゲートのたびに store.edit を更新 + 自動保存
  */
 export function initIrealTab(store) {
-  const pane    = document.getElementById('tabIreal');
-  const input   = document.getElementById('irealInput');
-  const parseBtn = document.getElementById('irealParseBtn');
-  const infoEl  = document.getElementById('irealSongInfo');
-  const gridEl  = document.getElementById('irealChordGrid');
-  const prevBtn = document.getElementById('irealPrev');
-  const nextBtn = document.getElementById('irealNext');
-  const curEl   = document.getElementById('irealCurrent');
-  const fbEl    = document.getElementById('irealFretboard');
+  const toggleBtn  = document.getElementById('irealToggle');
+  const barBody    = document.getElementById('irealBarBody');
+  const barNav     = document.getElementById('irealBarNav');
+  const songNameEl = document.getElementById('irealSongName');
+  const input      = document.getElementById('irealInput');
+  const parseBtn   = document.getElementById('irealParseBtn');
+  const gridEl     = document.getElementById('irealChordGrid');
+  const prevBtn    = document.getElementById('irealPrev');
+  const nextBtn    = document.getElementById('irealNext');
+  const currentEl  = document.getElementById('irealCurrent');
 
-  let chords  = [];
-  let current = 0;
+  let chords    = [];
+  let current   = -1;
+  let songTitle = '';
+  let isOpen    = false;
 
-  drawFretboardBase(fbEl);
-  applyFretboardDiff(fbEl, store.get().edit, null);
+  toggleBtn.addEventListener('click', () => {
+    isOpen = !isOpen;
+    barBody.classList.toggle('hidden', !isOpen);
+    toggleBtn.textContent = `iReal Pro ${isOpen ? '▲' : '▼'}`;
+  });
 
   parseBtn.addEventListener('click', parse);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') parse(); });
@@ -39,34 +41,33 @@ export function initIrealTab(store) {
     if (!url) return;
     try {
       const song = parseIrealUrl(url);
-      chords  = song.chords;
-      current = 0;
-      infoEl.textContent = `${song.title}  /  Key: ${song.key}  /  ${song.style}`;
-      infoEl.classList.remove('hidden');
+      chords    = song.chords;
+      songTitle = song.title;
+      current   = -1;
+      songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
+      barNav.classList.remove('hidden');
       buildGrid();
       navigate(0);
     } catch (e) {
-      infoEl.textContent = `エラー: ${e.message}`;
-      infoEl.classList.remove('hidden');
+      songNameEl.textContent = `エラー: ${e.message}`;
     }
   }
 
   function buildGrid() {
     gridEl.innerHTML = '';
     chords.forEach((c, i) => {
-      const cell = document.createElement('button');
-      cell.className = 'ireal-cell';
-      cell.dataset.idx = i;
-      const sym  = document.createElement('div');
-      sym.className  = 'ireal-cell-sym';
+      const chip = document.createElement('button');
+      chip.className = 'ireal-chip';
+      const sym  = document.createElement('span');
+      sym.className = 'ireal-chip-sym';
       sym.textContent = c.symbol;
-      const sc = document.createElement('div');
-      sc.className  = 'ireal-cell-scale';
+      const sc = document.createElement('span');
+      sc.className = 'ireal-chip-scale';
       sc.textContent = c.scaleName;
-      cell.appendChild(sym);
-      cell.appendChild(sc);
-      cell.addEventListener('click', () => navigate(i));
-      gridEl.appendChild(cell);
+      chip.appendChild(sym);
+      chip.appendChild(sc);
+      chip.addEventListener('click', () => navigate(i));
+      gridEl.appendChild(chip);
     });
   }
 
@@ -74,32 +75,29 @@ export function initIrealTab(store) {
     if (!chords.length) return;
     current = ((idx % chords.length) + chords.length) % chords.length;
 
-    // Highlight active cell
-    gridEl.querySelectorAll('.ireal-cell').forEach((el, i) => {
+    gridEl.querySelectorAll('.ireal-chip').forEach((el, i) => {
       el.classList.toggle('active', i === current);
     });
-    // Scroll into view
-    const activeCell = gridEl.querySelector('.ireal-cell.active');
-    if (activeCell) activeCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const activeChip = gridEl.querySelector('.ireal-chip.active');
+    if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
     const c = chords[current];
-    curEl.textContent = `${c.symbol}  →  ${c.scaleName}`;
+    currentEl.textContent = `${c.symbol} → ${c.scaleName}`;
 
-    // Build edit state for this chord
-    const editPatch = {
+    // Edit状態を更新（フレットボードに反映）
+    store.updateEdit({
       rootIndex: c.rootPc,
       activeDegrees: new Set(c.degrees),
       presetName: c.scaleName,
       mode: 'scale',
-    };
+    });
 
-    // Update internal fretboard
-    const prev = store.get().edit;
-    store.updateEdit(editPatch);
-    applyFretboardDiff(fbEl, store.get().edit, prev);
-
-    // Scroll active cell into view in chord grid
-    prevBtn.disabled = chords.length <= 1;
-    nextBtn.disabled = chords.length <= 1;
+    // 自動保存
+    const title = `${songTitle} — ${c.symbol} (${c.scaleName})`;
+    store.set(state => {
+      const id   = state.nextId;
+      const snap = { id, title, ...cloneEditAsSnapshot(state.edit) };
+      return { ...state, saved: [...state.saved, snap], nextId: id + 1 };
+    });
   }
 }

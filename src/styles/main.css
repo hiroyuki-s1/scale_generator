@@ -434,81 +434,82 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .btn-reset-colors:hover { background: var(--bg); }
 
-/* ── iReal Pro Tab ──────────────────────────────────────────────────── */
-#tabIreal { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-.ireal-input-row {
-  display: flex; gap: 8px; padding: 12px 16px 0; flex-shrink: 0;
+/* ── iReal Pro Bar（編集タブ内） ─────────────────────────────────────── */
+.ireal-bar {
+  flex-shrink: 0; border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
+  background: var(--surface-2);
 }
+.ireal-bar-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 12px; min-height: 34px;
+}
+.ireal-bar-toggle {
+  padding: 3px 10px; border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text-2);
+  font-size: 11px; font-weight: 700; font-family: inherit;
+  cursor: pointer; flex-shrink: 0; transition: all .1s;
+}
+.ireal-bar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.ireal-song-name {
+  font-size: 11px; font-weight: 600; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+.ireal-bar-nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ireal-bar-nav.hidden { display: none; }
+.ireal-nav-btn {
+  width: 26px; height: 26px; border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text);
+  font-size: 14px; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all .1s;
+}
+.ireal-nav-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ireal-current {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  font-family: 'Courier New', monospace; min-width: 120px; text-align: center;
+}
+/* expanded body */
+.ireal-bar-body { padding: 8px 12px 10px; }
+.ireal-bar-body.hidden { display: none; }
+.ireal-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .ireal-url-input {
-  flex: 1; padding: 8px 12px; border: 1.5px solid var(--border);
-  border-radius: 8px; background: var(--surface-2); color: var(--text);
+  flex: 1; padding: 7px 11px; border: 1.5px solid var(--border);
+  border-radius: 7px; background: var(--surface); color: var(--text);
   font-size: 12px; font-family: 'Courier New', monospace;
   outline: none; transition: border-color .15s;
 }
 .ireal-url-input:focus { border-color: var(--accent); }
 .ireal-parse-btn {
-  padding: 8px 16px; border: none; background: var(--accent);
-  color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700;
-  font-family: inherit; cursor: pointer; flex-shrink: 0;
-  transition: opacity .1s;
+  padding: 7px 14px; border: none; background: var(--accent);
+  color: #fff; border-radius: 7px; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer; flex-shrink: 0; transition: opacity .1s;
 }
 .ireal-parse-btn:hover { opacity: .85; }
-.ireal-song-info {
-  padding: 6px 16px; font-size: 12px; font-weight: 600;
-  color: var(--text-2); flex-shrink: 0;
+/* horizontal chip row */
+.ireal-chord-row {
+  display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px;
 }
-.ireal-song-info.hidden { display: none; }
-.ireal-body {
-  flex: 1; display: flex; gap: 0; overflow: hidden; min-height: 0;
+.ireal-chord-row::-webkit-scrollbar { height: 4px; }
+.ireal-chord-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.ireal-chip {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1px; padding: 5px 8px; flex-shrink: 0;
+  border: 1.5px solid var(--border-2); border-radius: 7px;
+  background: var(--surface); cursor: pointer; transition: all .1s;
+  min-width: 52px;
 }
-/* left: nav + chord grid */
-.ireal-left {
-  width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
-  overflow: hidden; border-right: 1px solid var(--border-2);
+.ireal-chip:hover { border-color: var(--accent); }
+.ireal-chip.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
 }
-.ireal-nav {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border-2);
-}
-.ireal-nav-btn {
-  width: 30px; height: 30px; border: 1.5px solid var(--border);
-  border-radius: 7px; background: var(--surface); color: var(--text);
-  font-size: 16px; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; flex-shrink: 0; transition: all .1s;
-}
-.ireal-nav-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
-.ireal-nav-btn:disabled { opacity: .35; cursor: default; }
-.ireal-current {
-  flex: 1; font-size: 11px; font-weight: 700; color: var(--text-2);
-  font-family: 'Courier New', monospace; text-align: center;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.ireal-chord-grid {
-  flex: 1; overflow-y: auto; display: flex; flex-wrap: wrap;
-  align-content: flex-start; gap: 4px; padding: 8px;
-}
-.ireal-cell {
-  width: calc(50% - 2px); padding: 6px 4px; border: 1.5px solid var(--border-2);
-  border-radius: 7px; background: var(--surface-2); cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  transition: all .1s;
-}
-.ireal-cell:hover { border-color: var(--accent); }
-.ireal-cell.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface-2)); }
-.ireal-cell-sym {
+.ireal-chip-sym {
   font-family: 'Courier New', monospace; font-weight: 700;
   font-size: 12px; color: var(--text);
 }
-.ireal-cell-scale {
-  font-size: 9px; color: var(--text-3); font-weight: 600; letter-spacing: .3px;
-}
-.ireal-cell.active .ireal-cell-sym { color: var(--accent); }
-/* right: fretboard */
-.ireal-right {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 12px; overflow: hidden; min-width: 0;
-}
-.ireal-fb { width: 100%; height: 100%; }
+.ireal-chip-scale { font-size: 8px; color: var(--text-3); font-weight: 600; }
+.ireal-chip.active .ireal-chip-sym { color: var(--accent); }
 
 /* PRINT BASE */
 @media print {

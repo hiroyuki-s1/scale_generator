@@ -1,6 +1,6 @@
 import './styles/main.css';
 
-import { DEFAULT_COLORS, findPresetEverywhere } from './domain/constants.js';
+import { DEFAULT_COLORS, findPresetEverywhere, SVG } from './domain/constants.js';
 import { buildTitle } from './domain/title.js';
 import { createStore } from './state/store.js';
 import { attachPersist, restoreFromStorage } from './state/persist.js';
@@ -103,11 +103,16 @@ function openFbFullscreen(state) {
   applyFretboardDiff(fbFullscreenSvg, state, fsPrevState);
   fsPrevState = state;
   renderLegend(fbFullscreenLegend, state);
+  // Crop viewBox to mask range when mask is enabled
+  const vb = maskViewBox(state.mask);
+  fbFullscreenSvg.setAttribute('viewBox', vb || `0 0 ${SVG.W} ${SVG.H}`);
   fbFullscreen.classList.remove('hidden');
 }
 
 function closeFbFullscreen() {
   fbFullscreen.classList.add('hidden');
+  fbFullscreenSvg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
+  fsPrevState = null; // force full re-render next open (viewBox may have changed)
 }
 
 fbFullscreenClose.addEventListener('click', closeFbFullscreen);

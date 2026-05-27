@@ -1,64 +1,121 @@
 import { parseIrealUrl } from '../domain/ireal.js';
+import { qualityToChordTones } from '../domain/chordTones.js';
+import { SCALE_GROUPS, DEGREES } from '../domain/constants.js';
+import { findPresetEverywhere } from '../domain/constants.js';
+import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
+import { renderLegend } from './legend.js';
 import { cloneColors } from '../state/snapshot.js';
 
 /**
- * iReal Pro バー（編集タブ内に統合）。
- * - 折りたたみ/展開
- * - URL貼り付け → コード進行表示
- * - コードチップまたは[←][→]でナビゲート
- * - ナビゲートのたびに store.edit を更新 + 自動保存
+ * Dedicated iReal Pro tab.
+ *
+ * - URL/file input → parse → deduplicated chord chip grid
+ * - Click a chip → shows fretboard with chord tones as default degrees
+ * - Scale selector and degree toggle buttons to customise
+ * - Save button saves the current chord/scale as a snapshot
  */
 export function initIrealTab(store) {
-  const toggleBtn  = document.getElementById('irealToggle');
-  const barBody    = document.getElementById('irealBarBody');
-  const barNav     = document.getElementById('irealBarNav');
-  const songNameEl = document.getElementById('irealSongName');
-  const input      = document.getElementById('irealInput');
-  const parseBtn   = document.getElementById('irealParseBtn');
-  const gridEl     = document.getElementById('irealChordGrid');
-  const prevBtn    = document.getElementById('irealPrev');
-  const nextBtn    = document.getElementById('irealNext');
-  const currentEl  = document.getElementById('irealCurrent');
+  const fileBtn      = document.getElementById('irealFileBtn');
+  const input        = document.getElementById('irealInput');
+  const parseBtn     = document.getElementById('irealParseBtn');
+  const tabEl        = document.getElementById('tabIreal');
+  const songSection  = document.getElementById('irealSongSection');
+  const songNameEl   = document.getElementById('irealSongName');
+  const gridEl       = document.getElementById('irealChordGrid');
+  const editPanel    = document.getElementById('irealEditPanel');
+  const editChordEl  = document.getElementById('irealEditChord');
+  const scaleSelect  = document.getElementById('irealScaleSelect');
+  const saveBtn      = document.getElementById('irealSaveBtn');
+  const degBtnsEl    = document.getElementById('irealDegBtns');
+  const fbEl         = document.getElementById('irealFretboard');
+  const legendEl     = document.getElementById('irealLegend');
 
-  let chords    = [];
-  let current   = -1;
-  let songTitle = '';
-  let isOpen    = false;
+  // Local state
+  let chords      = [];
+  let songTitle   = '';
+  let currentIdx  = -1;
+  let currentRoot = 0;
+  let currentDegrees = new Set();
+  let prevFbState = null;
 
-  toggleBtn.addEventListener('click', () => {
-    isOpen = !isOpen;
-    barBody.classList.toggle('hidden', !isOpen);
-    toggleBtn.textContent = `iReal Pro ${isOpen ? '▲' : '▼'}`;
-  });
+  // Init the iReal fretboard base (static decorations)
+  drawFretboardBase(fbEl);
 
-  parseBtn.addEventListener('click', parse);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') parse(); });
-  prevBtn.addEventListener('click', () => navigate(current - 1));
-  nextBtn.addEventListener('click', () => navigate(current + 1));
+  // Populate scale selector
+  buildScaleSelect(scaleSelect);
 
-  // ── ファイルドロップ & ファイル選択 ──────────────────────────────────
+  // ── File input (hidden) ──────────────────────────────────────────────────
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = '.irealb,.html';
   fileInput.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
   document.body.appendChild(fileInput);
 
-  const fileBtn = document.getElementById('irealFileBtn');
   fileBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) loadFile(fileInput.files[0]);
     fileInput.value = '';
   });
 
-  const barEl = document.getElementById('irealBar');
-  barEl.addEventListener('dragover', e => { e.preventDefault(); barEl.classList.add('drag-over'); });
-  barEl.addEventListener('dragleave', () => barEl.classList.remove('drag-over'));
-  barEl.addEventListener('drop', e => {
+  // ── Drag-and-drop onto the tab pane ─────────────────────────────────────
+  tabEl.addEventListener('dragover', e => {
     e.preventDefault();
-    barEl.classList.remove('drag-over');
+    tabEl.classList.add('drag-over');
+  });
+  tabEl.addEventListener('dragleave', () => tabEl.classList.remove('drag-over'));
+  tabEl.addEventListener('drop', e => {
+    e.preventDefault();
+    tabEl.classList.remove('drag-over');
     const file = e.dataTransfer.files[0];
     if (file) loadFile(file);
   });
+
+  // ── Parse trigger ────────────────────────────────────────────────────────
+  parseBtn.addEventListener('click', parse);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') parse(); });
+
+  // ── Scale selector ───────────────────────────────────────────────────────
+  scaleSelect.addEventListener('change', () => {
+    const name = scaleSelect.value;
+    if (name === '__chord__') {
+      if (currentIdx >= 0) {
+        currentDegrees = new Set(qualityToChordTones(chords[currentIdx].quality));
+        updateDegBtns();
+        updateFretboard();
+      }
+      return;
+    }
+    const result = findPresetEverywhere(name);
+    if (result) {
+      currentDegrees = new Set(result.preset.degrees);
+      updateDegBtns();
+      updateFretboard();
+    }
+  });
+
+  // ── Save current chord ───────────────────────────────────────────────────
+  saveBtn.addEventListener('click', () => {
+    if (currentIdx < 0) return;
+    const c = chords[currentIdx];
+    const scaleName = scaleSelect.value === '__chord__'
+      ? `${c.displayName} chord`
+      : scaleSelect.value;
+    store.set(state => {
+      const snap = {
+        id: state.nextId,
+        title: `${songTitle} — ${c.displayName} (${scaleName})`,
+        rootIndex: currentRoot,
+        activeDegrees: new Set(currentDegrees),
+        presetName: scaleName,
+        mode: 'scale',
+        mask: { enabled: false, min: 1, max: 15 },
+        degreeColors: cloneColors(state.edit.degreeColors),
+      };
+      return { ...state, saved: [...state.saved, snap], nextId: state.nextId + 1 };
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
 
   function loadFile(file) {
     const reader = new FileReader();
@@ -71,7 +128,6 @@ export function initIrealTab(store) {
     if (!url) return;
     try {
       const song = parseIrealUrl(url);
-      // 重複除去: displayName が同じコードは初回出現のみ残す
       const seen = new Set();
       chords = song.chords.filter(c => {
         if (seen.has(c.displayName)) return false;
@@ -79,14 +135,16 @@ export function initIrealTab(store) {
         return true;
       });
       songTitle = song.title;
-      current   = -1;
+      currentIdx = -1;
+      prevFbState = null;
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
-      barNav.classList.remove('hidden');
+      songSection.classList.remove('hidden');
+      editPanel.classList.add('hidden');
       buildGrid();
-      saveAllChords();
-      navigate(0);
+      if (chords.length > 0) selectChord(0);
     } catch (e) {
       songNameEl.textContent = `エラー: ${e.message}`;
+      songSection.classList.remove('hidden');
     }
   }
 
@@ -95,7 +153,7 @@ export function initIrealTab(store) {
     chords.forEach((c, i) => {
       const chip = document.createElement('button');
       chip.className = 'ireal-chip';
-      const sym  = document.createElement('span');
+      const sym = document.createElement('span');
       sym.className = 'ireal-chip-sym';
       sym.textContent = c.displayName;
       const sc = document.createElement('span');
@@ -103,48 +161,86 @@ export function initIrealTab(store) {
       sc.textContent = c.scaleName;
       chip.appendChild(sym);
       chip.appendChild(sc);
-      chip.addEventListener('click', () => navigate(i));
+      chip.addEventListener('click', () => selectChord(i));
       gridEl.appendChild(chip);
     });
   }
 
-  function saveAllChords() {
-    if (!chords.length) return;
-    store.set(state => {
-      let nextId = state.nextId;
-      const newSnaps = chords.map(c => ({
-        id: nextId++,
-        title: `${songTitle} — ${c.displayName} (${c.scaleName})`,
-        rootIndex: c.rootPc,
-        activeDegrees: new Set(c.degrees),
-        presetName: c.scaleName,
-        mode: 'scale',
-        mask: { ...state.edit.mask },
-        degreeColors: cloneColors(state.edit.degreeColors),
-      }));
-      return { ...state, saved: [...state.saved, ...newSnaps], nextId };
-    });
-  }
+  function selectChord(idx) {
+    currentIdx = idx;
+    const c = chords[idx];
+    currentRoot = c.rootPc;
+    currentDegrees = new Set(qualityToChordTones(c.quality));
 
-  function navigate(idx) {
-    if (!chords.length) return;
-    current = ((idx % chords.length) + chords.length) % chords.length;
-
+    // Highlight active chip
     gridEl.querySelectorAll('.ireal-chip').forEach((el, i) => {
-      el.classList.toggle('active', i === current);
+      el.classList.toggle('active', i === idx);
     });
     const activeChip = gridEl.querySelector('.ireal-chip.active');
     if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
-    const c = chords[current];
-    currentEl.textContent = `${c.displayName} → ${c.scaleName}`;
+    editChordEl.textContent = c.displayName;
+    scaleSelect.value = '__chord__';
 
-    // Edit状態を更新（フレットボードに反映）
-    store.updateEdit({
-      rootIndex: c.rootPc,
-      activeDegrees: new Set(c.degrees),
-      presetName: c.scaleName,
+    updateDegBtns();
+    editPanel.classList.remove('hidden');
+    prevFbState = null; // force full re-render for new chord
+    updateFretboard();
+  }
+
+  function updateFretboard() {
+    const state = {
+      rootIndex: currentRoot,
+      activeDegrees: currentDegrees,
+      presetName: currentIdx >= 0 ? chords[currentIdx].displayName : '',
       mode: 'scale',
+      mask: { enabled: false, min: 1, max: 15 },
+      degreeColors: store.get().edit.degreeColors,
+    };
+    applyFretboardDiff(fbEl, state, prevFbState);
+    prevFbState = state;
+    renderLegend(legendEl, state);
+  }
+
+  function updateDegBtns() {
+    degBtnsEl.innerHTML = '';
+    DEGREES.forEach(({ name, semi }) => {
+      const isRoot = semi === 0;
+      const btn = document.createElement('button');
+      btn.className = 'deg-btn' + (currentDegrees.has(semi) ? ' active' : '') + (isRoot ? ' root' : '');
+      btn.textContent = name;
+      if (!isRoot) {
+        btn.addEventListener('click', () => {
+          if (currentDegrees.has(semi)) {
+            currentDegrees = new Set([...currentDegrees].filter(d => d !== semi));
+          } else {
+            currentDegrees = new Set([...currentDegrees, semi]);
+          }
+          btn.classList.toggle('active', currentDegrees.has(semi));
+          // update scale select to show as custom if degrees no longer match a preset
+          updateFretboard();
+        });
+      }
+      degBtnsEl.appendChild(btn);
     });
+  }
+
+  function buildScaleSelect(select) {
+    const defOpt = document.createElement('option');
+    defOpt.value = '__chord__';
+    defOpt.textContent = 'コードトーン';
+    select.appendChild(defOpt);
+
+    for (const group of SCALE_GROUPS) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group.label;
+      for (const preset of group.presets) {
+        const opt = document.createElement('option');
+        opt.value = preset.name;
+        opt.textContent = preset.name;
+        optgroup.appendChild(opt);
+      }
+      select.appendChild(optgroup);
+    }
   }
 }

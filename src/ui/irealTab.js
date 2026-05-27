@@ -146,7 +146,6 @@ export function initIrealTab(store) {
       });
       songTitle = song.title;
       currentIdx = -1;
-      prevFbState = null;
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
       songSection.classList.remove('hidden');
       editPanel.classList.add('hidden');
@@ -196,7 +195,6 @@ export function initIrealTab(store) {
     editPanel.classList.remove('hidden');
     // Mobile: switch to edit view
     tabEl.classList.add('ireal-editing');
-    prevFbState = null; // force full re-render for new chord
     updateFretboard();
   }
 

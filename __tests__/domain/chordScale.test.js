@@ -12,6 +12,10 @@ describe('chordQualityToScale', () => {
     expect(chordQualityToScale('^7').scaleName).toBe('Ionian');
   });
 
+  it('^ alone → Ionian (iReal Bb^ notation)', () => {
+    expect(chordQualityToScale('^').scaleName).toBe('Ionian');
+  });
+
   it('M7 → Ionian', () => {
     expect(chordQualityToScale('M7').scaleName).toBe('Ionian');
   });

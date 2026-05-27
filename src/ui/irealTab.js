@@ -71,7 +71,13 @@ export function initIrealTab(store) {
     if (!url) return;
     try {
       const song = parseIrealUrl(url);
-      chords    = song.chords;
+      // 重複除去: displayName が同じコードは初回出現のみ残す
+      const seen = new Set();
+      chords = song.chords.filter(c => {
+        if (seen.has(c.displayName)) return false;
+        seen.add(c.displayName);
+        return true;
+      });
       songTitle = song.title;
       current   = -1;
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;

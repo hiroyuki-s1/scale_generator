@@ -376,23 +376,54 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .modal-overlay.show .color-modal-box { transform: translateY(0); }
 .color-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .color-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 10px; border: 1px solid var(--border-2);
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; border: 1px solid var(--border-2);
   border-radius: 8px; background: var(--surface-2);
 }
+.color-row-top { display: flex; align-items: center; gap: 8px; }
 .color-row-badge { width: 20px; height: 20px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
 .color-row-name { font-family: 'Courier New', monospace; font-weight: 700; font-size: 12px; width: 28px; flex-shrink: 0; color: var(--text); }
 .color-mode-btns { display: flex; gap: 3px; flex-shrink: 0; }
 .color-mode-btn {
-  padding: 3px 8px; border: 1.5px solid var(--border);
+  padding: 3px 9px; border: 1.5px solid var(--border);
   border-radius: 5px; background: var(--surface); color: var(--text-3);
   font-size: 10px; font-weight: 700; font-family: inherit;
   cursor: pointer; transition: all .1s;
 }
 .color-mode-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
-.color-swatch-group { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-.color-swatch-pair { display: flex; align-items: center; gap: 4px; }
-.color-swatch-label { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
+/* palette */
+.color-palettes { display: flex; flex-direction: column; gap: 4px; }
+.color-palette-row { display: flex; align-items: center; gap: 6px; }
+.color-palette-label { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; width: 18px; flex-shrink: 0; }
+.color-chips { display: flex; gap: 3px; flex-wrap: wrap; }
+.color-chip {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  padding: 0; flex-shrink: 0; transition: transform .1s;
+}
+.color-chip:hover { transform: scale(1.2); }
+.color-chip.active { border-color: var(--text); transform: scale(1.15); }
+/* custom picker swatch */
+.color-swatch-custom {
+  width: 20px; height: 20px; border-radius: 50%;
+  cursor: pointer; flex-shrink: 0; display: block; position: relative;
+  overflow: hidden; margin-left: 2px;
+}
+.color-swatch-custom::before {
+  content: '';
+  position: absolute;
+  width: 300%; height: 300%;
+  top: -100%; left: -100%;
+  background: conic-gradient(
+    hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%),
+    hsl(90,100%,50%), hsl(120,100%,50%), hsl(150,100%,50%),
+    hsl(180,100%,50%), hsl(210,100%,50%), hsl(240,100%,50%),
+    hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%),
+    hsl(360,100%,50%)
+  );
+  border-radius: 50%;
+}
+/* kept for backwards compat */
 .color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; overflow: hidden; flex-shrink: 0; display: block; }
 .color-swatch input[type=color] { width: 200%; height: 200%; margin: -50%; border: none; cursor: pointer; padding: 0; }
 .btn-reset-colors {
@@ -402,6 +433,82 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   font-weight: 600; font-family: inherit; transition: all .12s;
 }
 .btn-reset-colors:hover { background: var(--bg); }
+
+/* ── iReal Pro Tab ──────────────────────────────────────────────────── */
+#tabIreal { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.ireal-input-row {
+  display: flex; gap: 8px; padding: 12px 16px 0; flex-shrink: 0;
+}
+.ireal-url-input {
+  flex: 1; padding: 8px 12px; border: 1.5px solid var(--border);
+  border-radius: 8px; background: var(--surface-2); color: var(--text);
+  font-size: 12px; font-family: 'Courier New', monospace;
+  outline: none; transition: border-color .15s;
+}
+.ireal-url-input:focus { border-color: var(--accent); }
+.ireal-parse-btn {
+  padding: 8px 16px; border: none; background: var(--accent);
+  color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700;
+  font-family: inherit; cursor: pointer; flex-shrink: 0;
+  transition: opacity .1s;
+}
+.ireal-parse-btn:hover { opacity: .85; }
+.ireal-song-info {
+  padding: 6px 16px; font-size: 12px; font-weight: 600;
+  color: var(--text-2); flex-shrink: 0;
+}
+.ireal-song-info.hidden { display: none; }
+.ireal-body {
+  flex: 1; display: flex; gap: 0; overflow: hidden; min-height: 0;
+}
+/* left: nav + chord grid */
+.ireal-left {
+  width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+  overflow: hidden; border-right: 1px solid var(--border-2);
+}
+.ireal-nav {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border-2);
+}
+.ireal-nav-btn {
+  width: 30px; height: 30px; border: 1.5px solid var(--border);
+  border-radius: 7px; background: var(--surface); color: var(--text);
+  font-size: 16px; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: all .1s;
+}
+.ireal-nav-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ireal-nav-btn:disabled { opacity: .35; cursor: default; }
+.ireal-current {
+  flex: 1; font-size: 11px; font-weight: 700; color: var(--text-2);
+  font-family: 'Courier New', monospace; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ireal-chord-grid {
+  flex: 1; overflow-y: auto; display: flex; flex-wrap: wrap;
+  align-content: flex-start; gap: 4px; padding: 8px;
+}
+.ireal-cell {
+  width: calc(50% - 2px); padding: 6px 4px; border: 1.5px solid var(--border-2);
+  border-radius: 7px; background: var(--surface-2); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  transition: all .1s;
+}
+.ireal-cell:hover { border-color: var(--accent); }
+.ireal-cell.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface-2)); }
+.ireal-cell-sym {
+  font-family: 'Courier New', monospace; font-weight: 700;
+  font-size: 12px; color: var(--text);
+}
+.ireal-cell-scale {
+  font-size: 9px; color: var(--text-3); font-weight: 600; letter-spacing: .3px;
+}
+.ireal-cell.active .ireal-cell-sym { color: var(--accent); }
+/* right: fretboard */
+.ireal-right {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 12px; overflow: hidden; min-width: 0;
+}
+.ireal-fb { width: 100%; height: 100%; }
 
 /* PRINT BASE */
 @media print {

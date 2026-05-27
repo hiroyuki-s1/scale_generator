@@ -61,6 +61,7 @@
     <button class="tab-btn" id="tabBtnSaved">
       保存済み<span class="tab-badge" id="savedBadge" style="display:none">0</span>
     </button>
+    <button class="tab-btn" id="tabBtnIreal">iReal</button>
   </nav>
 
   <div class="tab-pane" id="tabEdit">
@@ -101,6 +102,30 @@
 
   <div class="tab-pane hidden" id="tabSaved">
     <div id="savedGrid"></div>
+  </div>
+
+  <div class="tab-pane hidden" id="tabIreal">
+    <div class="ireal-input-row">
+      <input class="ireal-url-input" id="irealInput" type="text"
+             placeholder="irealb:// URL をここに貼り付け...">
+      <button class="ireal-parse-btn" id="irealParseBtn">読み込む</button>
+    </div>
+    <div class="ireal-song-info hidden" id="irealSongInfo"></div>
+
+    <div class="ireal-body">
+      <div class="ireal-left">
+        <div class="ireal-nav">
+          <button class="ireal-nav-btn" id="irealPrev">&#8592;</button>
+          <span class="ireal-current" id="irealCurrent">—</span>
+          <button class="ireal-nav-btn" id="irealNext">&#8594;</button>
+        </div>
+        <div class="ireal-chord-grid" id="irealChordGrid"></div>
+      </div>
+      <div class="ireal-right">
+        <svg class="ireal-fb fb" id="irealFretboard"
+             viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
   </div>
 </div>
 

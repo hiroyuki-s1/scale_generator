@@ -1,9 +1,13 @@
 import { DEGREES, DEFAULT_COLORS } from '../domain/constants.js';
 import { cloneColors } from '../state/snapshot.js';
 
+const PALETTE = [
+  '#d92b2b', '#f0b429', '#27ae60', '#2980b9', '#ffffff', '#1c1c1c',
+];
+
 export function initColorModal(store, openBtn) {
-  const modal = document.getElementById('colorModal');
-  const list  = document.getElementById('colorList');
+  const modal    = document.getElementById('colorModal');
+  const list     = document.getElementById('colorList');
   const closeBtn = modal.querySelector('[data-act="close"]');
   const resetBtn = modal.querySelector('[data-act="reset"]');
 
@@ -12,10 +16,7 @@ export function initColorModal(store, openBtn) {
   resetBtn.addEventListener('click', reset);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
 
-  function open() {
-    build();
-    modal.classList.add('show');
-  }
+  function open()  { build(); modal.classList.add('show'); }
   function close() { modal.classList.remove('show'); }
 
   function reset() {
@@ -35,9 +36,13 @@ export function initColorModal(store, openBtn) {
     const colors = store.get().edit.degreeColors;
     list.innerHTML = '';
     DEGREES.forEach((d, i) => {
-      const dc = colors[i];
+      const dc  = colors[i];
       const row = document.createElement('div');
       row.className = 'color-row';
+
+      // ── top: badge + name + solid/outline toggle ──
+      const top = document.createElement('div');
+      top.className = 'color-row-top';
 
       const badge = document.createElement('div');
       badge.className = 'color-row-badge';
@@ -49,52 +54,80 @@ export function initColorModal(store, openBtn) {
 
       const modeBtns = document.createElement('div');
       modeBtns.className = 'color-mode-btns';
-      ['塗', '白'].forEach((label, si) => {
+      ['塗り', 'アウトライン'].forEach((label, si) => {
         const btn = document.createElement('button');
         btn.className = 'color-mode-btn' + ((si === 0) === dc.solid ? ' active' : '');
         btn.textContent = label;
-        btn.addEventListener('click', () => {
-          setColor(i, { solid: si === 0 });
-          build();
-        });
+        btn.addEventListener('click', () => { setColor(i, { solid: si === 0 }); build(); });
         modeBtns.appendChild(btn);
       });
 
-      const swatchGroup = document.createElement('div');
-      swatchGroup.className = 'color-swatch-group';
+      top.appendChild(badge);
+      top.appendChild(name);
+      top.appendChild(modeBtns);
+
+      // ── palette rows for 枠 and 文字 ──
+      const palettes = document.createElement('div');
+      palettes.className = 'color-palettes';
+
       [['枠', 'color'], ['文字', 'text']].forEach(([lbl, key]) => {
-        const pair = document.createElement('div');
-        pair.className = 'color-swatch-pair';
+        const prow = document.createElement('div');
+        prow.className = 'color-palette-row';
+
         const lblEl = document.createElement('span');
-        lblEl.className = 'color-swatch-label';
+        lblEl.className = 'color-palette-label';
         lblEl.textContent = lbl;
-        const sw = document.createElement('label');
-        sw.className = 'color-swatch';
-        sw.style.background = dc[key];
-        const inp = document.createElement('input');
-        inp.type = 'color';
-        inp.value = dc[key];
-        inp.addEventListener('input', e => {
-          setColor(i, { [key]: e.target.value });
-          sw.style.background = e.target.value;
-          applyBadge(badge, store.get().edit.degreeColors[i]);
+
+        const chips = document.createElement('div');
+        chips.className = 'color-chips';
+
+        PALETTE.forEach(hex => {
+          const chip = document.createElement('button');
+          chip.className = 'color-chip' + (dc[key] === hex ? ' active' : '');
+          chip.style.background = hex;
+          if (hex === '#ffffff') chip.style.boxShadow = 'inset 0 0 0 1.5px #ccc';
+          chip.title = hex;
+          chip.addEventListener('click', () => {
+            setColor(i, { [key]: hex });
+            applyBadge(badge, store.get().edit.degreeColors[i]);
+            prow.querySelectorAll('.color-chip').forEach((c, ci) => {
+              c.classList.toggle('active', PALETTE[ci] === hex);
+            });
+            customInp.value = hex;
+          });
+          chips.appendChild(chip);
         });
-        sw.appendChild(inp);
-        pair.appendChild(lblEl);
-        pair.appendChild(sw);
-        swatchGroup.appendChild(pair);
+
+        // custom picker at the end
+        const customInp = document.createElement('input');
+        customInp.type  = 'color';
+        customInp.value = dc[key];
+        customInp.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+        customInp.addEventListener('input', e => {
+          setColor(i, { [key]: e.target.value });
+          applyBadge(badge, store.get().edit.degreeColors[i]);
+          chips.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
+        });
+        const customSw = document.createElement('div');
+        customSw.className = 'color-swatch-custom';
+        customSw.title = 'カスタム';
+        customSw.appendChild(customInp);
+        customSw.addEventListener('click', () => customInp.click());
+
+        prow.appendChild(lblEl);
+        prow.appendChild(chips);
+        prow.appendChild(customSw);
+        palettes.appendChild(prow);
       });
 
-      row.appendChild(badge);
-      row.appendChild(name);
-      row.appendChild(modeBtns);
-      row.appendChild(swatchGroup);
+      row.appendChild(top);
+      row.appendChild(palettes);
       list.appendChild(row);
     });
   }
 }
 
 function applyBadge(badge, dc) {
-  badge.style.background = dc.solid ? dc.color : '#fff';
+  badge.style.background  = dc.solid ? dc.color : '#fff';
   badge.style.borderColor = dc.color;
 }

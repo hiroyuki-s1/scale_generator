@@ -458,10 +458,20 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .btn-reset-colors:hover { background: var(--bg); }
 
-/* ── iReal Pro section (sidebar) ─────────────────────────────────────── */
+/* ── iReal Pro section (below fretboard) ────────────────────────────── */
+.ireal-section {
+  border-top: 1px solid var(--border-2);
+  padding: 10px 14px 12px;
+  flex-shrink: 0;
+}
 .ireal-section.drag-over { outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: var(--radius); }
 
-.ireal-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.ireal-section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.ireal-section-header .ctrl-label { margin-bottom: 0; white-space: nowrap; flex-shrink: 0; }
+
+.ireal-input-row { display: flex; gap: 6px; flex: 1; min-width: 0; }
 .ireal-file-btn {
   padding: 6px 9px; border: 1.5px solid var(--border);
   border-radius: 7px; background: var(--surface); color: var(--text-2);
@@ -490,11 +500,12 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .ireal-song-header.hidden { display: none; }
 
-/* ─ Chip strip ─ */
+/* ─ Chip strip: always horizontal scroll, never wraps ─ */
 .ireal-chip-strip {
-  display: flex; flex-direction: row; flex-wrap: wrap; gap: 5px;
-  -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: row; gap: 5px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
+.ireal-chip-strip::-webkit-scrollbar { display: none; }
 .ireal-chip {
   display: flex; flex-direction: column; align-items: center;
   gap: 2px; padding: 4px 8px; flex-shrink: 0;

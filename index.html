@@ -85,17 +85,6 @@
         <div class="ctrl-label">Degrees</div>
         <div class="deg-btns" id="degBtns"></div>
       </div>
-      <div class="ctrl-section ireal-section" id="irealSection">
-        <div class="ctrl-label">iReal Pro</div>
-        <div class="ireal-input-row">
-          <button class="ireal-file-btn" id="irealFileBtn">&#128190;</button>
-          <input class="ireal-url-input" id="irealInput" type="text"
-                 placeholder=".irealb / URL を貼り付け...">
-          <button class="ireal-parse-btn" id="irealParseBtn">読込</button>
-        </div>
-        <div class="ireal-song-header hidden" id="irealSongName"></div>
-        <div class="ireal-chip-strip" id="irealChordGrid"></div>
-      </div>
     </aside>
     <div class="editor-fretboard">
       <div class="fb-header">
@@ -108,6 +97,20 @@
       <div class="mask-section">
         <div class="ctrl-label">Fret Mask</div>
         <div class="mask-row" id="maskControl"></div>
+      </div>
+      <!-- iReal Pro: below fretboard so chips don't disrupt sidebar -->
+      <div class="ireal-section" id="irealSection">
+        <div class="ireal-section-header">
+          <span class="ctrl-label">iReal Pro</span>
+          <div class="ireal-input-row">
+            <button class="ireal-file-btn" id="irealFileBtn">&#128190;</button>
+            <input class="ireal-url-input" id="irealInput" type="text"
+                   placeholder=".irealb / URL を貼り付け...">
+            <button class="ireal-parse-btn" id="irealParseBtn">読込</button>
+          </div>
+        </div>
+        <div class="ireal-song-header hidden" id="irealSongName"></div>
+        <div class="ireal-chip-strip" id="irealChordGrid"></div>
       </div>
     </div>
   </div>

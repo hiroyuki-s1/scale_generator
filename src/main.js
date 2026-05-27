@@ -66,6 +66,13 @@ initPrintCss(store);
 
 document.getElementById('printBtn').addEventListener('click', () => window.print());
 
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) {
+    localStorage.clear();
+    location.reload();
+  }
+});
+
 // Edit-tab fretboard: draw the static base once, then diff-apply on every
 // edit change. The diff naturally handles all transitions (root, preset,
 // mode, mask range, degree toggle, color) — only the actual delta animates.

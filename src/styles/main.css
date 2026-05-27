@@ -117,7 +117,7 @@ body {
 .layout-menu-btn:hover { background: var(--bg); border-color: var(--border); color: var(--text-2); }
 .layout-menu-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
-.btn-color, .btn-print {
+.btn-color, .btn-print, .btn-reset {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 12px;
   background: var(--surface); border: 1px solid var(--border);
@@ -126,6 +126,7 @@ body {
   cursor: pointer; transition: all .12s; flex-shrink: 0;
 }
 .btn-color:hover, .btn-print:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
+.btn-reset:hover { background: var(--bg); border-color: #e07070; color: #e07070; }
 .btn-save {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 12px;

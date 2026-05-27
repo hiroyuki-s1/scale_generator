@@ -17,7 +17,7 @@
  *   [A-G][#b]?... chord symbol
  */
 
-import { chordQualityToScale } from './chordScale.js';
+import { chordQualityToScaleCtx } from './chordScale.js';
 import { NOTES } from './constants.js';
 
 /** Pitch class for note names (supports # and b). */
@@ -114,12 +114,13 @@ export function parseIrealUrl(url) {
     if (KEY_RE.test(fields[i])) { key = fields[i]; break; }
   }
   if (!key) key = fields[3] || '';
-  const keyPc    = NOTE_PC[key.replace(/-$/, '')] ?? 0;
+  const keyIsMinor = key.endsWith('-');
+  const keyPc      = NOTE_PC[key.replace(/-$/, '')] ?? 0;
 
   // Chord data is field index 6; everything after is metadata (0s)
   const chordData = fields.slice(6).join('=').replace(/=[\d,]+$/, '');
 
-  const chords = extractChords(chordData);
+  const chords = extractChords(chordData, keyPc, keyIsMinor);
 
   return { title, composer, style, key, keyPc, chords };
 }
@@ -134,7 +135,7 @@ export function parseIrealUrl(url) {
  * @param {string} raw
  * @returns {IrealChord[]}
  */
-export function extractChords(raw) {
+export function extractChords(raw, keyPc = 0, keyIsMinor = false) {
   // Strip text annotations <...>
   let s = raw.replace(/<[^>]*>/g, ' ');
   // Strip section markers *A *B *C etc.
@@ -156,7 +157,7 @@ export function extractChords(raw) {
   const chords = [];
   let match;
   while ((match = CHORD_RE.exec(s)) !== null) {
-    const chord = parseChordToken(match[0]);
+    const chord = parseChordToken(match[0], keyPc, keyIsMinor);
     if (chord) chords.push(chord);
   }
   return chords;
@@ -175,7 +176,7 @@ export function extractChords(raw) {
  * @param {string} token
  * @returns {IrealChord|null}
  */
-export function parseChordToken(token) {
+export function parseChordToken(token, keyPc = 0, keyIsMinor = false) {
   // Quality-first notation: prefix + optional flat + root letter
   const prefixMatch = token.match(/^([\^ho-])(b?)([A-G][#b]?)(.*)/);
   if (prefixMatch) {
@@ -189,7 +190,7 @@ export function parseChordToken(token) {
                       : prefix === 'o' ? 'o7'
                       : /* '-' */        '-';
     const quality = baseQuality + extra;
-    const { scaleName, degrees } = chordQualityToScale(quality);
+    const { scaleName, degrees } = chordQualityToScaleCtx(quality, rootPc, keyPc, keyIsMinor);
     const displayName = root + qualityToDisplay(quality);
     return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
   }
@@ -202,7 +203,7 @@ export function parseChordToken(token) {
   const rootPc = NOTE_PC[root];
   if (rootPc === undefined) return null;
   const quality = token.slice(root.length);
-  const { scaleName, degrees } = chordQualityToScale(quality);
+  const { scaleName, degrees } = chordQualityToScaleCtx(quality, rootPc, keyPc, keyIsMinor);
   const displayName = root + qualityToDisplay(quality);
   return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
 }

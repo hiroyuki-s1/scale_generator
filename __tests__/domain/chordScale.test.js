@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chordQualityToScale } from '../../src/domain/chordScale.js';
+import { chordQualityToScale, chordQualityToScaleCtx } from '../../src/domain/chordScale.js';
 
 describe('chordQualityToScale', () => {
   it('empty quality → Major Penta (major triad)', () => {
@@ -52,12 +52,12 @@ describe('chordQualityToScale', () => {
     expect(chordQualityToScale('7#11').scaleName).toBe('Lydian Dom');
   });
 
-  it('m7b5 → Locrian', () => {
-    expect(chordQualityToScale('m7b5').scaleName).toBe('Locrian');
+  it('m7b5 → Locrian #2 (6th mode of melodic minor)', () => {
+    expect(chordQualityToScale('m7b5').scaleName).toBe('Locrian #2');
   });
 
-  it('h7 → Locrian', () => {
-    expect(chordQualityToScale('h7').scaleName).toBe('Locrian');
+  it('h7 → Locrian #2', () => {
+    expect(chordQualityToScale('h7').scaleName).toBe('Locrian #2');
   });
 
   it('o7 → Diminished', () => {
@@ -88,5 +88,49 @@ describe('chordQualityToScale', () => {
     ['', 'm7', '7', '^7', 'm7b5', 'o7', '7alt', 'sus'].forEach(q => {
       expect(chordQualityToScale(q).degrees).toContain(0);
     });
+  });
+});
+
+describe('chordQualityToScaleCtx — key-aware mode assignment', () => {
+  // key of C major (keyPc=0, keyIsMinor=false)
+  it('IVM7 (FM7 in C) → Lydian', () => {
+    expect(chordQualityToScaleCtx('M7', 5, 0, false).scaleName).toBe('Lydian');
+  });
+  it('IIIm7 (Em7 in C) → Phrygian', () => {
+    expect(chordQualityToScaleCtx('m7', 4, 0, false).scaleName).toBe('Phrygian');
+  });
+  it('VIm7 (Am7 in C) → Natural Minor', () => {
+    expect(chordQualityToScaleCtx('m7', 9, 0, false).scaleName).toBe('Natural Minor');
+  });
+  it('bII7 (Db7 in C) → Lydian Dom (tritone sub)', () => {
+    expect(chordQualityToScaleCtx('7', 1, 0, false).scaleName).toBe('Lydian Dom');
+  });
+
+  // non-context-specific chords fall through to quality rules
+  it('IIm7 (Dm7 in C) → Dorian (fallthrough)', () => {
+    expect(chordQualityToScaleCtx('m7', 2, 0, false).scaleName).toBe('Dorian');
+  });
+  it('V7 (G7 in C) → Mixolydian (fallthrough)', () => {
+    expect(chordQualityToScaleCtx('7', 7, 0, false).scaleName).toBe('Mixolydian');
+  });
+  it('m7b5 → Locrian #2 regardless of key', () => {
+    expect(chordQualityToScaleCtx('m7b5', 9, 0, false).scaleName).toBe('Locrian #2');
+  });
+  it('7b9 → Altered regardless of key', () => {
+    expect(chordQualityToScaleCtx('7b9', 7, 0, false).scaleName).toBe('Altered');
+  });
+
+  // minor key (G minor, keyPc=7, keyIsMinor=true)
+  it('bVIM7 (EbM7 in Gm) → Lydian', () => {
+    expect(chordQualityToScaleCtx('M7', 3, 7, true).scaleName).toBe('Lydian');
+  });
+  it('bVIIM7 (FM7 in Gm) → Lydian', () => {
+    expect(chordQualityToScaleCtx('M7', 5, 7, true).scaleName).toBe('Lydian');
+  });
+  it('bII7 (Ab7 in Gm) → Lydian Dom', () => {
+    expect(chordQualityToScaleCtx('7', 8, 7, true).scaleName).toBe('Lydian Dom');
+  });
+  it('Im7 (Gm7 in Gm) → Dorian (fallthrough)', () => {
+    expect(chordQualityToScaleCtx('m7', 7, 7, true).scaleName).toBe('Dorian');
   });
 });

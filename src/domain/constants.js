@@ -28,9 +28,12 @@ export const SCALE_GROUPS = [
     label: 'Diatonic',
     presets: [
       { name: 'Major',         degrees: [0, 2, 4, 5, 7, 9, 11] },
-      { name: 'Natural Minor', degrees: [0, 2, 3, 5, 7, 8, 10] },
-      { name: 'Dorian',        degrees: [0, 2, 3, 5, 7, 9, 10] },
+      { name: 'Lydian',        degrees: [0, 2, 4, 6, 7, 9, 11] },
       { name: 'Mixolydian',    degrees: [0, 2, 4, 5, 7, 9, 10] },
+      { name: 'Dorian',        degrees: [0, 2, 3, 5, 7, 9, 10] },
+      { name: 'Natural Minor', degrees: [0, 2, 3, 5, 7, 8, 10] },
+      { name: 'Phrygian',      degrees: [0, 1, 3, 5, 7, 8, 10] },
+      { name: 'Locrian',       degrees: [0, 1, 3, 5, 6, 8, 10] },
     ],
   },
   {
@@ -38,7 +41,9 @@ export const SCALE_GROUPS = [
     presets: [
       { name: 'Lydian Dom',   degrees: [0, 2, 4, 6, 7, 9, 10] },
       { name: 'Altered',      degrees: [0, 1, 3, 4, 6, 8, 10] },
+      { name: 'Locrian #2',   degrees: [0, 2, 3, 5, 6, 8, 10] },
       { name: 'Harmonic Min', degrees: [0, 2, 3, 5, 7, 8, 11] },
+      { name: 'Diminished',   degrees: [0, 1, 3, 4, 6, 7, 9, 10] },
     ],
   },
 ];

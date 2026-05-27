@@ -56,7 +56,7 @@ describe('parseChordToken — standard root-first', () => {
   it('parses Am7b5', () => {
     const c = parseChordToken('Am7b5');
     expect(c.root).toBe('A');
-    expect(c.scaleName).toBe('Locrian');
+    expect(c.scaleName).toBe('Locrian #2');
   });
 
   it('parses F#m7', () => {
@@ -117,7 +117,7 @@ describe('parseChordToken — quality-first (iReal Pro obfuscated)', () => {
     const c = parseChordToken('hA');
     expect(c.root).toBe('A');
     expect(c.rootPc).toBe(9);
-    expect(c.scaleName).toBe('Locrian');
+    expect(c.scaleName).toBe('Locrian #2');
   });
 
   it('parses -G → Gm', () => {
@@ -243,15 +243,16 @@ describe('parseIrealUrl — new format (key at field 4, empty fields at 2 and 5)
     expect(cm7).toBeTruthy();
   });
 
-  it('finds Am7b5 (hA notation) in actual chord data', () => {
+  it('finds Am7b5 (hA notation) in actual chord data → Locrian #2', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    const am7b5 = chords.find(c => c.root === 'A' && c.scaleName === 'Locrian');
+    const am7b5 = chords.find(c => c.root === 'A' && c.scaleName === 'Locrian #2');
     expect(am7b5).toBeTruthy();
   });
 
-  it('finds Ebmaj7 (^bE notation) in actual chord data', () => {
+  it('finds Ebmaj7 (^bE notation) in actual chord data → Lydian (bVIM7 in Gm)', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    const ebM7 = chords.find(c => c.root === 'Eb' && c.scaleName === 'Ionian');
+    // Eb is bVI of G minor → Lydian (not Ionian)
+    const ebM7 = chords.find(c => c.root === 'Eb' && c.scaleName === 'Lydian');
     expect(ebM7).toBeTruthy();
   });
 

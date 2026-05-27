@@ -15,22 +15,24 @@ import { cloneColors } from '../state/snapshot.js';
  * - Save button saves the current chord/scale as a snapshot
  */
 export function initIrealTab(store, openFullscreen) {
-  const fileBtn      = document.getElementById('irealFileBtn');
-  const input        = document.getElementById('irealInput');
-  const parseBtn     = document.getElementById('irealParseBtn');
-  const tabEl        = document.getElementById('tabIreal');
-  const songSection  = document.getElementById('irealSongSection');
-  const songNameEl   = document.getElementById('irealSongName');
-  const gridEl       = document.getElementById('irealChordGrid');
-  const editPanel    = document.getElementById('irealEditPanel');
-  const editChordEl  = document.getElementById('irealEditChord');
-  const scaleSelect  = document.getElementById('irealScaleSelect');
-  const saveBtn      = document.getElementById('irealSaveBtn');
-  const degBtnsEl    = document.getElementById('irealDegBtns');
-  const fbEl         = document.getElementById('irealFretboard');
-  const fbWrapEl     = fbEl.closest('.fb-wrap');
-  const legendEl     = document.getElementById('irealLegend');
-  const maskEl       = document.getElementById('irealMaskControl');
+  const fileBtn        = document.getElementById('irealFileBtn');
+  const input          = document.getElementById('irealInput');
+  const parseBtn       = document.getElementById('irealParseBtn');
+  const tabEl          = document.getElementById('tabIreal');
+  const mainEl         = document.getElementById('irealMain');
+  const songNameEl     = document.getElementById('irealSongName');
+  const gridEl         = document.getElementById('irealChordGrid');
+  const editChordEl    = document.getElementById('irealEditChord');
+  const scaleSelect    = document.getElementById('irealScaleSelect');
+  const saveBtn        = document.getElementById('irealSaveBtn');
+  const degBtnsEl      = document.getElementById('irealDegBtns');
+  const fbEl           = document.getElementById('irealFretboard');
+  const fbWrapEl       = fbEl.closest('.fb-wrap');
+  const legendEl       = document.getElementById('irealLegend');
+  const maskEl         = document.getElementById('irealMaskControl');
+  const drawerEl       = document.getElementById('irealDrawer');
+  const drawerHandle   = document.getElementById('irealDrawerHandle');
+  const drawerToggleEl = document.getElementById('irealDrawerToggle');
 
   // Local state
   let chords      = [];
@@ -49,6 +51,13 @@ export function initIrealTab(store, openFullscreen) {
 
   // Init mask control
   initMaskUI();
+
+  // ── Drawer toggle ────────────────────────────────────────────────────────
+  drawerHandle.addEventListener('click', e => {
+    if (e.target.closest('select') || e.target.closest('.ireal-save-btn')) return;
+    if (currentIdx < 0) return;
+    toggleDrawer();
+  });
 
   // ── File input (hidden) ──────────────────────────────────────────────────
   const fileInput = document.createElement('input');
@@ -150,13 +159,13 @@ export function initIrealTab(store, openFullscreen) {
       songTitle = song.title;
       currentIdx = -1;
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
-      songSection.classList.remove('hidden');
-      editPanel.classList.add('hidden');
+      mainEl.classList.remove('hidden');
+      drawerEl.classList.remove('open');
       buildGrid();
       if (chords.length > 0) selectChord(0);
     } catch (e) {
       songNameEl.textContent = `エラー: ${e.message}`;
-      songSection.classList.remove('hidden');
+      mainEl.classList.remove('hidden');
     }
   }
 
@@ -192,15 +201,9 @@ export function initIrealTab(store, openFullscreen) {
     editChordEl.textContent = c.displayName;
     scaleSelect.value = '__chord__';
 
-    const wasHidden = editPanel.classList.contains('hidden');
     updateDegBtns();
-    editPanel.classList.remove('hidden');
     updateFretboard();
-
-    // Scroll edit panel into view when first shown (user tap)
-    if (wasHidden) {
-      editPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    openDrawer();
   }
 
   function getFbState() {
@@ -212,6 +215,17 @@ export function initIrealTab(store, openFullscreen) {
       mask: { ...currentMask },
       degreeColors: store.get().edit.degreeColors,
     };
+  }
+
+  function openDrawer() {
+    drawerEl.classList.add('open');
+    drawerToggleEl.textContent = '▼';
+  }
+
+  function toggleDrawer() {
+    const isOpen = drawerEl.classList.contains('open');
+    drawerEl.classList.toggle('open');
+    drawerToggleEl.textContent = isOpen ? '▲' : '▼';
   }
 
   function initMaskUI() {

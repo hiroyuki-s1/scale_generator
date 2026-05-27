@@ -118,34 +118,35 @@
       </div>
     </div>
 
-    <!-- Song header + chord chip grid -->
-    <div class="ireal-song-section hidden" id="irealSongSection">
+    <!-- Main view: song header + chip strip + fretboard + bottom drawer -->
+    <div class="ireal-main hidden" id="irealMain">
       <div class="ireal-song-header" id="irealSongName"></div>
-      <div class="ireal-chord-grid" id="irealChordGrid"></div>
-    </div>
+      <div class="ireal-chip-strip" id="irealChordGrid"></div>
 
-    <!-- Editor panel: appears when a chord is selected. Same sidebar layout. -->
-    <div class="ireal-edit-panel hidden" id="irealEditPanel">
-      <aside class="editor-sidebar">
-        <!-- Chord name + scale selector + save -->
-        <div class="ireal-chord-info">
-          <span class="ireal-edit-chord-name" id="irealEditChord"></span>
-          <select class="ireal-scale-select" id="irealScaleSelect"></select>
-          <button class="ireal-save-btn" id="irealSaveBtn">保存する</button>
-        </div>
-        <div class="ctrl-section">
-          <div class="ctrl-label">Degrees</div>
-          <div class="deg-btns" id="irealDegBtns"></div>
-        </div>
-      </aside>
-      <div class="editor-fretboard">
-        <div class="fb-wrap" title="クリックで全画面表示">
+      <div class="ireal-fb-area">
+        <div class="fb-wrap" title="タップで全画面表示">
           <svg class="fb" id="irealFretboard" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
         <div class="legend" id="irealLegend"></div>
-        <div class="mask-section">
-          <div class="ctrl-label">Fret Mask</div>
-          <div class="mask-row" id="irealMaskControl"></div>
+      </div>
+
+      <!-- Bottom drawer: handle always visible, body slides up on open -->
+      <div class="ireal-drawer" id="irealDrawer">
+        <div class="ireal-drawer-handle" id="irealDrawerHandle">
+          <span class="ireal-edit-chord-name" id="irealEditChord">コードを選択</span>
+          <select class="ireal-scale-select" id="irealScaleSelect"></select>
+          <button class="ireal-save-btn" id="irealSaveBtn">保存する</button>
+          <button class="ireal-drawer-toggle" id="irealDrawerToggle" aria-label="展開">▲</button>
+        </div>
+        <div class="ireal-drawer-body" id="irealDrawerBody">
+          <div class="ireal-drawer-body-inner">
+            <div class="ctrl-label">Degrees</div>
+            <div class="deg-btns" id="irealDegBtns"></div>
+            <div class="mask-section">
+              <div class="ctrl-label">Fret Mask</div>
+              <div class="mask-row" id="irealMaskControl"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

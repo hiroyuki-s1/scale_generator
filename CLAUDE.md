@@ -1,10 +1,10 @@
 # Guitar Scale Trainer — Claude Code Instructions
 
 ## Tech Stack
-- React 19 + TypeScript (strict) + Vite
-- Capacitor (iOS / Android native wrapping)
+- React 18 + TypeScript (strict) + Vite
+- Web-only (deployed to GitHub Pages — no native wrapping)
 - Zustand (state management)
-- Tailwind CSS + shadcn/ui
+- Tailwind CSS v4 + shadcn/ui
 - Tonal.js (music theory calculations)
 - Vitest + Testing Library + Playwright
 

@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Guitar Scale Trainer</string>
-    <string name="title_activity_main">Guitar Scale Trainer</string>
-    <string name="package_name">com.guitarscaletrainer.app</string>
-    <string name="custom_url_scheme">com.guitarscaletrainer.app</string>
-</resources>

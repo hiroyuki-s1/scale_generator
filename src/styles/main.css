@@ -458,60 +458,49 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .btn-reset-colors:hover { background: var(--bg); }
 
-/* ── iReal Pro Tab ───────────────────────────────────────────────────── */
-#tabIreal { overflow-y: auto; }
-#tabIreal.drag-over { outline: 3px dashed var(--accent); outline-offset: -3px; }
+/* ── iReal Pro section (sidebar) ─────────────────────────────────────── */
+.ireal-section.drag-over { outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: var(--radius); }
 
-/* ─ Input section ─ */
-.ireal-input-section {
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid var(--border-2);
-  background: var(--surface-2); flex-shrink: 0;
-}
-.ireal-input-row { display: flex; gap: 8px; }
+.ireal-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .ireal-file-btn {
-  padding: 7px 11px; border: 1.5px solid var(--border);
+  padding: 6px 9px; border: 1.5px solid var(--border);
   border-radius: 7px; background: var(--surface); color: var(--text-2);
-  font-size: 12px; font-family: inherit; cursor: pointer; flex-shrink: 0;
+  font-size: 13px; font-family: inherit; cursor: pointer; flex-shrink: 0;
   transition: all .1s;
 }
 .ireal-file-btn:hover { border-color: var(--accent); color: var(--accent); }
 .ireal-url-input {
-  flex: 1; padding: 7px 11px; border: 1.5px solid var(--border);
+  flex: 1; padding: 6px 9px; border: 1.5px solid var(--border);
   border-radius: 7px; background: var(--surface); color: var(--text);
-  font-size: 12px; font-family: 'Courier New', monospace;
+  font-size: 11px; font-family: 'Courier New', monospace;
   outline: none; transition: border-color .15s; min-width: 0;
 }
 .ireal-url-input:focus { border-color: var(--accent); }
 .ireal-parse-btn {
-  padding: 7px 14px; border: none; background: var(--accent);
+  padding: 6px 10px; border: none; background: var(--accent);
   color: #fff; border-radius: 7px; font-size: 12px; font-weight: 700;
   font-family: inherit; cursor: pointer; flex-shrink: 0; transition: opacity .1s;
 }
 .ireal-parse-btn:hover { opacity: .85; }
 
-/* ─ Song header ─ */
 .ireal-song-header {
-  padding: 7px 14px 5px;
-  font-size: 12px; font-weight: 700; color: var(--text-2);
+  font-size: 11px; font-weight: 700; color: var(--text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  flex-shrink: 0;
+  margin-bottom: 6px;
 }
+.ireal-song-header.hidden { display: none; }
 
-/* ─ Chip strip: horizontal scroll row ─ */
+/* ─ Chip strip ─ */
 .ireal-chip-strip {
-  display: flex; flex-direction: row; gap: 5px;
-  padding: 4px 12px 8px; overflow-x: auto; flex-shrink: 0;
-  border-bottom: 1px solid var(--border-2);
-  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 5px;
+  -webkit-overflow-scrolling: touch;
 }
-.ireal-chip-strip::-webkit-scrollbar { display: none; }
 .ireal-chip {
   display: flex; flex-direction: column; align-items: center;
-  gap: 2px; padding: 5px 9px; flex-shrink: 0;
+  gap: 2px; padding: 4px 8px; flex-shrink: 0;
   border: 1.5px solid var(--border-2); border-radius: 8px;
   background: var(--surface); cursor: pointer; transition: all .1s;
-  min-width: 50px;
+  min-width: 44px;
 }
 .ireal-chip:hover { border-color: var(--accent); }
 .ireal-chip.active {
@@ -520,70 +509,11 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .ireal-chip-sym {
   font-family: 'Courier New', monospace; font-weight: 700;
-  font-size: 13px; color: var(--text);
+  font-size: 12px; color: var(--text);
 }
 .ireal-chip-scale { font-size: 8px; color: var(--text-3); font-weight: 600; }
 .ireal-chip.active .ireal-chip-sym { color: var(--accent); }
 
-/* ─ Fretboard area ─ */
-.ireal-fb-area {
-  flex: 1; min-height: 0; display: flex; flex-direction: column;
-  padding: 8px 14px 4px;
-}
-.ireal-fb-area .fb-wrap {
-  flex: 1; min-height: 80px; overflow: hidden; cursor: pointer;
-  padding: 6px 12px 4px;
-}
-.ireal-fb-area .fb-wrap:hover { border-color: #c8bfb5; }
-.ireal-fb-area svg.fb { width: 100%; height: 100%; }
-
-/* ─ Bottom drawer ─ */
-.ireal-drawer {
-  flex-shrink: 0; position: sticky; bottom: 0; z-index: 10;
-  background: var(--surface); border-top: 2px solid var(--border-2);
-}
-.ireal-drawer-handle {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 12px; cursor: pointer; user-select: none;
-}
-.ireal-drawer-body {
-  position: absolute; bottom: 100%; left: 0; right: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-2); border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.10);
-  overflow: hidden; max-height: 0;
-  transition: max-height 0.28s ease;
-}
-.ireal-drawer.open .ireal-drawer-body { max-height: min(480px, 60vh); }
-.ireal-drawer-body-inner { padding: 14px 12px 12px; }
-.ireal-drawer-toggle {
-  margin-left: auto; background: none; border: none; color: var(--text-3);
-  font-size: 13px; cursor: pointer; padding: 4px 6px; flex-shrink: 0;
-  transition: transform 0.28s ease;
-}
-.ireal-drawer.open .ireal-drawer-toggle { transform: rotate(180deg); }
-
-/* Drawer handle: chord name + scale select + save */
-.ireal-drawer-handle .ireal-edit-chord-name {
-  font-size: 20px; font-weight: 800; color: var(--accent);
-  font-family: 'Courier New', monospace; letter-spacing: -.5px; line-height: 1;
-  flex-shrink: 0;
-}
-.ireal-scale-select {
-  flex: 1; min-width: 0; padding: 6px 10px; border: 1.5px solid var(--border);
-  border-radius: 7px; background: var(--surface); color: var(--text);
-  font-size: 12px; font-family: inherit; font-weight: 600;
-  outline: none; cursor: pointer; transition: border-color .12s;
-}
-.ireal-scale-select:focus { border-color: var(--accent); }
-.ireal-save-btn {
-  padding: 7px 13px; border: none; flex-shrink: 0;
-  background: var(--green); color: #fff; border-radius: 7px;
-  font-size: 12px; font-weight: 700; font-family: inherit;
-  cursor: pointer; transition: opacity .1s;
-}
-.ireal-save-btn:hover { opacity: .85; }
 /* Fretboard click-to-enlarge hint */
 .editor-fretboard .fb-wrap { cursor: pointer; }
 .editor-fretboard .fb-wrap:hover { border-color: #c8bfb5; }
@@ -627,7 +557,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   body { background: #fff; height: auto; overflow: auto; }
   .header, .modal-overlay, .btn-delete, .legend, .tab-nav { display: none !important; }
   .fb-fullscreen { display: none !important; }
-  #tabEdit, #tabIreal { display: none !important; }
+  #tabEdit { display: none !important; }
   .tabs { display: block !important; overflow: visible !important; height: auto !important; }
   #tabSaved { display: block !important; overflow: visible !important; padding: 0 !important; }
   .saved-title-input { border-bottom: none !important; }
@@ -739,29 +669,14 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* ── Legend: hide on mobile ── */
   #legend, #irealLegend, #fbFullscreenLegend { display: none; }
 
-  /* ── iReal input section ── */
-  .ireal-input-section { padding: 14px 14px 12px; }
-  .ireal-input-row { gap: 10px; }
-  .ireal-file-btn { min-height: 54px; font-size: 15px; padding: 12px 16px; }
-  .ireal-url-input  { min-height: 54px; font-size: 15px; padding: 12px 14px; }
-  .ireal-parse-btn  { min-height: 54px; font-size: 15px; padding: 12px 20px; }
-
-  /* ── iReal chip strip: larger chips, horizontal scroll ── */
-  .ireal-song-header { font-size: 14px; padding: 8px 14px 4px; }
-  .ireal-chip-strip { gap: 8px; padding: 6px 12px 10px; }
-  .ireal-chip { padding: 8px 12px; min-width: 64px; border-radius: 10px; gap: 4px; }
-  .ireal-chip-sym { font-size: 18px; }
-  .ireal-chip-scale { font-size: 10px; }
-
-  /* ── iReal drawer: larger touch targets ── */
-  .ireal-fb-area { padding: 6px 10px 2px; }
-  .ireal-fb-area .fb-wrap { overflow-x: auto; overflow-y: hidden; }
-  .ireal-fb-area svg.fb { min-width: 560px !important; width: auto !important; height: auto; }
-  .ireal-drawer-handle { padding: 12px 12px; gap: 10px; }
-  .ireal-drawer-handle .ireal-edit-chord-name { font-size: 26px; }
-  .ireal-scale-select { min-height: 44px; font-size: 16px; padding: 10px 12px; }
-  .ireal-save-btn { padding: 10px 16px; font-size: 14px; min-height: 44px; }
-  .ireal-drawer-toggle { font-size: 16px; padding: 6px 8px; }
+  /* ── iReal chip strip: larger chips on mobile ── */
+  .ireal-song-header { font-size: 13px; }
+  .ireal-chip { padding: 7px 10px; min-width: 56px; border-radius: 10px; }
+  .ireal-chip-sym { font-size: 15px; }
+  .ireal-chip-scale { font-size: 9px; }
+  .ireal-file-btn { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  .ireal-url-input  { min-height: 44px; font-size: 13px; padding: 10px 10px; }
+  .ireal-parse-btn  { min-height: 44px; font-size: 13px; padding: 10px 14px; }
 
   /* ── Saved tab ── */
   #tabSaved { padding: 12px; }

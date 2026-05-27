@@ -66,7 +66,6 @@
     <button class="tab-btn" id="tabBtnSaved">
       保存済み<span class="tab-badge" id="savedBadge" style="display:none">0</span>
     </button>
-    <button class="tab-btn" id="tabBtnIreal">iReal Pro</button>
   </nav>
 
   <!-- ── Edit Tab ─────────────────────────────────────────────────────── -->
@@ -85,6 +84,17 @@
       <div class="ctrl-section">
         <div class="ctrl-label">Degrees</div>
         <div class="deg-btns" id="degBtns"></div>
+      </div>
+      <div class="ctrl-section ireal-section" id="irealSection">
+        <div class="ctrl-label">iReal Pro</div>
+        <div class="ireal-input-row">
+          <button class="ireal-file-btn" id="irealFileBtn">&#128190;</button>
+          <input class="ireal-url-input" id="irealInput" type="text"
+                 placeholder=".irealb / URL を貼り付け...">
+          <button class="ireal-parse-btn" id="irealParseBtn">読込</button>
+        </div>
+        <div class="ireal-song-header hidden" id="irealSongName"></div>
+        <div class="ireal-chip-strip" id="irealChordGrid"></div>
       </div>
     </aside>
     <div class="editor-fretboard">
@@ -110,52 +120,6 @@
       <div class="saved-empty-hint">編集タブで「保存」ボタンを押すと、ここに表示されます</div>
     </div>
     <div id="savedGrid"></div>
-  </div>
-
-  <!-- ── iReal Pro Tab ──────────────────────────────────────────────── -->
-  <div class="tab-pane hidden" id="tabIreal">
-    <!-- Input row -->
-    <div class="ireal-input-section">
-      <div class="ireal-input-row">
-        <button class="ireal-file-btn" id="irealFileBtn">&#128190; ファイル</button>
-        <input class="ireal-url-input" id="irealInput" type="text"
-               placeholder=".irealb ファイルをドロップ、またはURLを貼り付け...">
-        <button class="ireal-parse-btn" id="irealParseBtn">読み込む</button>
-      </div>
-    </div>
-
-    <!-- Main view: song header + chip strip + fretboard + bottom drawer -->
-    <div class="ireal-main hidden" id="irealMain">
-      <div class="ireal-song-header" id="irealSongName"></div>
-      <div class="ireal-chip-strip" id="irealChordGrid"></div>
-
-      <div class="ireal-fb-area">
-        <div class="fb-wrap" title="タップで全画面表示">
-          <svg class="fb" id="irealFretboard" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
-        <div class="legend" id="irealLegend"></div>
-      </div>
-
-      <!-- Bottom drawer: handle always visible, body slides up on open -->
-      <div class="ireal-drawer" id="irealDrawer">
-        <div class="ireal-drawer-handle" id="irealDrawerHandle">
-          <span class="ireal-edit-chord-name" id="irealEditChord">コードを選択</span>
-          <select class="ireal-scale-select" id="irealScaleSelect"></select>
-          <button class="ireal-save-btn" id="irealSaveBtn">保存する</button>
-          <button class="ireal-drawer-toggle" id="irealDrawerToggle" aria-label="展開">▲</button>
-        </div>
-        <div class="ireal-drawer-body" id="irealDrawerBody">
-          <div class="ireal-drawer-body-inner">
-            <div class="ctrl-label">Degrees</div>
-            <div class="deg-btns" id="irealDegBtns"></div>
-            <div class="mask-section">
-              <div class="ctrl-label">Fret Mask</div>
-              <div class="mask-row" id="irealMaskControl"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
 </div>

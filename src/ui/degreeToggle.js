@@ -33,11 +33,13 @@ export function initDegreeToggle(container, store) {
         btn.style.background = bg;
         btn.style.borderColor = dc.color;
         btn.style.color = dc.text;
+        btn.classList.add('active');
         dot.style.background = dc.color;
         dot.style.borderColor = dc.color;
       } else {
         btn.style.cssText = '';
         dot.style.cssText = '';
+        btn.classList.remove('active');
       }
     });
   }

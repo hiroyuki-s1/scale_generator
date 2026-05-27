@@ -58,6 +58,33 @@
   <button class="btn-reset" id="resetBtn" title="保存データをすべて消去してリセット" aria-label="リセット">
     <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
   </button>
+
+  <button class="more-trigger" id="moreTrigger" aria-label="メニュー" aria-haspopup="true" aria-expanded="false">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/>
+    </svg>
+  </button>
+  <div class="more-menu" id="moreMenu" role="menu">
+    <button class="more-item" data-act="color" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 2.5 2.5 0 0 0 0-5 .5.5 0 0 1 0-1h.01A9 9 0 0 0 12 3zM3 12a9 9 0 0 1 9-9 9 9 0 1 1-9 9zm5-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+      色設定
+    </button>
+    <div class="more-section">
+      <div class="more-section-label">印刷向き</div>
+      <div class="more-orient">
+        <button class="more-orient-btn" data-act="orient-land" role="menuitem">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5"><rect x=".75" y="2.25" width="9.5" height="6.5" rx="1"/></svg>横
+        </button>
+        <button class="more-orient-btn" data-act="orient-port" role="menuitem">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.25" y=".75" width="6.5" height="9.5" rx="1"/></svg>縦
+        </button>
+      </div>
+    </div>
+    <button class="more-item more-item-danger" data-act="reset" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+      保存データをリセット
+    </button>
+  </div>
 </header>
 
 <div class="tabs">

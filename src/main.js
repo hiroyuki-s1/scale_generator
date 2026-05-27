@@ -24,6 +24,7 @@ import { initColorModal } from './ui/colorModal.js';
 import { initIrealSection } from './ui/irealTab.js';
 import { initLayoutPicker } from './ui/layoutPicker.js';
 import { initOrientation } from './ui/orientation.js';
+import { initHeaderMenu } from './ui/headerMenu.js';
 import { initPrintCss } from './print/printCss.js';
 
 // Show build version
@@ -67,6 +68,7 @@ initColorModal(store, document.getElementById('colorBtn'));
 initIrealSection(store);
 initLayoutPicker(store);
 initOrientation(store);
+initHeaderMenu(store);
 initPrintCss(store);
 
 document.getElementById('printBtn').addEventListener('click', () => window.print());

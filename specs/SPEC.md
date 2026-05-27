@@ -1,7 +1,5 @@
 # スケールジェネレータ — 仕様書
 
-リファレンス実装: [`demo/fretboard.html`](../demo/fretboard.html)（vanilla HTML/JS/CSS 1ファイル版）
-本仕様は demo の機能をモジュール分割した「本番版」を vanilla HTML/JS/CSS で構築するための仕様。
 
 ---
 
@@ -191,7 +189,6 @@ scale_generator/
 │       ├─ fretboard.test.js
 │       └─ title.test.js
 ├─ specs/SPEC.md                 # この仕様
-├─ demo/fretboard.html           # 参考実装（変更しない）
 ├─ package.json
 ├─ vite.config.js
 ├─ vitest.config.js
@@ -255,7 +252,7 @@ export function createStore(initialState) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-各部の詳細仕様は demo を正とする。SVG座標・色・サイズはdemoの値をそのまま継承。
+各部の詳細仕様は specs/SPEC.md を正とする。SVG座標・色・サイズは constants.js の SVG 定数に従う。
 
 ---
 

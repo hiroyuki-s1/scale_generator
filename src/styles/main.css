@@ -54,6 +54,11 @@ body {
 .brand-name { font-size: 13px; font-weight: 600; color: var(--text-2); flex-shrink: 0; }
 @media (max-width: 560px) { .brand-name { display: none; } }
 .header-spacer { flex: 1; min-width: 8px; }
+.build-ver {
+  font-size: 9px; font-weight: 500; color: var(--text-3);
+  font-family: 'Courier New', monospace; flex-shrink: 0; opacity: .7;
+  letter-spacing: .3px;
+}
 
 .hdr-group {
   display: flex;

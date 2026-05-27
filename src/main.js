@@ -26,6 +26,11 @@ import { initLayoutPicker } from './ui/layoutPicker.js';
 import { initOrientation } from './ui/orientation.js';
 import { initPrintCss } from './print/printCss.js';
 
+// Show build version
+/* global __COMMIT__ */
+const verEl = document.getElementById('buildVer');
+if (verEl) verEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+
 function defaultState() {
   const initial = findPresetEverywhere('Minor Penta');
   return {

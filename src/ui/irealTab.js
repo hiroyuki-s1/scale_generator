@@ -23,6 +23,7 @@ export function initIrealTab(store) {
   const songNameEl   = document.getElementById('irealSongName');
   const gridEl       = document.getElementById('irealChordGrid');
   const editPanel    = document.getElementById('irealEditPanel');
+  const backBtn      = document.getElementById('irealBackBtn');
   const editChordEl  = document.getElementById('irealEditChord');
   const scaleSelect  = document.getElementById('irealScaleSelect');
   const saveBtn      = document.getElementById('irealSaveBtn');
@@ -68,6 +69,15 @@ export function initIrealTab(store) {
     tabEl.classList.remove('drag-over');
     const file = e.dataTransfer.files[0];
     if (file) loadFile(file);
+  });
+
+  // ── Back button (mobile only) ─────────────────────────────────────────────
+  backBtn.addEventListener('click', () => {
+    tabEl.classList.remove('ireal-editing');
+    editPanel.classList.add('hidden');
+    // Scroll chip list to the currently active chip
+    const active = gridEl.querySelector('.ireal-chip.active');
+    if (active) active.scrollIntoView({ block: 'nearest', inline: 'center' });
   });
 
   // ── Parse trigger ────────────────────────────────────────────────────────
@@ -184,6 +194,8 @@ export function initIrealTab(store) {
 
     updateDegBtns();
     editPanel.classList.remove('hidden');
+    // Mobile: switch to edit view
+    tabEl.classList.add('ireal-editing');
     prevFbState = null; // force full re-render for new chord
     updateFretboard();
   }

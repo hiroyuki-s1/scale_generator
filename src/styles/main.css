@@ -18,7 +18,7 @@
   --radius:      10px;
 }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -212,8 +212,8 @@ body {
 .deg-btn.root { cursor: default; }
 .deg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #ddd7cf; border: 1.5px solid #c8c0b6; }
 @media (max-width: 600px) {
-  .deg-btns { grid-template-columns: repeat(4, 1fr); max-width: none; }
-  .deg-btn { padding: 13px 4px; font-size: 15px; min-height: 48px; }
+  .deg-btns { grid-template-columns: repeat(6, 1fr); max-width: none; gap: 4px; }
+  .deg-btn { padding: 8px 2px; font-size: 11px; min-height: 36px; border-radius: 7px; }
 }
 
 /* MASK */
@@ -498,14 +498,21 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .ireal-chip-scale { font-size: 8px; color: var(--text-3); font-weight: 600; }
 .ireal-chip.active .ireal-chip-sym { color: var(--accent); }
 
-/* ─ Edit panel ─ */
-.ireal-edit-panel { padding: 14px 16px 20px; }
+/* ─ Edit panel (fullscreen overlay) ─ */
+.ireal-edit-panel {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--bg);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 28px;
+  display: flex; flex-direction: column;
+  animation: fadeUp .18s ease both;
+}
 .ireal-edit-panel.hidden { display: none; }
 .ireal-edit-header {
   display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
 }
 .ireal-back-btn {
-  display: none; /* hidden on desktop */
+  display: flex; /* always visible */
   padding: 6px 12px; border: 1.5px solid var(--border);
   border-radius: 7px; background: var(--surface); color: var(--text-2);
   font-size: 12px; font-weight: 600; font-family: inherit;
@@ -532,7 +539,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .ireal-save-btn:hover { opacity: .85; }
 .ireal-fb-wrap { margin: 12px 0 8px; }
 
-/* ── Mobile: two-view navigation (list ↔ edit) ─────────────────────── */
+/* ── iReal Pro mobile overrides ─────────────────────────────────────── */
 @media (max-width: 600px) {
   .ireal-input-section { padding: 8px 12px; }
   .ireal-parse-btn { font-size: 11px; padding: 7px 10px; }
@@ -546,36 +553,62 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .ireal-chord-grid::-webkit-scrollbar { height: 3px; }
   .ireal-chord-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-  /* Hide list view while in edit mode */
-  #tabIreal.ireal-editing .ireal-song-section { display: none !important; }
-
-  /* Edit panel: normal block layout on mobile (body scrolls) */
-  .ireal-edit-panel { padding: 10px 12px 16px; }
-
-  /* Show back button on mobile */
-  .ireal-back-btn { display: flex; }
+  /* Fullscreen overlay: compact header */
+  .ireal-edit-panel { padding: 10px 12px 20px; }
   .ireal-edit-header { margin-bottom: 8px; flex-wrap: nowrap; gap: 8px; overflow: hidden; }
   .ireal-edit-chord-name { font-size: 18px; flex-shrink: 0; }
   .ireal-scale-select { font-size: 11px; padding: 5px 8px; flex: 1; min-width: 0; }
   .ireal-save-btn { margin-left: 0; padding: 7px 12px; font-size: 11px; flex-shrink: 0; }
 
-  /* Compact 6-col degree buttons inside iReal tab */
-  #irealDegBtns.deg-btns {
-    grid-template-columns: repeat(6, 1fr); max-width: none; gap: 4px;
-  }
-  #irealDegBtns .deg-btn {
-    padding: 8px 2px; font-size: 11px; min-height: 36px; border-radius: 7px;
-  }
+  /* Compact 6-col degree buttons inside iReal overlay */
+  #irealDegBtns.deg-btns { grid-template-columns: repeat(6, 1fr); max-width: none; gap: 4px; }
+  #irealDegBtns .deg-btn { padding: 8px 2px; font-size: 11px; min-height: 36px; border-radius: 7px; }
+
   /* Fretboard: tight margins */
   .ireal-fb-wrap { margin: 8px 0 6px; padding: 8px 8px 4px; }
-  /* Legend hidden on mobile — saves ~50px */
+  /* Legend hidden on mobile */
   #irealLegend { display: none; }
 }
+
+/* ── Fullscreen fretboard modal (edit tab / all tabs) ───────────────── */
+.fb-fullscreen {
+  position: fixed; inset: 0; z-index: 300;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  animation: fadeUp .18s ease both;
+}
+.fb-fullscreen.hidden { display: none; }
+.fb-fullscreen-inner {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 12px 16px 20px; min-height: 0;
+}
+.fb-fullscreen-hdr {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-shrink: 0;
+}
+.fb-fullscreen-title {
+  font-size: 20px; font-weight: 700; letter-spacing: -.6px; color: var(--text); flex: 1;
+}
+.fb-fullscreen-close {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-2); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .1s;
+}
+.fb-fullscreen-close:hover { border-color: var(--accent); color: var(--accent); }
+.fb-fullscreen .fb-wrap {
+  flex: 1; min-height: 0; overflow: hidden; padding: 12px 14px 8px;
+}
+.fb-fullscreen svg.fb { min-width: 0 !important; width: 100%; height: 100%; }
+/* Clickable fretboard hint on edit tab */
+.edit-fb-area { cursor: pointer; }
+.edit-fb-area:hover .fb-wrap { border-color: #c8bfb5; }
 
 /* PRINT BASE */
 @media print {
   body { background: #fff; height: auto; overflow: auto; }
   .header, .modal-overlay, .btn-delete, .legend, .tab-nav { display: none !important; }
+  .fb-fullscreen, .ireal-edit-panel { display: none !important; }
   #tabEdit, #tabIreal { display: none !important; }
   .tabs { display: block !important; overflow: visible !important; height: auto !important; }
   #tabSaved { display: block !important; overflow: visible !important; padding: 0 !important; }
@@ -626,17 +659,37 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 @media (max-width: 600px) {
   body { height: auto; overflow: auto; }
   .tabs { flex: none; min-height: calc(100vh - 52px); }
-  .panel { padding: 14px; gap: 14px; }
-  .panel-row { gap: 14px; }
+
+  /* Header: hide non-essential controls */
+  #layoutPicker, .hdr-group { display: none; }
+  #printBtn { display: none; }
+
+  /* Tab nav: tighter */
+  .tab-btn { padding: 0 10px; font-size: 12px; }
+
+  /* Edit panel */
+  .panel { padding: 12px; gap: 12px; }
+  .panel-row { gap: 10px; }
+
+  /* Mask section: compact */
+  .btn-mask { padding: 6px 10px; font-size: 11px; min-height: 36px; }
+  input[type=range].mslider { width: 72px; }
+
   .fb-wrap { padding: 12px 8px 6px; }
   .fb-title { font-size: 18px; }
   .saved-title-input { font-size: 17px; }
-  /* スマホでは指板が縦に余白を取れるよう min-height で確保 */
-  .edit-fb-area { padding: 12px 12px 20px; }
-  .edit-fb-area .fb-wrap { min-height: 320px; flex: none; }
+
+  /* Edit fretboard area */
+  .edit-fb-area { padding: 10px 10px 12px; }
+  .edit-fb-area .fb-wrap { min-height: 280px; flex: none; }
   svg.fb { min-width: 0; }
-  /* スマホでは指板を縦表示風（横長すぎを抑える） */
   .edit-fb-area svg.fb { width: 100%; height: auto; }
+  /* Legend hidden on mobile — saves ~40px */
+  #legend { display: none; }
+
+  /* Saved tab: tighter padding */
+  #tabSaved { padding: 12px; }
+  #savedGrid { gap: 14px; }
 }
 
 /* PRESET DROPDOWN */

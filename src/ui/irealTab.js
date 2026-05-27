@@ -71,13 +71,15 @@ export function initIrealTab(store) {
     if (file) loadFile(file);
   });
 
-  // ── Back button (mobile only) ─────────────────────────────────────────────
-  backBtn.addEventListener('click', () => {
-    tabEl.classList.remove('ireal-editing');
+  // ── Close overlay (back button + ESC) ────────────────────────────────────
+  function closeOverlay() {
     editPanel.classList.add('hidden');
-    // Scroll chip list to the currently active chip
     const active = gridEl.querySelector('.ireal-chip.active');
     if (active) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  backBtn.addEventListener('click', closeOverlay);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !editPanel.classList.contains('hidden')) closeOverlay();
   });
 
   // ── Parse trigger ────────────────────────────────────────────────────────
@@ -193,8 +195,6 @@ export function initIrealTab(store) {
 
     updateDegBtns();
     editPanel.classList.remove('hidden');
-    // Mobile: switch to edit view
-    tabEl.classList.add('ireal-editing');
     updateFretboard();
   }
 

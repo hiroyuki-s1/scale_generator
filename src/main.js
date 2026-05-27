@@ -88,6 +88,47 @@ store.subscribe((s, p) => {
   applyFretboardDiff(fretboardEl, s.edit, p?.edit);
 });
 
+// ---- Fullscreen fretboard modal (click edit fretboard to enlarge) ----
+const fbFullscreen     = document.getElementById('fbFullscreen');
+const fbFullscreenSvg  = document.getElementById('fbFullscreenSvg');
+const fbFullscreenTitle = document.getElementById('fbFullscreenTitle');
+const fbFullscreenLegend = document.getElementById('fbFullscreenLegend');
+const fbFullscreenClose = document.getElementById('fbFullscreenClose');
+let fsOpen = false;
+let fsPrevState = null;
+
+drawFretboardBase(fbFullscreenSvg);
+
+function openFbFullscreen() {
+  const s = store.get().edit;
+  fbFullscreenTitle.textContent = buildTitle(s);
+  applyFretboardDiff(fbFullscreenSvg, s, fsPrevState);
+  fsPrevState = s;
+  renderLegend(fbFullscreenLegend, s);
+  fbFullscreen.classList.remove('hidden');
+  fsOpen = true;
+}
+
+function closeFbFullscreen() {
+  fbFullscreen.classList.add('hidden');
+  fsOpen = false;
+}
+
+fbFullscreenClose.addEventListener('click', closeFbFullscreen);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && fsOpen) closeFbFullscreen(); });
+
+// Click on the edit fretboard area to open fullscreen
+document.querySelector('.edit-fb-area').addEventListener('click', openFbFullscreen);
+
+// Live-update fullscreen when store changes while open
+store.subscribe((s, p) => {
+  if (!fsOpen || !p || s.edit === p.edit) return;
+  fbFullscreenTitle.textContent = buildTitle(s.edit);
+  applyFretboardDiff(fbFullscreenSvg, s.edit, fsPrevState);
+  fsPrevState = s.edit;
+  renderLegend(fbFullscreenLegend, s.edit);
+});
+
 // ---- Print: crop saved-card SVGs to the mask range and hide overlays ----
 const printOriginalViewBox = new WeakMap();
 

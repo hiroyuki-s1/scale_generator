@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>スケールジェネレータ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -164,6 +164,20 @@
       <button class="modal-cancel" data-act="cancel">キャンセル</button>
       <button class="modal-confirm" data-act="confirm">保存する</button>
     </div>
+  </div>
+</div>
+
+<!-- Fullscreen fretboard modal (edit tab click-to-enlarge) -->
+<div class="fb-fullscreen hidden" id="fbFullscreen">
+  <div class="fb-fullscreen-inner">
+    <div class="fb-fullscreen-hdr">
+      <div class="fb-fullscreen-title" id="fbFullscreenTitle"></div>
+      <button class="fb-fullscreen-close" id="fbFullscreenClose" aria-label="閉じる">&#x2715;</button>
+    </div>
+    <div class="fb-wrap">
+      <svg class="fb" id="fbFullscreenSvg" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="legend" id="fbFullscreenLegend"></div>
   </div>
 </div>
 

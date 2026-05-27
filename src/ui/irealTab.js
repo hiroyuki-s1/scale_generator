@@ -36,6 +36,36 @@ export function initIrealTab(store) {
   prevBtn.addEventListener('click', () => navigate(current - 1));
   nextBtn.addEventListener('click', () => navigate(current + 1));
 
+  // ── ファイルドロップ & ファイル選択 ──────────────────────────────────
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.irealb,.html';
+  fileInput.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+  document.body.appendChild(fileInput);
+
+  const fileBtn = document.getElementById('irealFileBtn');
+  fileBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+
+  const barEl = document.getElementById('irealBar');
+  barEl.addEventListener('dragover', e => { e.preventDefault(); barEl.classList.add('drag-over'); });
+  barEl.addEventListener('dragleave', () => barEl.classList.remove('drag-over'));
+  barEl.addEventListener('drop', e => {
+    e.preventDefault();
+    barEl.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => { input.value = e.target.result; parse(); };
+    reader.readAsText(file);
+  }
+
   function parse() {
     const url = input.value.trim();
     if (!url) return;

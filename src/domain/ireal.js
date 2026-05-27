@@ -50,8 +50,31 @@ const NOTE_PC = {
  * @returns {IrealSong}
  * @throws {Error} if format is invalid
  */
+/**
+ * .irealb ファイルの内容（HTML or プレーンテキスト）から irealb:// URL を抽出する。
+ * @param {string} content  ファイルの文字列内容
+ * @returns {string}  irealb:// URL
+ */
+export function extractIrealUrl(content) {
+  const trimmed = content.trim();
+  // すでに irealb:// URL そのものの場合はそのまま返す
+  if (/^irealb:\/\//i.test(trimmed)) return trimmed;
+  // HTML の href="irealb://..." を探す
+  const hrefMatch = trimmed.match(/href=["'](irealb:\/\/[^"']+)["']/i);
+  if (hrefMatch) return hrefMatch[1];
+  // その他のインラインURL（スペース不含）
+  const linkMatch = trimmed.match(/(irealb:\/\/\S+)/i);
+  if (linkMatch) return linkMatch[1];
+  throw new Error('.irealb ファイルに irealb:// URLが見つかりません');
+}
+
 export function parseIrealUrl(url) {
-  const withoutScheme = url.replace(/^irealb:\/\//i, '');
+  // HTML / ファイル内容が渡された場合も対応
+  const rawUrl = url.includes('irealb://') && !url.startsWith('irealb://')
+    ? extractIrealUrl(url)
+    : url;
+
+  const withoutScheme = rawUrl.replace(/^irealb:\/\//i, '');
   const decoded = decodeURIComponent(withoutScheme);
 
   // Multiple songs are separated by ===; take the first

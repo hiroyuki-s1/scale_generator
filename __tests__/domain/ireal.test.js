@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseIrealUrl, extractChords, parseChordToken } from '../../src/domain/ireal.js';
+import { parseIrealUrl, extractChords, parseChordToken, extractIrealUrl } from '../../src/domain/ireal.js';
 
 // Real iReal Pro URL for Autumn Leaves (simplified)
 const AUTUMN_LEAVES_URL =
@@ -117,5 +117,33 @@ describe('parseIrealUrl', () => {
       expect(Array.isArray(c.degrees)).toBe(true);
       expect(c.degrees).toContain(0);
     });
+  });
+});
+
+describe('extractIrealUrl', () => {
+  const RAW_URL = 'irealb://Autumn%20Leaves=Joseph%20Kosma=Medium%20Swing=Bb=n=0=*A{Cm7 }Z=0=0=0=0=0';
+
+  it('extracts URL from HTML href attribute (double quotes)', () => {
+    const html = `<html><body><a href="${RAW_URL}">Open in iReal Pro</a></body></html>`;
+    expect(extractIrealUrl(html)).toBe(RAW_URL);
+  });
+
+  it('extracts URL from HTML href attribute (single quotes)', () => {
+    const html = `<a href='${RAW_URL}'>Open</a>`;
+    expect(extractIrealUrl(html)).toBe(RAW_URL);
+  });
+
+  it('extracts bare irealb:// from plain text', () => {
+    expect(extractIrealUrl(RAW_URL)).toBe(RAW_URL);
+  });
+
+  it('throws when no URL found', () => {
+    expect(() => extractIrealUrl('<html><body>no url here</body></html>')).toThrow();
+  });
+
+  it('parseIrealUrl accepts HTML content directly', () => {
+    const html = `<html><body><a href="${RAW_URL}">Open</a></body></html>`;
+    const song = parseIrealUrl(html);
+    expect(song.title).toBe('Autumn Leaves');
   });
 });

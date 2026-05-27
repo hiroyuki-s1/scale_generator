@@ -1,5 +1,5 @@
 import { parseIrealUrl } from '../domain/ireal.js';
-import { cloneEditAsSnapshot } from '../state/snapshot.js';
+import { cloneColors } from '../state/snapshot.js';
 
 /**
  * iReal Pro バー（編集タブ内に統合）。
@@ -83,6 +83,7 @@ export function initIrealTab(store) {
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
       barNav.classList.remove('hidden');
       buildGrid();
+      saveAllChords();
       navigate(0);
     } catch (e) {
       songNameEl.textContent = `エラー: ${e.message}`;
@@ -107,6 +108,24 @@ export function initIrealTab(store) {
     });
   }
 
+  function saveAllChords() {
+    if (!chords.length) return;
+    store.set(state => {
+      let nextId = state.nextId;
+      const newSnaps = chords.map(c => ({
+        id: nextId++,
+        title: `${songTitle} — ${c.displayName} (${c.scaleName})`,
+        rootIndex: c.rootPc,
+        activeDegrees: new Set(c.degrees),
+        presetName: c.scaleName,
+        mode: 'scale',
+        mask: { ...state.edit.mask },
+        degreeColors: cloneColors(state.edit.degreeColors),
+      }));
+      return { ...state, saved: [...state.saved, ...newSnaps], nextId };
+    });
+  }
+
   function navigate(idx) {
     if (!chords.length) return;
     current = ((idx % chords.length) + chords.length) % chords.length;
@@ -126,14 +145,6 @@ export function initIrealTab(store) {
       activeDegrees: new Set(c.degrees),
       presetName: c.scaleName,
       mode: 'scale',
-    });
-
-    // 自動保存
-    const title = `${songTitle} — ${c.displayName} (${c.scaleName})`;
-    store.set(state => {
-      const id   = state.nextId;
-      const snap = { id, title, ...cloneEditAsSnapshot(state.edit) };
-      return { ...state, saved: [...state.saved, snap], nextId: id + 1 };
     });
   }
 }

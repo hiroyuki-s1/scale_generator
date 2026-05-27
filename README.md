@@ -1,23 +1,30 @@
 # スケールジェネレータ (Scale Generator)
 
 ギター指板上にスケールを可視化・印刷するWebアプリ。
+
+https://hiroyuki-s1.github.io/scale_generator/
+
 Jazz tension表記（R, b9, 9, m3, M3, 11, #11, P5, b13, 13, m7, M7）で度数を表示。
+キー・スケール/コードトーンを選択して指板にプロットし、A4印刷できる。
 
 ## Stack
-- React 18 + TypeScript (strict) + Vite
-- Zustand / Tailwind CSS v4 / Tonal.js
-- GitHub Pagesに自動デプロイ (`.github/workflows/deploy.yml`)
+
+- Vanilla HTML5 + ES2022 modules（フレームワークなし）
+- Vite（ビルド / dev server）
+- Vitest（ユニットテスト）
+- GitHub Pages 自動デプロイ（`.github/workflows/deploy.yml`）
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # dev server
-npm run build    # production build
-npm run lint
+npm run dev      # dev server (port 5173)
+npm run build    # dist/ 生成
+npm run preview  # dist/ をローカル確認
+npm test         # Vitest
+npm run lint     # ESLint
 ```
 
 ## 仕様
 
-実装仕様は [`specs/SPEC.md`](specs/SPEC.md) を参照。
-リファレンス実装は [`demo/fretboard.html`](demo/fretboard.html)（vanilla HTML/JS）。
+[`specs/SPEC.md`](specs/SPEC.md) を参照。

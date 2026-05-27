@@ -287,6 +287,14 @@ input[type=range].mslider::-moz-range-thumb {
 .ireal-main.hidden { display: none; }
 
 #tabSaved { overflow-y: auto; padding: 20px; }
+.saved-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px;
+  padding: 48px 20px; color: var(--text-3); text-align: center;
+}
+.saved-empty-icon { font-size: 36px; opacity: .5; }
+.saved-empty-title { font-size: 14px; font-weight: 600; color: var(--text-2); }
+.saved-empty-hint { font-size: 12px; }
 #savedGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
 #savedGrid.screen-grid svg.fb { min-width: 0 !important; }
 #savedGrid.screen-grid .fb-title,

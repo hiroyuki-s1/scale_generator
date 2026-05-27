@@ -5,6 +5,7 @@ import { renderLegend } from './legend.js';
 const NS = 'http://www.w3.org/2000/svg';
 
 export function initSavedTab(container, store) {
+  const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
   let lastCols = 0;
 
@@ -21,6 +22,7 @@ export function initSavedTab(container, store) {
     }
 
     container.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = saved.length === 0 ? '' : 'none';
     // Update lastIdsKey BEFORE the loop so a renderCard error doesn't
     // leave it stale and cause infinite re-render attempts on next store update.
     lastIdsKey = saved.map(s => s.id).join(',');

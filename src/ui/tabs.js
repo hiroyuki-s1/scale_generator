@@ -11,7 +11,7 @@ export function initTabs(store) {
   btnSaved.addEventListener('click', () => store.set({ activeTab: 'saved' }));
   btnIreal.addEventListener('click', () => store.set({ activeTab: 'ireal' }));
 
-  function sync() {
+  function sync(scrollToTop) {
     const { activeTab, saved } = store.get();
     paneEdit.classList.toggle('hidden',  activeTab !== 'edit');
     paneSaved.classList.toggle('hidden', activeTab !== 'saved');
@@ -21,10 +21,11 @@ export function initTabs(store) {
     btnIreal.classList.toggle('active',  activeTab === 'ireal');
     badge.textContent = saved.length;
     badge.style.display = saved.length > 0 ? '' : 'none';
+    if (scrollToTop) window.scrollTo({ top: 0, behavior: 'instant' });
   }
-  sync();
+  sync(false);
   store.subscribe((s, p) => {
     if (p && s.activeTab === p.activeTab && s.saved.length === p.saved.length) return;
-    sync();
+    sync(p && s.activeTab !== p.activeTab);
   });
 }

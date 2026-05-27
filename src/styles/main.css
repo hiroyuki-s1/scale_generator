@@ -687,7 +687,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .btn-reset { padding: 8px 9px; }
   .btn-print { gap: 4px; }
 
-  /* ── Tab nav ── */
+  /* ── Tab nav: sticky so it stays on screen while scrolling ── */
+  .tab-nav { position: sticky; top: 60px; z-index: 50; }
   .tab-btn { padding: 0 14px; height: 52px; font-size: 15px; }
   .tab-btn.active { border-bottom-width: 3px; }
 

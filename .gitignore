@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Scratch / test files in project root
+*.irealb
+*.jpg
+*.jpeg
+*.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

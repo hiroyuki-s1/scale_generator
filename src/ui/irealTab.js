@@ -90,7 +90,7 @@ export function initIrealTab(store) {
       chip.className = 'ireal-chip';
       const sym  = document.createElement('span');
       sym.className = 'ireal-chip-sym';
-      sym.textContent = c.symbol;
+      sym.textContent = c.displayName;
       const sc = document.createElement('span');
       sc.className = 'ireal-chip-scale';
       sc.textContent = c.scaleName;
@@ -112,7 +112,7 @@ export function initIrealTab(store) {
     if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
     const c = chords[current];
-    currentEl.textContent = `${c.symbol} → ${c.scaleName}`;
+    currentEl.textContent = `${c.displayName} → ${c.scaleName}`;
 
     // Edit状態を更新（フレットボードに反映）
     store.updateEdit({
@@ -123,7 +123,7 @@ export function initIrealTab(store) {
     });
 
     // 自動保存
-    const title = `${songTitle} — ${c.symbol} (${c.scaleName})`;
+    const title = `${songTitle} — ${c.displayName} (${c.scaleName})`;
     store.set(state => {
       const id   = state.nextId;
       const snap = { id, title, ...cloneEditAsSnapshot(state.edit) };

@@ -37,8 +37,22 @@ const NOTE_PC = {
 };
 
 /**
- * @typedef {{ root: string, rootPc: number, quality: string, symbol: string, scaleName: string, degrees: number[] }} IrealChord
+ * @typedef {{ root: string, rootPc: number, quality: string, symbol: string, displayName: string, scaleName: string, degrees: number[] }} IrealChord
  */
+
+/**
+ * Convert internal quality string to human-readable standard notation.
+ * "^7"→"M7", "h7"→"m7b5", "-7"→"m7", "-"→"m", "o7"→"dim7"
+ * @param {string} quality
+ * @returns {string}
+ */
+function qualityToDisplay(quality) {
+  return quality
+    .replace(/^\^7?/, 'M7')    // ^ or ^7  → M7
+    .replace(/^h7?$/, 'm7b5')  // h or h7  → m7b5
+    .replace(/^o7?$/, 'dim7')  // o or o7  → dim7
+    .replace(/^-/, 'm');       // -7→m7, -6→m6, -→m
+}
 
 /**
  * @typedef {{ title: string, composer: string, style: string, key: string, keyPc: number, chords: IrealChord[] }} IrealSong
@@ -176,7 +190,8 @@ export function parseChordToken(token) {
                       : /* '-' */        '-';
     const quality = baseQuality + extra;
     const { scaleName, degrees } = chordQualityToScale(quality);
-    return { root, rootPc, quality, symbol: token, scaleName, degrees };
+    const displayName = root + qualityToDisplay(quality);
+    return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
   }
 
   // Standard root-first notation: Cm7, BbM7, G-7, Am7b5, Bb^, F
@@ -188,7 +203,8 @@ export function parseChordToken(token) {
   if (rootPc === undefined) return null;
   const quality = token.slice(root.length);
   const { scaleName, degrees } = chordQualityToScale(quality);
-  return { root, rootPc, quality, symbol: token, scaleName, degrees };
+  const displayName = root + qualityToDisplay(quality);
+  return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
 }
 
 /**

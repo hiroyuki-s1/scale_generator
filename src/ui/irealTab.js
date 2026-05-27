@@ -28,8 +28,9 @@ export function initIrealTab(store, openFullscreen) {
   const saveBtn      = document.getElementById('irealSaveBtn');
   const degBtnsEl    = document.getElementById('irealDegBtns');
   const fbEl         = document.getElementById('irealFretboard');
-  const fbWrapEl     = fbEl.closest('.ireal-fb-wrap');
+  const fbWrapEl     = fbEl.closest('.fb-wrap');
   const legendEl     = document.getElementById('irealLegend');
+  const maskEl       = document.getElementById('irealMaskControl');
 
   // Local state
   let chords      = [];
@@ -37,6 +38,7 @@ export function initIrealTab(store, openFullscreen) {
   let currentIdx  = -1;
   let currentRoot = 0;
   let currentDegrees = new Set();
+  let currentMask = { enabled: false, min: 1, max: 15 };
   let prevFbState = null;
 
   // Init the iReal fretboard base (static decorations)
@@ -44,6 +46,9 @@ export function initIrealTab(store, openFullscreen) {
 
   // Populate scale selector
   buildScaleSelect(scaleSelect);
+
+  // Init mask control
+  initMaskUI();
 
   // ── File input (hidden) ──────────────────────────────────────────────────
   const fileInput = document.createElement('input');
@@ -116,7 +121,7 @@ export function initIrealTab(store, openFullscreen) {
         activeDegrees: new Set(currentDegrees),
         presetName: scaleName,
         mode: 'scale',
-        mask: { enabled: false, min: 1, max: 15 },
+        mask: { ...currentMask },
         degreeColors: cloneColors(state.edit.degreeColors),
       };
       return { ...state, saved: [...state.saved, snap], nextId: state.nextId + 1 };
@@ -204,9 +209,71 @@ export function initIrealTab(store, openFullscreen) {
       activeDegrees: currentDegrees,
       presetName: currentIdx >= 0 ? chords[currentIdx].displayName : '',
       mode: 'scale',
-      mask: { enabled: false, min: 1, max: 15 },
+      mask: { ...currentMask },
       degreeColors: store.get().edit.degreeColors,
     };
+  }
+
+  function initMaskUI() {
+    maskEl.innerHTML = `
+      <button class="btn-mask" data-el="toggle">Mask OFF</button>
+      <div class="mask-sliders" data-el="sliders" style="display:none">
+        <div class="mslider-group">
+          <span class="mslider-lbl">Min</span>
+          <input type="range" class="mslider" data-el="min" min="1" max="15" value="1">
+          <span class="mval" data-el="minVal">1</span>
+        </div>
+        <span class="msep">—</span>
+        <div class="mslider-group">
+          <span class="mslider-lbl">Max</span>
+          <input type="range" class="mslider" data-el="max" min="1" max="15" value="15">
+          <span class="mval" data-el="maxVal">15</span>
+        </div>
+      </div>
+    `;
+
+    const toggle   = maskEl.querySelector('[data-el="toggle"]');
+    const sliders  = maskEl.querySelector('[data-el="sliders"]');
+    const minIn    = maskEl.querySelector('[data-el="min"]');
+    const maxIn    = maskEl.querySelector('[data-el="max"]');
+    const minLabel = maskEl.querySelector('[data-el="minVal"]');
+    const maxLabel = maskEl.querySelector('[data-el="maxVal"]');
+
+    toggle.addEventListener('click', () => {
+      currentMask = { ...currentMask, enabled: !currentMask.enabled };
+      syncMask(toggle, sliders, minIn, maxIn, minLabel, maxLabel);
+      updateFretboard();
+    });
+
+    minIn.addEventListener('input', () => {
+      let lo = parseInt(minIn.value);
+      let hi = parseInt(maxIn.value);
+      if (lo > hi) hi = lo;
+      currentMask = { ...currentMask, min: lo, max: hi };
+      syncMask(toggle, sliders, minIn, maxIn, minLabel, maxLabel);
+      updateFretboard();
+    });
+
+    maxIn.addEventListener('input', () => {
+      let lo = parseInt(minIn.value);
+      let hi = parseInt(maxIn.value);
+      if (hi < lo) lo = hi;
+      currentMask = { ...currentMask, min: lo, max: hi };
+      syncMask(toggle, sliders, minIn, maxIn, minLabel, maxLabel);
+      updateFretboard();
+    });
+
+    syncMask(toggle, sliders, minIn, maxIn, minLabel, maxLabel);
+  }
+
+  function syncMask(toggle, sliders, minIn, maxIn, minLabel, maxLabel) {
+    toggle.textContent = currentMask.enabled ? 'Mask ON' : 'Mask OFF';
+    toggle.classList.toggle('on', currentMask.enabled);
+    sliders.style.display = currentMask.enabled ? 'flex' : 'none';
+    minIn.value = currentMask.min;
+    maxIn.value = currentMask.max;
+    minLabel.textContent = currentMask.min;
+    maxLabel.textContent = currentMask.max;
   }
 
   function updateFretboard() {

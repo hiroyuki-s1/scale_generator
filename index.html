@@ -68,32 +68,29 @@
     <button class="tab-btn" id="tabBtnIreal">iReal Pro</button>
   </nav>
 
+  <!-- ── Edit Tab ─────────────────────────────────────────────────────── -->
   <div class="tab-pane" id="tabEdit">
-    <div class="panel">
-      <div class="panel-row">
-        <section>
-          <div class="section-label">Key</div>
-          <div class="piano-outer"><div class="piano-wrap" id="piano"></div></div>
-        </section>
-        <div class="panel-divider"></div>
-        <section>
-          <div class="section-label">Scale / Chord</div>
-          <div id="presetSelectorMount"></div>
-        </section>
+    <!-- Desktop: sidebar (controls left, fretboard right)  -->
+    <!-- Mobile:  stacked (controls top, fretboard below)   -->
+    <aside class="editor-sidebar">
+      <div class="ctrl-section">
+        <div class="ctrl-label">Key</div>
+        <div class="piano-outer"><div class="piano-wrap" id="piano"></div></div>
       </div>
-      <div class="panel-row">
-        <section>
-          <div class="section-label">Degrees</div>
-          <div class="deg-btns" id="degBtns"></div>
-        </section>
-        <div class="panel-divider"></div>
-        <section>
-          <div class="section-label">Fret Mask</div>
-          <div class="mask-row" id="maskControl"></div>
-        </section>
+      <div class="ctrl-section">
+        <div class="ctrl-label">Scale / Chord</div>
+        <div id="presetSelectorMount"></div>
       </div>
-    </div>
-    <div class="edit-fb-area">
+      <div class="ctrl-section">
+        <div class="ctrl-label">Degrees</div>
+        <div class="deg-btns" id="degBtns"></div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-label">Fret Mask</div>
+        <div class="mask-row" id="maskControl"></div>
+      </div>
+    </aside>
+    <div class="editor-fretboard">
       <div class="fb-header">
         <div class="fb-title" id="fbTitle"></div>
       </div>
@@ -102,15 +99,16 @@
       </div>
       <div class="legend" id="legend"></div>
     </div>
-
   </div>
 
+  <!-- ── Saved Tab ──────────────────────────────────────────────────── -->
   <div class="tab-pane hidden" id="tabSaved">
     <div id="savedGrid"></div>
   </div>
 
+  <!-- ── iReal Pro Tab ──────────────────────────────────────────────── -->
   <div class="tab-pane hidden" id="tabIreal">
-    <!-- Input section -->
+    <!-- Input row -->
     <div class="ireal-input-section">
       <div class="ireal-input-row">
         <button class="ireal-file-btn" id="irealFileBtn">&#128190; ファイル</button>
@@ -120,24 +118,36 @@
       </div>
     </div>
 
-    <!-- Song info + chord chip grid (shown after parse) -->
+    <!-- Song header + chord chip grid -->
     <div class="ireal-song-section hidden" id="irealSongSection">
       <div class="ireal-song-header" id="irealSongName"></div>
       <div class="ireal-chord-grid" id="irealChordGrid"></div>
     </div>
 
-    <!-- Edit panel for selected chord (inline, no navigation) -->
+    <!-- Editor panel: appears when a chord is selected. Same sidebar layout. -->
     <div class="ireal-edit-panel hidden" id="irealEditPanel">
-      <div class="ireal-edit-header">
-        <span class="ireal-edit-chord-name" id="irealEditChord"></span>
-        <select class="ireal-scale-select" id="irealScaleSelect"></select>
-        <button class="ireal-save-btn" id="irealSaveBtn">保存する</button>
+      <aside class="editor-sidebar">
+        <!-- Chord name + scale selector + save -->
+        <div class="ireal-chord-info">
+          <span class="ireal-edit-chord-name" id="irealEditChord"></span>
+          <select class="ireal-scale-select" id="irealScaleSelect"></select>
+          <button class="ireal-save-btn" id="irealSaveBtn">保存する</button>
+        </div>
+        <div class="ctrl-section">
+          <div class="ctrl-label">Degrees</div>
+          <div class="deg-btns" id="irealDegBtns"></div>
+        </div>
+        <div class="ctrl-section">
+          <div class="ctrl-label">Fret Mask</div>
+          <div class="mask-row" id="irealMaskControl"></div>
+        </div>
+      </aside>
+      <div class="editor-fretboard">
+        <div class="fb-wrap" title="クリックで全画面表示">
+          <svg class="fb" id="irealFretboard" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="legend" id="irealLegend"></div>
       </div>
-      <div class="deg-btns" id="irealDegBtns"></div>
-      <div class="fb-wrap ireal-fb-wrap" title="クリックで全画面表示">
-        <svg class="fb" id="irealFretboard" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-      <div class="legend" id="irealLegend"></div>
     </div>
   </div>
 

@@ -115,8 +115,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
 });
 
-// Click anywhere on the edit fretboard area to enlarge
-document.querySelector('.edit-fb-area').addEventListener('click', () => {
+// Click the edit tab's fretboard area to enlarge
+fretboardEl.closest('.editor-fretboard').addEventListener('click', () => {
   openFbFullscreen(store.get().edit);
 });
 

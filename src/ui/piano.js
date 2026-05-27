@@ -1,16 +1,25 @@
 import { WHITE_KEYS, BLACK_KEYS } from '../domain/constants.js';
 
-const WW = 46, BW = 28, BH = 42;
+function getKeyDims() {
+  return window.matchMedia('(max-width: 767px)').matches
+    ? { WW: 60, BW: 36, BH: 56, WH: 90 }
+    : { WW: 46, BW: 28, BH: 42, WH: 68 };
+}
 
 export function initPiano(container, store) {
   function build() {
     container.innerHTML = '';
     const { rootIndex } = store.get().edit;
+    const { WW, BW, BH, WH } = getKeyDims();
+    container.style.width = `${WHITE_KEYS.length * WW}px`;
+    container.style.height = `${WH}px`;
     WHITE_KEYS.forEach((k, i) => {
       const btn = document.createElement('button');
       btn.className = 'wkey' + (k.idx === rootIndex ? ' active' : '');
       btn.dataset.ni = k.idx;
       btn.style.left = `${i * WW}px`;
+      btn.style.width = `${WW - 2}px`;
+      btn.style.height = `${WH}px`;
       btn.textContent = k.note;
       btn.addEventListener('click', () => setRoot(k.idx));
       container.appendChild(btn);

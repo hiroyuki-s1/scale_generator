@@ -68,6 +68,66 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gridTemplateColumns = 'repeat(2, 1fr)';
   container.style.gap = '16px';
 
+  // ── ドラッグ&ドロップ並べ替え (コンテナレベルで委譲) ──
+  let draggingId = null;
+
+  function getDragAfterElement(x, y) {
+    const els = [...container.querySelectorAll('.saved-card:not(.dragging)')];
+    let result = null;
+    let closest = Infinity;
+    for (const el of els) {
+      const box = el.getBoundingClientRect();
+      const cx = box.left + box.width / 2;
+      const cy = box.top + box.height / 2;
+      // reading-order「後ろ」: 下の行、または同じ行で右側にある要素
+      const isAfter = (y < cy - box.height / 2) ||
+        (Math.abs(y - cy) <= box.height / 2 && x < cx);
+      if (!isAfter) continue;
+      const dist = Math.hypot(x - cx, y - cy);
+      if (dist < closest) { closest = dist; result = el; }
+    }
+    return result;
+  }
+
+  function commitOrder() {
+    const orderedIds = [...container.querySelectorAll('.saved-card')]
+      .map(c => Number(c.dataset.id));
+    const cur = store.get().saved;
+    if (orderedIds.join(',') === cur.map(s => s.id).join(',')) return;
+    const byId = new Map(cur.map(s => [s.id, s]));
+    const reordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
+    // DOM はすでに新しい順なので、subscribe の再描画はスキップさせたい
+    lastIdsKey = orderedIds.join(',');
+    store.set(state => ({ ...state, saved: reordered }));
+  }
+
+  container.addEventListener('dragstart', e => {
+    const card = e.target.closest('.saved-card');
+    if (!card) return;
+    draggingId = Number(card.dataset.id);
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.id);
+  });
+  container.addEventListener('dragover', e => {
+    if (draggingId == null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const dragging = container.querySelector('.saved-card.dragging');
+    if (!dragging) return;
+    const after = getDragAfterElement(e.clientX, e.clientY);
+    if (after == null) {
+      if (dragging !== container.lastElementChild) container.appendChild(dragging);
+    } else if (after !== dragging) {
+      container.insertBefore(dragging, after);
+    }
+  });
+  container.addEventListener('drop', e => { e.preventDefault(); });
+  container.addEventListener('dragend', e => {
+    e.target.closest('.saved-card')?.classList.remove('dragging');
+    if (draggingId != null) { draggingId = null; commitOrder(); }
+  });
+
   function render() {
     const { saved } = store.get();
     container.innerHTML = '';
@@ -167,10 +227,22 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
   const card = document.createElement('div');
   card.className = 'saved-card';
   card.dataset.id = snap.id;
+  card.draggable = true;
 
-  // ── ヘッダー (編集 / 削除ボタンのみ) ──
+  // ── ヘッダー (ドラッグハンドル / 編集 / 削除ボタン) ──
   const hdr = document.createElement('div');
   hdr.className = 'saved-card-header';
+
+  const dragHandle = document.createElement('span');
+  dragHandle.className = 'drag-handle';
+  dragHandle.title = 'ドラッグして並べ替え';
+  dragHandle.setAttribute('aria-hidden', 'true');
+  dragHandle.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+    <circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/>
+    <circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/>
+    <circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/>
+  </svg>`;
+  hdr.appendChild(dragHandle);
 
   const editBtn = document.createElement('button');
   editBtn.className = 'btn-edit-saved';

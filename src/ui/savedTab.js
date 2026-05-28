@@ -5,6 +5,11 @@ import { renderLegend } from './legend.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
+/** ひらがな → カタカナ変換 (U+3041–U+3096 → +0x60) */
+function toKatakana(str) {
+  return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+
 export function initSavedTab(container, store, openFullscreen) {
   const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
@@ -165,7 +170,7 @@ function renderCard(snap, store, openFullscreen) {
   titleOverlay.setAttribute('letter-spacing', '5');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('filter', `url(#${filterId})`);
-  titleOverlay.textContent = snap.title.toUpperCase();
+  titleOverlay.textContent = toKatakana(snap.title).toUpperCase();
   overlayGroup.appendChild(titleOverlay);
 
   svg.appendChild(overlayGroup);  // frontmost — above all dots

@@ -117,19 +117,31 @@ function renderCard(snap, store, openFullscreen) {
   clipPath.appendChild(clipRect);
   defs.appendChild(clipPath);
 
+  // Drop-shadow filter for the overlay text
+  const filterId = 'tfilt-' + snap.id;
+  const filter = document.createElementNS(NS, 'filter');
+  filter.setAttribute('id', filterId);
+  filter.setAttribute('x', '-5%'); filter.setAttribute('y', '-30%');
+  filter.setAttribute('width', '110%'); filter.setAttribute('height', '160%');
+  const shadow = document.createElementNS(NS, 'feDropShadow');
+  shadow.setAttribute('dx', '0'); shadow.setAttribute('dy', '2');
+  shadow.setAttribute('stdDeviation', '4');
+  shadow.setAttribute('flood-color', 'rgba(0,0,0,0.35)');
+  filter.appendChild(shadow);
+  defs.appendChild(filter);
+
   const titleOverlay = document.createElementNS(NS, 'text');
   titleOverlay.setAttribute('x', String(cx));
   titleOverlay.setAttribute('y', String(cy));
   titleOverlay.setAttribute('text-anchor', 'middle');
   titleOverlay.setAttribute('dominant-baseline', 'middle');
-  titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.72)');
-  titleOverlay.setAttribute('font-size', '62');
+  titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.75)');
+  titleOverlay.setAttribute('font-size', '58');
   titleOverlay.setAttribute('font-weight', '500');
-  titleOverlay.setAttribute('letter-spacing', '4');
-  titleOverlay.setAttribute('textLength', String(SVG.FBW - 20));
-  titleOverlay.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+  titleOverlay.setAttribute('letter-spacing', '5');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('clip-path', `url(#${clipId})`);
+  titleOverlay.setAttribute('filter', `url(#${filterId})`);
   titleOverlay.textContent = snap.title.toUpperCase();
   svg.insertBefore(titleOverlay, svg.querySelector('.dot-layer'));
 

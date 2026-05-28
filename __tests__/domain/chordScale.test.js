@@ -99,8 +99,8 @@ describe('chordQualityToScaleCtx — key-aware mode assignment', () => {
   it('IIIm7 (Em7 in C) → Phrygian', () => {
     expect(chordQualityToScaleCtx('m7', 4, 0, false).scaleName).toBe('Phrygian');
   });
-  it('VIm7 (Am7 in C) → Natural Minor', () => {
-    expect(chordQualityToScaleCtx('m7', 9, 0, false).scaleName).toBe('Natural Minor');
+  it('VIm7 (Am7 in C) → Aeolian', () => {
+    expect(chordQualityToScaleCtx('m7', 9, 0, false).scaleName).toBe('Aeolian');
   });
   it('bII7 (Db7 in C) → Lydian Dom (tritone sub)', () => {
     expect(chordQualityToScaleCtx('7', 1, 0, false).scaleName).toBe('Lydian Dom');

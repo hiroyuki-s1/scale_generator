@@ -319,19 +319,19 @@ body {
 }
 .bkey {
   position: absolute; top: 0; width: 28px; height: 42px;
-  background: linear-gradient(180deg, #38322e 0%, #1c1714 100%);
-  border: 1px solid #111; border-top: none; border-radius: 0 0 5px 5px;
+  background: var(--surface-2);
+  border: 1px solid #cfc8bf; border-top: none; border-radius: 0 0 5px 5px;
   cursor: pointer; display: flex; align-items: flex-end;
   justify-content: center; padding-bottom: 5px;
-  font-size: 8px; font-weight: 700; color: #7a7068; font-family: inherit;
+  font-size: 8px; font-weight: 700; color: var(--text-3); font-family: inherit;
   transition: background .08s, color .08s, transform .06s; z-index: 2;
-  box-shadow: 0 3px 6px rgba(0,0,0,.25);
+  box-shadow: 0 2px 4px rgba(0,0,0,.12);
 }
-.bkey:hover { background: linear-gradient(180deg, #4a433d 0%, #2a2420 100%); color: #9a9088; }
+.bkey:hover { background: #f1ede6; color: var(--text-2); }
 .bkey:active { transform: scaleY(.97); transform-origin: top; }
 .bkey.active {
-  background: linear-gradient(180deg, #e75a30 0%, #a83e12 100%);
-  border-color: #6b2a0c; color: #fff;
+  background: linear-gradient(180deg, #e75a30 0%, #c0511f 100%);
+  border-color: #8a3013; color: #fff;
 }
 
 /* DEGREES */
@@ -856,6 +856,13 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .saved-card-header { display: none !important; }
   .title-overlay { display: none !important; }
   .new-badge, .edit-badge { display: none !important; }
+  .particle-burst { display: none !important; }
+  /* 新規追加/編集中カードの緑枠・オレンジ枠も印刷しない */
+  .saved-card.newly-added, .saved-card.editing-target {
+    outline: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
   /* スケール名は指板の上にシンプルに印字 */
   .saved-print-title {
     display: block !important;

@@ -7,7 +7,7 @@ import {
 
 describe('preset groups', () => {
   it('scale group names are stable', () => {
-    expect(SCALE_GROUPS.map(g => g.label)).toEqual(['Penta', 'Diatonic', 'Advanced']);
+    expect(SCALE_GROUPS.map(g => g.label)).toEqual(['Penta', 'Church Mode', 'Advanced']);
   });
   it('chord group names are stable', () => {
     expect(CHORD_GROUPS.map(g => g.label)).toEqual(['Triad', '7th', 'Extended']);

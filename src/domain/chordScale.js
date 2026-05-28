@@ -90,8 +90,8 @@ export function chordQualityToScaleCtx(quality, rootPc, keyPc, keyIsMinor) {
     if (iv === 5 && isMaj7)      return { scaleName: 'Lydian',        degrees: [0, 2, 4, 6, 7, 9, 11] };
     // IIIm7 → Phrygian
     if (iv === 4 && isMin7)      return { scaleName: 'Phrygian',      degrees: [0, 1, 3, 5, 7, 8, 10] };
-    // VIm7 → Natural Minor (Aeolian)
-    if (iv === 9 && isMin7)      return { scaleName: 'Natural Minor',  degrees: [0, 2, 3, 5, 7, 8, 10] };
+    // VIm7 → Aeolian (Natural Minor)
+    if (iv === 9 && isMin7)      return { scaleName: 'Aeolian',  degrees: [0, 2, 3, 5, 7, 8, 10] };
     // bII7 → Lydian Dom (tritone substitution)
     if (iv === 1 && isPlainDom7) return { scaleName: 'Lydian Dom',    degrees: [0, 2, 4, 6, 7, 9, 10] };
   } else {

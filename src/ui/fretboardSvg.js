@@ -55,8 +55,8 @@ export function drawFretboardBase(svgEl) {
   [3, 5, 7, 9, 12, 15].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
-      x: fx(f), y: SVG.MT + SVG.FBH + 15, 'text-anchor': 'middle',
-      fill: '#bbb', 'font-size': '10', 'font-family': 'monospace', 'font-weight': '600',
+      x: fx(f), y: SVG.MT + SVG.FBH + 17, 'text-anchor': 'middle',
+      fill: '#8a8079', 'font-size': '15', 'font-family': 'monospace', 'font-weight': 'bold',
     }, String(f)));
   });
   [3, 5, 7, 9].forEach(f => {

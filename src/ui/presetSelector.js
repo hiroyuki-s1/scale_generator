@@ -8,7 +8,7 @@ export function initPresetSelector(container, store) {
   container.innerHTML = `
     <select class="preset-select" id="presetSelect" aria-label="プリセット">
       ${optgroupHtml('スケール / Penta',     SCALE_GROUPS[0])}
-      ${optgroupHtml('スケール / Diatonic',  SCALE_GROUPS[1])}
+      ${optgroupHtml('スケール / チャーチモード', SCALE_GROUPS[1])}
       ${optgroupHtml('スケール / Advanced',  SCALE_GROUPS[2])}
       ${optgroupHtml('コード / Triad',       CHORD_GROUPS[0])}
       ${optgroupHtml('コード / 7th',         CHORD_GROUPS[1])}

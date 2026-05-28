@@ -14,7 +14,7 @@ export function renderLegend(container, scale) {
     dot.style.cssText = `background:${dc.solid ? dc.color : '#fff'};border:1.5px solid ${dc.color};color:${dc.text}`;
     dot.textContent = name.length <= 2 ? name : '';
     chip.appendChild(dot);
-    chip.appendChild(document.createTextNode(i === 0 ? `R — ${NOTES[scale.rootIndex]}` : name));
+    chip.appendChild(document.createTextNode(name));
     container.appendChild(chip);
   });
 }

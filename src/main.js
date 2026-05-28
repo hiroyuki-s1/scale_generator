@@ -6,10 +6,18 @@ import { createStore } from './state/store.js';
 import { attachPersist, restoreFromStorage } from './state/persist.js';
 import { cloneColors } from './state/snapshot.js';
 
-import { initPiano } from './ui/piano.js';
-import { initPresetSelector } from './ui/presetSelector.js';
-import { initDegreeToggle } from './ui/degreeToggle.js';
-import { initMaskControl } from './ui/maskControl.js';
+import { initKeyPicker }    from './ui/keyPicker.js';
+import { initScalePicker }  from './ui/scalePicker.js';
+import { initDegreePicker } from './ui/degreePicker.js';
+import { initMaskControl }  from './ui/maskControl.js';
+import { initRegisterBtn }  from './ui/registerBtn.js';
+import { initSavedTab }     from './ui/savedTab.js';
+import { initColorModal }   from './ui/colorModal.js';
+import { initIrealSection } from './ui/irealTab.js';
+import { initLayoutPicker } from './ui/layoutPicker.js';
+import { initOrientation }  from './ui/orientation.js';
+import { initHeaderMenu }   from './ui/headerMenu.js';
+import { initPrintCss }     from './print/printCss.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -17,16 +25,7 @@ import {
   setMaskOverlayVisible,
 } from './ui/fretboardSvg.js';
 import { renderLegend } from './ui/legend.js';
-import { initSavedTab } from './ui/savedTab.js';
-import { initSaveModal } from './ui/saveModal.js';
-import { initColorModal } from './ui/colorModal.js';
-import { initIrealSection } from './ui/irealTab.js';
-import { initLayoutPicker } from './ui/layoutPicker.js';
-import { initOrientation } from './ui/orientation.js';
-import { initHeaderMenu } from './ui/headerMenu.js';
-import { initPrintCss } from './print/printCss.js';
 
-// Show build version
 /* global __COMMIT__ */
 const verEl = document.getElementById('buildVer');
 if (verEl) verEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
@@ -52,17 +51,49 @@ function defaultState() {
 const store = createStore(restoreFromStorage() || defaultState());
 attachPersist(store);
 
+// ── 指板 ──────────────────────────────────────────────────────────────
 const fretboardEl = document.getElementById('fretboard');
-const titleEl     = document.getElementById('fbTitle');
-const legendEl    = document.getElementById('legend');
+drawFretboardBase(fretboardEl);
+applyFretboardDiff(fretboardEl, store.get().edit, null);
 
-initPiano(document.getElementById('piano'), store);
-initPresetSelector(document.getElementById('presetSelectorMount'), store);
-initDegreeToggle(document.getElementById('degBtns'), store);
+store.subscribe((s, p) => {
+  if (p && s.edit === p.edit) return;
+  applyFretboardDiff(fretboardEl, s.edit, p?.edit);
+});
+
+// ── スケール名入力 ────────────────────────────────────────────────────
+const titleInputEl = document.getElementById('fbTitleInput');
+let userEditedTitle = false;
+
+function autoTitle(edit) {
+  if (!userEditedTitle) titleInputEl.value = buildTitle(edit);
+}
+autoTitle(store.get().edit);
+
+titleInputEl.addEventListener('input', () => { userEditedTitle = true; });
+store.subscribe((s, p) => {
+  if (!p) return;
+  if (s.edit.rootIndex !== p.edit.rootIndex || s.edit.presetName !== p.edit.presetName) {
+    userEditedTitle = false;
+    autoTitle(s.edit);
+  }
+});
+
+// ── コントロール初期化 ─────────────────────────────────────────────────
+initKeyPicker(store);
+initScalePicker(store);
+initDegreePicker(store);
 initMaskControl(document.getElementById('maskControl'), store);
-initSavedTab(document.getElementById('savedGrid'), store);
+initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl);
+initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title));
+initColorModal(store, document.getElementById('colorBtn'));
+initIrealSection(store);
+initLayoutPicker(store);
+initOrientation(store);
+initHeaderMenu(store);
+initPrintCss(store);
 
-// Update saved badge count
+// ── 保存済みバッジ ─────────────────────────────────────────────────────
 const savedBadgeEl = document.getElementById('savedBadge');
 function updateBadge(n) {
   if (!savedBadgeEl) return;
@@ -74,78 +105,83 @@ store.subscribe((s, p) => {
   if (p && s.saved.length === p.saved.length) return;
   updateBadge(s.saved.length);
 });
-initSaveModal(store, document.getElementById('saveBtn'));
-initColorModal(store, document.getElementById('colorBtn'));
-initIrealSection(store);
-initLayoutPicker(store);
-initOrientation(store);
-initHeaderMenu(store);
-initPrintCss(store);
 
-document.getElementById('printBtn').addEventListener('click', () => window.print());
-
-document.getElementById('resetBtn').addEventListener('click', () => {
-  if (confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) {
-    localStorage.clear();
-    location.reload();
-  }
-});
-
-// Edit-tab fretboard: draw the static base once, then diff-apply on every
-// edit change. The diff naturally handles all transitions (root, preset,
-// mode, mask range, degree toggle, color) — only the actual delta animates.
-drawFretboardBase(fretboardEl);
-applyFretboardDiff(fretboardEl, store.get().edit, null);
-titleEl.textContent = buildTitle(store.get().edit);
-renderLegend(legendEl, store.get().edit);
-
-store.subscribe((s, p) => {
-  if (p && s.edit === p.edit) return;
-  titleEl.textContent = buildTitle(s.edit);
-  renderLegend(legendEl, s.edit);
-  applyFretboardDiff(fretboardEl, s.edit, p?.edit);
-});
-
-// ---- Fullscreen fretboard (shared: edit tab click + iReal fretboard click) ----
-const fbFullscreen      = document.getElementById('fbFullscreen');
-const fbFullscreenSvg   = document.getElementById('fbFullscreenSvg');
-const fbFullscreenTitle = document.getElementById('fbFullscreenTitle');
+// ── 全画面フレットボード ──────────────────────────────────────────────
+const fbFullscreen       = document.getElementById('fbFullscreen');
+const fbFullscreenSvg    = document.getElementById('fbFullscreenSvg');
+const fbFullscreenTitle  = document.getElementById('fbFullscreenTitle');
 const fbFullscreenLegend = document.getElementById('fbFullscreenLegend');
 const fbFullscreenClose  = document.getElementById('fbFullscreenClose');
 let fsPrevState = null;
 
 drawFretboardBase(fbFullscreenSvg);
 
-function openFbFullscreen(state) {
-  fbFullscreenTitle.textContent = buildTitle(state);
+export function openFbFullscreen(state, displayTitle) {
+  fbFullscreenTitle.textContent = displayTitle || buildTitle(state);
   applyFretboardDiff(fbFullscreenSvg, state, fsPrevState);
   fsPrevState = state;
   renderLegend(fbFullscreenLegend, state);
-  // Crop viewBox to mask range when mask is enabled
   const vb = maskViewBox(state.mask);
   fbFullscreenSvg.setAttribute('viewBox', vb || `0 0 ${SVG.W} ${SVG.H}`);
   fbFullscreen.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeFbFullscreen() {
   fbFullscreen.classList.add('hidden');
   fbFullscreenSvg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
-  fsPrevState = null; // force full re-render next open (viewBox may have changed)
+  fsPrevState = null;
+  document.body.style.overflow = '';
 }
 
 fbFullscreenClose.addEventListener('click', closeFbFullscreen);
+fbFullscreen.addEventListener('click', e => {
+  if (e.target === fbFullscreen) closeFbFullscreen();
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
 });
 
-// Click the edit tab's fretboard (SVG wrap only) to enlarge
-fretboardEl.closest('.fb-wrap').addEventListener('click', () => {
-  openFbFullscreen(store.get().edit);
+// 編集指板クリックで全画面
+document.getElementById('editFbWrap').addEventListener('click', () => {
+  openFbFullscreen(store.get().edit, titleInputEl.value || buildTitle(store.get().edit));
 });
 
-// ---- Print: crop saved-card SVGs to the mask range and hide overlays ----
-const printOriginalViewBox = new WeakMap();
+// 編集状態変化時に全画面も更新
+store.subscribe((s, p) => {
+  if (!fbFullscreen.classList.contains('hidden') && p && s.edit !== p.edit) {
+    applyFretboardDiff(fbFullscreenSvg, s.edit, p?.edit);
+    renderLegend(fbFullscreenLegend, s.edit);
+  }
+});
 
+// ── 印刷ボタン: ダイアログを出す ──────────────────────────────────────
+const printModal = document.getElementById('printModal');
+printModal.querySelector('[data-act="cancel"]').addEventListener('click', () => printModal.classList.remove('show'));
+printModal.querySelector('[data-act="print"]').addEventListener('click',  () => {
+  printModal.classList.remove('show');
+  setTimeout(() => window.print(), 80);
+});
+printModal.addEventListener('click', e => { if (e.target === printModal) printModal.classList.remove('show'); });
+
+document.getElementById('printBtn').addEventListener('click', () => {
+  syncPrintDialog();
+  printModal.classList.add('show');
+});
+
+function syncPrintDialog() {
+  const { orientation } = store.get().layout;
+  printModal.querySelectorAll('.print-orient-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.orient === orientation);
+    btn.onclick = () => {
+      store.set(s => ({ ...s, layout: { ...s.layout, orientation: btn.dataset.orient } }));
+      syncPrintDialog();
+    };
+  });
+}
+
+// ── 印刷前後処理 ──────────────────────────────────────────────────────
+const printOriginalViewBox = new WeakMap();
 window.addEventListener('beforeprint', () => {
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
@@ -157,7 +193,6 @@ window.addEventListener('beforeprint', () => {
     setMaskOverlayVisible(svg, false);
   });
 });
-
 window.addEventListener('afterprint', () => {
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
@@ -169,4 +204,11 @@ window.addEventListener('afterprint', () => {
     }
     setMaskOverlayVisible(svg, true);
   });
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) {
+    localStorage.clear();
+    location.reload();
+  }
 });

@@ -41,8 +41,10 @@ export function initHeaderMenu(store) {
 
   function syncOrient() {
     const o = store.get().layout.orientation;
-    menu.querySelector('[data-act="orient-land"]').classList.toggle('active', o === 'landscape');
-    menu.querySelector('[data-act="orient-port"]').classList.toggle('active', o === 'portrait');
+    const bl = menu.querySelector('[data-act="orient-land"]');
+    const bp = menu.querySelector('[data-act="orient-port"]');
+    if (bl) bl.classList.toggle('active', o === 'landscape');
+    if (bp) bp.classList.toggle('active', o === 'portrait');
   }
   syncOrient();
   store.subscribe((s, p) => {

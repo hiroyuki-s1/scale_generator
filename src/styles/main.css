@@ -206,16 +206,42 @@ body {
 .editor { display: flex; flex-direction: row; }
 
 .editor-sidebar {
-  width: 264px; flex-shrink: 0;
+  width: 220px; flex-shrink: 0;
   background: var(--surface); border-right: 1px solid var(--border);
-  padding: 16px; overflow-y: auto;
-  display: flex; flex-direction: column;
+  padding: 14px 12px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 16px;
 }
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* キー選択ボタン */
+.key-picker-btn {
+  padding: 9px 14px; border: 1.5px solid var(--border);
+  border-radius: 8px; background: var(--surface);
+  color: var(--text); font-size: 15px; font-weight: 700;
+  font-family: 'Courier New', monospace; cursor: pointer;
+  text-align: left; transition: all .12s; width: 100%;
+}
+.key-picker-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* スケール2段階選択 */
+.scale-cat-sel, .scale-name-sel {
+  width: 100%; padding: 7px 10px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  background: var(--surface); color: var(--text);
+  font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
+}
+.scale-cat-sel:focus, .scale-name-sel:focus { border-color: var(--accent); }
+.scale-apply-btn {
+  padding: 8px 14px; border: none; background: var(--accent);
+  color: #fff; border-radius: 7px; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer; width: 100%; transition: opacity .1s;
+}
+.scale-apply-btn:hover { opacity: .85; }
+
 .editor-fretboard {
   flex: 1; display: flex; flex-direction: column;
-  min-width: 0; min-height: 0; padding: 12px 16px; gap: 6px;
+  min-width: 0; min-height: 0; padding: 10px 14px 12px; gap: 6px;
 }
-.editor-fretboard .fb-wrap { flex: 1; min-height: 0; overflow: hidden; padding: 10px 14px 6px; }
 .editor-fretboard svg.fb { min-width: 0 !important; width: 100%; height: auto; }
 
 /* PIANO */
@@ -340,8 +366,132 @@ input[type=range].mslider::-moz-range-thumb {
 /* Print title: hidden on screen, shown in print instead of input element */
 .saved-title-print { display: none; }
 
-.fb-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
-.fb-title { font-size: 20px; font-weight: 700; letter-spacing: -.6px; color: var(--text); }
+.fb-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;
+}
+/* スケール名 編集可能入力 */
+.fb-title-input {
+  flex: 1; min-width: 0;
+  font-size: 18px; font-weight: 700; letter-spacing: -.5px; color: var(--text);
+  border: none; border-bottom: 2px solid transparent; background: transparent;
+  padding: 2px 4px; outline: none; font-family: inherit; transition: border-color .15s;
+}
+.fb-title-input:hover, .fb-title-input:focus { border-bottom-color: var(--accent); }
+.fb-title-input::placeholder { color: var(--text-3); font-weight: 400; }
+/* 登録ボタン */
+.btn-register {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; flex-shrink: 0;
+  background: var(--green); border: none; border-radius: 8px;
+  color: #fff; font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background .12s;
+}
+.btn-register:hover { background: #15803d; }
+
+/* 度数行: [度数ボタン] [度数チップ] */
+.deg-display-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.deg-picker-btn {
+  padding: 6px 12px; flex-shrink: 0;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2);
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.deg-picker-btn:hover { border-color: var(--accent); color: var(--accent); }
+.deg-display-row .legend {
+  flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px;
+}
+
+/* ── ポップアップピアノ ──────────────────────────────────────── */
+.picker-popup {
+  position: fixed; z-index: 600;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: var(--shadow-md);
+  padding: 12px 14px 14px; animation: fadeUp .15s ease;
+}
+.picker-popup.hidden { display: none !important; }
+.picker-popup-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-3); margin-bottom: 10px;
+}
+.popup-piano-wrap { position: relative; overflow: visible; }
+
+/* ポップアップピアノ の鍵盤 */
+.ppkey-w {
+  position: absolute; bottom: 0;
+  background: #fff; border: 1px solid #d0c8c0; border-top: none;
+  border-radius: 0 0 5px 5px; cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; padding-bottom: 5px;
+  transition: background .08s;
+}
+.ppkey-w:hover { background: #faf8f5; }
+.ppkey-w.ppkey-on {
+  background: linear-gradient(180deg, #e75a30 0%, #c0511f 100%) !important;
+  border-color: #8a3013 !important; color: #fff !important;
+}
+.ppkey-b {
+  position: absolute; top: 0; z-index: 2;
+  background: linear-gradient(180deg, #38322e 0%, #1c1714 100%);
+  border: 1px solid #111; border-top: none; border-radius: 0 0 4px 4px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; padding-bottom: 4px;
+  transition: background .08s;
+}
+.ppkey-b:hover { background: linear-gradient(180deg, #4a433d 0%, #2a2420 100%); }
+.ppkey-b.ppkey-on {
+  background: linear-gradient(180deg, #e75a30 0%, #a83e12 100%) !important;
+  border-color: #6b2a0c !important;
+}
+.ppkey-root { opacity: .7; cursor: default !important; }
+.ppkey-note { font-size: 10px; font-weight: 700; color: inherit; }
+.ppkey-deg  { font-size: 7px; color: inherit; opacity: .8; margin-top: 1px; }
+/* White keys: note label only (color via parent) */
+.ppkey-w .ppkey-note { color: var(--text-2); }
+.ppkey-w.ppkey-on .ppkey-note { color: #fff; }
+.ppkey-b .ppkey-note { color: rgba(255,255,255,.65); }
+.ppkey-b.ppkey-on .ppkey-note { color: rgba(255,255,255,.9); }
+
+.picker-popup-footer { margin-top: 10px; text-align: right; }
+.picker-done-btn {
+  padding: 6px 18px; border: none; background: var(--accent);
+  color: #fff; border-radius: 7px; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+}
+
+/* ── トースト通知 ─────────────────────────────────────────────── */
+.app-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,20,.9); color: #fff;
+  padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600;
+  pointer-events: none; opacity: 0; transition: opacity .2s, transform .2s; z-index: 9999;
+}
+.app-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 印刷ダイアログ ───────────────────────────────────────────── */
+.print-orient-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.print-orient-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px; border: 2px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2); font-size: 12px; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.print-orient-btn:hover { background: var(--bg); }
+.print-orient-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* ── 登録済み: 編集ボタン ────────────────────────────────────── */
+.btn-edit-saved {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1.5px solid var(--accent);
+  border-radius: 7px; background: var(--accent-dim); color: var(--accent);
+  font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer;
+  flex-shrink: 0; transition: all .12s;
+}
+.btn-edit-saved:hover { background: var(--accent); color: #fff; }
+.saved-fb-wrap { cursor: pointer; }
+.saved-fb-wrap:hover { border-color: #c8bfb5; }
 .fb-wrap {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px 16px 8px;
@@ -565,8 +715,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .ireal-chip.active .ireal-chip-sym { color: var(--accent); }
 
 /* Fretboard click-to-enlarge hint */
-.editor-fretboard .fb-wrap { cursor: pointer; }
-.editor-fretboard .fb-wrap:hover { border-color: #c8bfb5; }
+#editFbWrap { cursor: pointer; }
+#editFbWrap:hover { border-color: #c8bfb5; }
 
 /* ── Fullscreen fretboard modal (edit tab / all tabs) ───────────────── */
 .fb-fullscreen {
@@ -599,8 +749,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .fb-fullscreen svg.fb { min-width: 0 !important; width: 100%; height: 100%; }
 /* Clickable fretboard hint on edit tab */
-.edit-fb-area { cursor: pointer; }
-.edit-fb-area:hover .fb-wrap { border-color: #c8bfb5; }
 
 /* PRINT BASE */
 @media print {
@@ -650,7 +798,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 .deg-btn:active   { transform: scale(.92); }
 .hdr-btn:active   { transform: scale(.9); }
-.btn-save:active  { transform: scale(.95); }
+.btn-register:active { transform: scale(.95); }
 .btn-print:active { transform: scale(.95); }
 
 @media (max-width: 900px) {
@@ -667,45 +815,31 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .header { height: 60px; padding: 0 12px; gap: 7px; position: relative; }
   #layoutPicker, .hdr-group, .btn-color, .btn-reset { display: none; }
   .more-trigger { display: flex; }
-  .btn-save, .btn-print { padding: 8px 10px; font-size: 12px; }
+  .btn-register, .btn-print { padding: 8px 10px; font-size: 12px; }
   .btn-print { gap: 4px; }
 
-  /* ── Editor: stack vertically ── */
+  /* ── Editor: 縦積み ── */
   .editor { flex-direction: column; overflow: visible; height: auto; }
 
   .editor-sidebar {
     width: 100%; border-right: none; border-bottom: 1px solid var(--border);
-    padding: 12px 14px 14px; overflow-y: visible;
+    padding: 10px 12px 12px; overflow-y: visible; gap: 10px;
   }
-  /* Compact spacing between sections so all 3 fit without scroll */
-  .ctrl-section + .ctrl-section { padding-top: 10px; margin-top: 10px; border-top-width: 1px; }
-  .ctrl-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 8px; }
+  .ctrl-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
 
-  /* ── Fretboard: fit to screen width ── */
+  /* キー・スケールを横並びに */
+  .editor-sidebar { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+  .ctrl-group { flex: 1; min-width: 130px; }
+  .key-picker-btn { font-size: 18px; min-height: 48px; }
+  .scale-cat-sel, .scale-name-sel { font-size: 15px; min-height: 44px; }
+  .scale-apply-btn { min-height: 44px; font-size: 14px; }
+
+  /* ── 指板エリア ── */
   .editor-fretboard { padding: 8px 8px 12px; gap: 4px; }
-  .editor-fretboard .fb-wrap { flex: none; overflow: visible; touch-action: pinch-zoom; }
   .editor-fretboard svg.fb { min-width: 0 !important; width: 100% !important; height: auto; }
   #savedGrid svg.fb { min-width: 0 !important; width: 100% !important; }
-
-  /* ── Piano: compact but still usable ── */
-  .piano-outer { height: 62px; }
-  .piano-wrap { width: auto !important; height: auto !important; }
-
-  /* ── Preset selector: large touch target, suppress iOS zoom ── */
-  .preset-select {
-    min-height: 44px; font-size: 16px;
-    padding: 10px 36px 10px 14px;
-    background-position:
-      calc(100% - 18px) calc(50% - 2px),
-      calc(100% - 13px) calc(50% - 2px);
-  }
-
-  /* ── Degree buttons: 6 cols × 2 rows = compact, all 12 visible ── */
-  .deg-btns { grid-template-columns: repeat(6, 1fr); max-width: none; gap: 4px; }
-  .deg-btn { padding: 7px 2px; font-size: 12px; min-height: 38px; border-radius: 8px; }
-  .deg-dot { width: 7px; height: 7px; }
-  .deg-btn.active { box-shadow: 0 2px 4px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.18); }
-  .deg-btn.active:active { transform: scale(.94); }
+  .fb-title-input { font-size: 16px; }
+  .deg-picker-btn { min-height: 44px; font-size: 14px; padding: 10px 16px; }
 
   /* ── Modal inputs: 16px to suppress iOS auto-zoom on focus ── */
   .modal-input { font-size: 16px; padding: 12px 14px; }

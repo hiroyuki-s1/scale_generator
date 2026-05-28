@@ -105,8 +105,8 @@ export function initIrealSection(store) {
     store.updateEdit({
       rootIndex: c.rootPc,
       activeDegrees: new Set(qualityToChordTones(c.quality)),
-      presetName: c.displayName,
-      mode: 'scale',
+      presetName: c.quality || c.displayName,
+      mode: 'chord',
     });
   }
 }

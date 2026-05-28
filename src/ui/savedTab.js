@@ -40,30 +40,10 @@ function renderCard(snap, store, openFullscreen) {
   card.className = 'saved-card';
   card.dataset.id = snap.id;
 
-  // ── ヘッダー ──
+  // ── ヘッダー (編集 / 削除ボタンのみ) ──
   const hdr = document.createElement('div');
   hdr.className = 'saved-card-header';
 
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.className = 'saved-title-input';
-  inp.value = snap.title;
-
-  const printTitle = document.createElement('span');
-  printTitle.className = 'saved-title-print';
-  printTitle.textContent = snap.title;
-
-  inp.addEventListener('input', e => {
-    const newTitle = e.target.value;
-    printTitle.textContent = newTitle;
-    if (titleOverlay) titleOverlay.textContent = newTitle;
-    store.set(state => ({
-      ...state,
-      saved: state.saved.map(s => s.id === snap.id ? { ...s, title: newTitle } : s),
-    }));
-  });
-
-  // 編集ボタン: 保存済みスケールを編集エリアに読み込む
   const editBtn = document.createElement('button');
   editBtn.className = 'btn-edit-saved';
   editBtn.title = '編集エリアに読み込む';
@@ -80,10 +60,8 @@ function renderCard(snap, store, openFullscreen) {
       mask:          { ...snap.mask },
       degreeColors:  snap.degreeColors,
     });
-    // タイトル入力も更新
     const ti = document.getElementById('fbTitleInput');
     if (ti) { ti.value = snap.title; }
-    // ページトップへスクロール
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
@@ -97,8 +75,6 @@ function renderCard(snap, store, openFullscreen) {
     store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
   });
 
-  hdr.appendChild(inp);
-  hdr.appendChild(printTitle);
   hdr.appendChild(editBtn);
   hdr.appendChild(del);
   card.appendChild(hdr);
@@ -126,7 +102,7 @@ function renderCard(snap, store, openFullscreen) {
 
   drawFretboardBase(svg);
 
-  // Title overlay: faint text centered on the fretboard
+  // Title overlay: large elegant text spanning the fretboard width
   const cx = SVG.ML + SVG.FBW / 2;
   const cy = SVG.MT + SVG.FBH / 2;
   const defs = svg.querySelector('defs');
@@ -146,12 +122,15 @@ function renderCard(snap, store, openFullscreen) {
   titleOverlay.setAttribute('y', String(cy));
   titleOverlay.setAttribute('text-anchor', 'middle');
   titleOverlay.setAttribute('dominant-baseline', 'middle');
-  titleOverlay.setAttribute('fill', 'rgba(100,55,10,0.22)');
-  titleOverlay.setAttribute('font-size', '30');
-  titleOverlay.setAttribute('font-weight', '700');
+  titleOverlay.setAttribute('fill', 'rgba(55,28,6,0.52)');
+  titleOverlay.setAttribute('font-size', '62');
+  titleOverlay.setAttribute('font-weight', '300');
+  titleOverlay.setAttribute('letter-spacing', '6');
+  titleOverlay.setAttribute('textLength', String(SVG.FBW - 20));
+  titleOverlay.setAttribute('lengthAdjust', 'spacingAndGlyphs');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('clip-path', `url(#${clipId})`);
-  titleOverlay.textContent = snap.title;
+  titleOverlay.textContent = snap.title.toUpperCase();
   svg.insertBefore(titleOverlay, svg.querySelector('.dot-layer'));
 
   applyFretboardDiff(svg, snap, null);

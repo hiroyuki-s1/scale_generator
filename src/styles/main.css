@@ -393,12 +393,8 @@ input[type=range].mslider::-moz-range-thumb {
 .saved-empty-hint { font-size: 12px; }
 #savedGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
 #savedGrid.screen-grid svg.fb { min-width: 0 !important; }
-#savedGrid.screen-grid .fb-title,
-#savedGrid.screen-grid .saved-title-input { font-size: 15px; }
+#savedGrid.screen-grid .fb-title { font-size: 15px; }
 #savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; }
-
-/* Print title: hidden on screen, shown in print instead of input element */
-.saved-title-print { display: none; }
 
 .fb-header {
   display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;
@@ -542,15 +538,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 
 /* SAVED CARDS */
-.saved-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.saved-title-input {
-  font-size: 20px; font-weight: 700; letter-spacing: -.5px;
-  color: var(--text); background: transparent; border: none; outline: none;
-  border-bottom: 2px solid transparent; padding: 2px 0;
-  font-family: inherit; transition: border-color .15s; flex: 1; min-width: 0;
-}
-.saved-title-input:hover { border-bottom-color: var(--border); }
-.saved-title-input:focus { border-bottom-color: var(--accent); }
+.saved-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
 .btn-delete {
   display: flex; align-items: center; gap: 4px;
   padding: 5px 10px; border: 1px solid var(--border);
@@ -783,8 +771,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .app-body { overflow: visible !important; height: auto !important; display: block !important; }
   .saved-section { display: block !important; padding: 0 !important; overflow: visible !important; }
   .saved-section-hdr { display: none !important; }
-  .saved-title-input { display: none !important; }
-  .saved-title-print { display: block !important; font-weight: 700; }
   svg.fb { min-width: 0 !important; }
 }
 
@@ -872,7 +858,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
   /* ── Modal inputs: 16px to suppress iOS auto-zoom on focus ── */
   .modal-input { font-size: 16px; padding: 12px 14px; }
-  .saved-title-input { font-size: 17px; }
 
   /* ── Mask control ── */
   .btn-mask { padding: 12px 16px; font-size: 14px; min-height: 48px; flex-shrink: 0; }
@@ -908,7 +893,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tab-panel.hidden { display: none; }
   .saved-section { flex: none; height: auto; overflow: visible; padding: 12px 12px 20px; }
   #savedGrid { gap: 14px; }
-  .fb-title, .saved-title-input { font-size: 17px; }
+  .fb-title { font-size: 17px; }
   .tab-btn { padding: 8px 14px; font-size: 12px; }
 
   /* ── Fullscreen modal ── */

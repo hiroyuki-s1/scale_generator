@@ -164,13 +164,13 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
     const goingSaved = btn.dataset.tab === 'saved';
-    panelEditor.classList.toggle('hidden', !goingSaved);
-    panelSaved.classList.toggle('hidden', goingSaved);
+    panelEditor.classList.toggle('hidden', goingSaved);
+    panelSaved.classList.toggle('hidden', !goingSaved);
     if (!goingSaved) savedTab.clearNewlyAdded();
     // スライドアニメーション
     const panel = goingSaved ? panelSaved : panelEditor;
-    panel.classList.remove('slide-in');
-    requestAnimationFrame(() => panel.classList.add('slide-in'));
+    panel.classList.remove('slide-in-left', 'slide-in-right');
+    requestAnimationFrame(() => panel.classList.add(goingSaved ? 'slide-in-right' : 'slide-in-left'));
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
 });

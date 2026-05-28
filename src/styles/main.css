@@ -903,12 +903,19 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 
 /* タブパネルのスライドイン */
+@keyframes slideInFromLeft {
+  from { transform: translateX(-32px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
 @keyframes slideInFromRight {
-  from { transform: translateX(24px); opacity: 0; }
+  from { transform: translateX(32px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
-.tab-panel.slide-in {
+.tab-panel.slide-in-right {
   animation: slideInFromRight 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tab-panel.slide-in-left {
+  animation: slideInFromLeft 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .fb-dot {
@@ -1041,3 +1048,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .preset-select:hover { border-color: #bfb8ae; }
 .preset-select:focus { border-color: var(--accent); }
+
+/* パーティクルバーストエフェクト */
+@keyframes particle-fly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  80%  { opacity: .8; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+.particle-burst {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform-origin: center;
+  animation: particle-fly 0.65s cubic-bezier(.22,1,.36,1) forwards;
+}

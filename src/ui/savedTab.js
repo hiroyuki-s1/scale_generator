@@ -92,10 +92,38 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
+  function spawnParticles(card) {
+    const rect = card.getBoundingClientRect();
+    const colors = ['#22c55e','#86efac','#4ade80','#fbbf24','#34d399','#a3e635'];
+    for (let i = 0; i < 28; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle-burst';
+      const angle = (i / 28) * 360;
+      const dist  = 40 + Math.random() * 60;
+      const size  = 4 + Math.random() * 6;
+      const color = colors[i % colors.length];
+      const delay = Math.random() * 0.15;
+      p.style.cssText = [
+        `left:${rect.left + rect.width/2}px`,
+        `top:${rect.top + rect.height/2}px`,
+        `width:${size}px`,
+        `height:${size}px`,
+        `background:${color}`,
+        `--dx:${Math.cos(angle*Math.PI/180)*dist}px`,
+        `--dy:${Math.sin(angle*Math.PI/180)*dist}px`,
+        `animation-delay:${delay}s`,
+      ].join(';');
+      document.body.appendChild(p);
+      p.addEventListener('animationend', () => p.remove(), { once: true });
+    }
+  }
+
   function highlightNewCard(id) {
     currentNewId = id;
     container.querySelectorAll('.saved-card').forEach(c => {
-      c.classList.toggle('newly-added', Number(c.dataset.id) === id);
+      const match = Number(c.dataset.id) === id;
+      c.classList.toggle('newly-added', match);
+      if (match) spawnParticles(c);
     });
   }
 

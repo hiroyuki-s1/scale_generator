@@ -117,7 +117,18 @@ function renderCard(snap, store, openFullscreen) {
   clipPath.appendChild(clipRect);
   defs.appendChild(clipPath);
 
-  // Drop-shadow filter for the overlay text
+  // Blurred background band filter
+  const bgFiltId = 'bgfilt-' + snap.id;
+  const bgFilter = document.createElementNS(NS, 'filter');
+  bgFilter.setAttribute('id', bgFiltId);
+  bgFilter.setAttribute('x', '-2%'); bgFilter.setAttribute('y', '-40%');
+  bgFilter.setAttribute('width', '104%'); bgFilter.setAttribute('height', '180%');
+  const bgBlur = document.createElementNS(NS, 'feGaussianBlur');
+  bgBlur.setAttribute('in', 'SourceGraphic'); bgBlur.setAttribute('stdDeviation', '10');
+  bgFilter.appendChild(bgBlur);
+  defs.appendChild(bgFilter);
+
+  // Drop-shadow filter for the text
   const filterId = 'tfilt-' + snap.id;
   const filter = document.createElementNS(NS, 'filter');
   filter.setAttribute('id', filterId);
@@ -125,25 +136,39 @@ function renderCard(snap, store, openFullscreen) {
   filter.setAttribute('width', '110%'); filter.setAttribute('height', '160%');
   const shadow = document.createElementNS(NS, 'feDropShadow');
   shadow.setAttribute('dx', '0'); shadow.setAttribute('dy', '2');
-  shadow.setAttribute('stdDeviation', '4');
-  shadow.setAttribute('flood-color', 'rgba(0,0,0,0.35)');
+  shadow.setAttribute('stdDeviation', '3');
+  shadow.setAttribute('flood-color', 'rgba(0,0,0,0.4)');
   filter.appendChild(shadow);
   defs.appendChild(filter);
+
+  // Overlay group — appended LAST so it renders above dots
+  const overlayGroup = document.createElementNS(NS, 'g');
+  overlayGroup.setAttribute('clip-path', `url(#${clipId})`);
+
+  const bgRect = document.createElementNS(NS, 'rect');
+  bgRect.setAttribute('x', String(SVG.ML));
+  bgRect.setAttribute('y', String(cy - 46));
+  bgRect.setAttribute('width', String(SVG.FBW));
+  bgRect.setAttribute('height', '92');
+  bgRect.setAttribute('fill', 'rgba(252,238,205,0.78)');
+  bgRect.setAttribute('filter', `url(#${bgFiltId})`);
+  overlayGroup.appendChild(bgRect);
 
   const titleOverlay = document.createElementNS(NS, 'text');
   titleOverlay.setAttribute('x', String(cx));
   titleOverlay.setAttribute('y', String(cy));
   titleOverlay.setAttribute('text-anchor', 'middle');
   titleOverlay.setAttribute('dominant-baseline', 'middle');
-  titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.75)');
+  titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.88)');
   titleOverlay.setAttribute('font-size', '58');
-  titleOverlay.setAttribute('font-weight', '500');
+  titleOverlay.setAttribute('font-weight', '600');
   titleOverlay.setAttribute('letter-spacing', '5');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
-  titleOverlay.setAttribute('clip-path', `url(#${clipId})`);
   titleOverlay.setAttribute('filter', `url(#${filterId})`);
   titleOverlay.textContent = snap.title.toUpperCase();
-  svg.insertBefore(titleOverlay, svg.querySelector('.dot-layer'));
+  overlayGroup.appendChild(titleOverlay);
+
+  svg.appendChild(overlayGroup);  // frontmost — above all dots
 
   applyFretboardDiff(svg, snap, null);
   renderLegend(leg, snap);

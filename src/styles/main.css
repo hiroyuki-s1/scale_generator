@@ -1073,7 +1073,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .new-badge {
   position: absolute;
-  top: 6px;
+  top: 18px;
   left: 2px;
   transform: rotate(-30deg);
   transform-origin: left center;
@@ -1103,7 +1103,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .edit-badge {
   position: absolute;
-  top: 6px;
+  top: 18px;
   left: 2px;
   transform: rotate(-30deg);
   transform-origin: left center;

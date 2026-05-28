@@ -850,7 +850,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-areas: "scale key" "scale apply";
-    grid-template-rows: auto 48px;
+    grid-template-rows: auto 44px;
     gap: 8px 12px;
     align-items: start;
   }
@@ -859,9 +859,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .editor-sidebar .scale-apply-btn         { grid-area: apply; align-self: stretch; }
   .ctrl-group { flex: none; }
   .ctrl-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
-  .key-picker-btn { font-size: 18px; height: 48px; width: 100%; }
-  .scale-cat-sel, .scale-name-sel { font-size: 15px; min-height: 44px; }
-  .scale-apply-btn { height: 48px; font-size: 15px; width: 100%; }
+  .key-picker-btn { font-size: 18px; height: 44px; width: 100%; }
+  .scale-cat-sel, .scale-name-sel { font-size: 15px; height: 44px; min-height: 44px; }
+  .scale-apply-btn { height: 44px; font-size: 15px; width: 100%; }
 
   /* ── 指板エリア ── */
   .editor-fretboard { padding: 8px 8px 12px; gap: 4px; }
@@ -888,6 +888,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
   /* ── Legend: hide on mobile ── */
   #legend, #fbFullscreenLegend { display: none; }
+  /* 登録スケール一覧: 度数チップ不要 */
+  .saved-section .legend { display: none; }
 
   /* ── iReal chips: larger tap area ── */
   .ireal-song-header { font-size: 13px; }

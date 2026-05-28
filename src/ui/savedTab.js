@@ -122,10 +122,10 @@ function renderCard(snap, store, openFullscreen) {
   titleOverlay.setAttribute('y', String(cy));
   titleOverlay.setAttribute('text-anchor', 'middle');
   titleOverlay.setAttribute('dominant-baseline', 'middle');
-  titleOverlay.setAttribute('fill', 'rgba(55,28,6,0.52)');
+  titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.72)');
   titleOverlay.setAttribute('font-size', '62');
-  titleOverlay.setAttribute('font-weight', '300');
-  titleOverlay.setAttribute('letter-spacing', '6');
+  titleOverlay.setAttribute('font-weight', '500');
+  titleOverlay.setAttribute('letter-spacing', '4');
   titleOverlay.setAttribute('textLength', String(SVG.FBW - 20));
   titleOverlay.setAttribute('lengthAdjust', 'spacingAndGlyphs');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');

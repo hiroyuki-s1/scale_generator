@@ -1,4 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+.hidden { display: none !important; }
 
 :root {
   --accent:      #c0511f;

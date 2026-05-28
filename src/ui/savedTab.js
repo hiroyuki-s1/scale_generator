@@ -1,5 +1,4 @@
 import { SVG } from '../domain/constants.js';
-import { buildTitle } from '../domain/title.js';
 import { localizeTitle } from '../domain/i18n.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
@@ -11,7 +10,7 @@ function toKatakana(str) {
   return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 }
 
-export function initSavedTab(container, store, openFullscreen, onEditMode) {
+export function initSavedTab(container, store, openFullscreen, onEditMode = null) {
   const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
 
@@ -26,7 +25,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode) {
     lastIdsKey = saved.map(s => s.id).join(',');
     saved.forEach(snap => {
       try {
-        container.appendChild(renderCard(snap, store, openFullscreen));
+        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode));
       } catch (e) {
         console.warn('savedTab: failed to render card', snap.id, e);
       }
@@ -34,14 +33,14 @@ export function initSavedTab(container, store, openFullscreen, onEditMode) {
   }
 
   render();
-  store.subscribe((s, p) => {
+  store.subscribe(s => {
     const idsKey = s.saved.map(c => c.id).join(',');
     if (idsKey === lastIdsKey) return;
     render();
   });
 }
 
-function renderCard(snap, store, openFullscreen) {
+function renderCard(snap, store, openFullscreen, onEditMode) {
   const card = document.createElement('div');
   card.className = 'saved-card';
   card.dataset.id = snap.id;

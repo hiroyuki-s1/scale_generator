@@ -1,12 +1,27 @@
-import { WHITE_KEYS, BLACK_KEYS, NOTES } from '../domain/constants.js';
+import { NOTES } from '../domain/constants.js';
 
-/** キー選択ボタン + ポップアップピアノ */
+const BLACK_PCS = new Set([1, 3, 6, 8, 10]);
+
+/** キー選択ボタン + ドロップダウングリッド */
 export function initKeyPicker(store) {
   const triggerBtn = document.getElementById('keyPickerBtn');
   const popup      = document.getElementById('keyPickerPopup');
-  const pianoEl    = document.getElementById('keyPickerPiano');
+  const gridEl     = document.getElementById('keyPickerPiano');
 
   let isOpen = false;
+
+  // Build 12-note grid once
+  NOTES.forEach((note, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'note-key ' + (BLACK_PCS.has(i) ? 'note-key-black' : 'note-key-white');
+    btn.dataset.idx = i;
+    btn.textContent = note;
+    btn.addEventListener('click', () => {
+      store.updateEdit({ rootIndex: i });
+      close();
+    });
+    gridEl.appendChild(btn);
+  });
 
   triggerBtn.addEventListener('click', e => {
     e.stopPropagation();
@@ -23,7 +38,7 @@ export function initKeyPicker(store) {
     isOpen = true;
     popup.classList.remove('hidden');
     position();
-    buildPiano();
+    syncActive();
   }
   function close() {
     isOpen = false;
@@ -31,51 +46,28 @@ export function initKeyPicker(store) {
   }
   function position() {
     const r = triggerBtn.getBoundingClientRect();
-    const pW = 300;
+    const pW = 340;
     let left = r.left;
     if (left + pW > window.innerWidth - 8) left = window.innerWidth - pW - 8;
     popup.style.top  = `${r.bottom + 6}px`;
     popup.style.left = `${Math.max(8, left)}px`;
   }
 
-  function buildPiano() {
-    pianoEl.innerHTML = '';
+  function syncActive() {
     const { rootIndex } = store.get().edit;
-    const WW = 40, BW = 25, WH = 72, BH = 46;
-    pianoEl.style.cssText = `position:relative;width:${WHITE_KEYS.length * WW}px;height:${WH}px`;
-
-    WHITE_KEYS.forEach((k, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'ppkey-w' + (k.idx === rootIndex ? ' ppkey-on' : '');
-      btn.style.cssText = `left:${i * WW}px;width:${WW - 2}px;height:${WH}px`;
-      btn.textContent = k.note;
-      btn.addEventListener('click', () => {
-        store.updateEdit({ rootIndex: k.idx });
-        close();
-      });
-      pianoEl.appendChild(btn);
-    });
-    BLACK_KEYS.forEach(k => {
-      const btn = document.createElement('button');
-      btn.className = 'ppkey-b' + (k.idx === rootIndex ? ' ppkey-on' : '');
-      btn.style.cssText = `left:${(k.wi + 1) * WW - BW / 2 - 1}px;width:${BW}px;height:${BH}px`;
-      btn.textContent = k.note;
-      btn.addEventListener('click', () => {
-        store.updateEdit({ rootIndex: k.idx });
-        close();
-      });
-      pianoEl.appendChild(btn);
+    gridEl.querySelectorAll('.note-key').forEach(btn => {
+      btn.classList.toggle('note-key-active', Number(btn.dataset.idx) === rootIndex);
     });
   }
 
   function syncBtn() {
-    const { rootIndex } = store.get().edit;
-    triggerBtn.textContent = `${NOTES[rootIndex]} ▾`;
+    triggerBtn.textContent = `${NOTES[store.get().edit.rootIndex]} ▾`;
   }
+
   syncBtn();
   store.subscribe((s, p) => {
     if (p && s.edit.rootIndex === p.edit.rootIndex) return;
     syncBtn();
-    if (isOpen) buildPiano();
+    if (isOpen) syncActive();
   });
 }

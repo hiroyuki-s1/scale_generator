@@ -438,7 +438,7 @@ input[type=range].mslider::-moz-range-thumb {
   flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px;
 }
 
-/* ── ポップアップピアノ ──────────────────────────────────────── */
+/* ── ポップアップ（ドロップダウン型） ───────────────────────── */
 .picker-popup {
   position: fixed; z-index: 600;
   background: var(--surface); border: 1px solid var(--border);
@@ -450,43 +450,28 @@ input[type=range].mslider::-moz-range-thumb {
   font-size: 9px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1.2px; color: var(--text-3); margin-bottom: 10px;
 }
-.popup-piano-wrap { position: relative; overflow: visible; }
 
-/* ポップアップピアノ の鍵盤 */
-.ppkey-w {
-  position: absolute; bottom: 0;
-  background: #fff; border: 1px solid #d0c8c0; border-top: none;
-  border-radius: 0 0 5px 5px; cursor: pointer;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end; padding-bottom: 5px;
-  transition: background .08s;
+/* 12ノート グリッド */
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  width: 300px;
 }
-.ppkey-w:hover { background: #faf8f5; }
-.ppkey-w.ppkey-on {
-  background: linear-gradient(180deg, #e75a30 0%, #c0511f 100%) !important;
-  border-color: #8a3013 !important; color: #fff !important;
+.note-key {
+  padding: 8px 2px; border-radius: 6px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  font-size: 11px; font-weight: 700;
+  font-family: 'Courier New', monospace;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 40px; text-align: center; line-height: 1.2;
+  transition: opacity .08s, border-color .08s;
 }
-.ppkey-b {
-  position: absolute; top: 0; z-index: 2;
-  background: linear-gradient(180deg, #38322e 0%, #1c1714 100%);
-  border: 1px solid #111; border-top: none; border-radius: 0 0 4px 4px;
-  cursor: pointer; display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end; padding-bottom: 4px;
-  transition: background .08s;
-}
-.ppkey-b:hover { background: linear-gradient(180deg, #4a433d 0%, #2a2420 100%); }
-.ppkey-b.ppkey-on {
-  background: linear-gradient(180deg, #e75a30 0%, #a83e12 100%) !important;
-  border-color: #6b2a0c !important;
-}
-.ppkey-root { opacity: .7; cursor: default !important; }
-.ppkey-note { font-size: 10px; font-weight: 700; color: inherit; }
-.ppkey-deg  { font-size: 7px; color: inherit; opacity: .8; margin-top: 1px; }
-/* White keys: note label only (color via parent) */
-.ppkey-w .ppkey-note { color: var(--text-2); }
-.ppkey-w.ppkey-on .ppkey-note { color: #fff; }
-.ppkey-b .ppkey-note { color: rgba(255,255,255,.65); }
-.ppkey-b.ppkey-on .ppkey-note { color: rgba(255,255,255,.9); }
+.note-key-white { background: var(--surface); color: var(--text); }
+.note-key-black { background: #2a2520; color: rgba(255,255,255,.8); border-color: #1a1512; }
+.note-key.note-key-active { background: var(--accent); border-color: #8a3013; color: #fff; }
+.note-key.root-key { cursor: default; opacity: .75; }
+.note-key:hover:not(.root-key) { border-color: var(--accent); opacity: .85; }
 
 .picker-popup-footer { margin-top: 10px; text-align: right; }
 .picker-done-btn {
@@ -858,13 +843,13 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* ── Editor: 縦積み ── */
   .editor { flex-direction: column; overflow: visible; height: auto; }
 
-  /* キー（左）+ スケール（右）グリッド、反映ボタンをキーの下に */
+  /* スケール（左）+ キー（右）グリッド、反映ボタンをキーの下に */
   .editor-sidebar {
     width: 100%; border-right: none; border-bottom: 1px solid var(--border);
     padding: 10px 12px 12px; overflow-y: visible;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-areas: "key scale" "apply scale";
+    grid-template-areas: "scale key" "scale apply";
     gap: 8px 12px;
   }
   .editor-sidebar .ctrl-group:first-child  { grid-area: key; }

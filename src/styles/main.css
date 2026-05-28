@@ -231,52 +231,58 @@ body {
   font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
 }
 .scale-cat-sel:focus, .scale-name-sel:focus { border-color: var(--accent); }
-/* ── エディターモードバナー ── */
-@keyframes banner-slide-in {
-  from { transform: translateY(-100%); opacity: 0; }
-  to   { transform: translateY(0);     opacity: 1; }
+/* ── エディターモードバナー (ヘッダー中央) ── */
+@keyframes mode-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1);   opacity: 1; }
 }
-@keyframes banner-pulse-edit {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.5); }
-  50%       { box-shadow: 0 0 0 8px rgba(230, 81, 0, 0); }
+@keyframes edit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 112, 67, 0.6), inset 0 0 0 0 rgba(255,112,67,.1); }
+  50%       { box-shadow: 0 0 0 6px rgba(255, 112, 67, 0), inset 0 0 12px rgba(255,112,67,.15); }
 }
-@keyframes banner-shimmer {
+@keyframes edit-shimmer {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
 }
+@keyframes new-breathe {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .75; }
+}
 
 .editor-mode-banner {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 18px;
-  font-size: 13px; font-weight: 800; letter-spacing: 1px;
-  font-family: inherit;
-  animation: banner-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 5px 14px;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.8px;
+  font-family: inherit; border-radius: 8px; margin: 0 8px;
+  animation: mode-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .editor-mode-banner.new-mode {
-  background: linear-gradient(90deg, #e8f5e9, #c8e6c9, #e8f5e9);
-  color: #1b5e20;
-  border-bottom: 2px solid #66bb6a;
+  background: linear-gradient(135deg, #e8f5e9, #dcedc8);
+  color: #2e7d32;
+  border: 1.5px solid #a5d6a7;
+  animation: mode-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+             new-breathe 3s ease-in-out 0.35s infinite;
 }
 .editor-mode-banner.edit-mode {
-  background: linear-gradient(90deg, #fff3e0 0%, #ffe0b2 40%, #fff3e0 60%, #ffe0b2 100%);
+  background: linear-gradient(90deg, #ffe0b2 0%, #ffcc80 30%, #ffe0b2 60%, #ffcc80 100%);
   background-size: 200% auto;
   color: #bf360c;
-  border-bottom: 3px solid #ff7043;
-  animation: banner-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-             banner-shimmer 2s linear infinite,
-             banner-pulse-edit 1.8s ease-in-out infinite;
+  border: 2px solid #ff7043;
+  animation: mode-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+             edit-shimmer 1.8s linear 0.35s infinite,
+             edit-pulse 1.6s ease-in-out 0.35s infinite;
 }
-.editor-mode-label-icon {
-  margin-right: 6px; font-size: 15px;
-}
+.editor-mode-label-icon { font-size: 14px; }
 .editor-mode-cancel {
-  background: rgba(0,0,0,.08); border: 1.5px solid currentColor; cursor: pointer;
-  font-size: 12px; font-weight: 700; color: inherit;
-  padding: 4px 12px; border-radius: 20px; line-height: 1.4;
-  font-family: inherit; letter-spacing: 0.5px;
+  background: rgba(0,0,0,.1); border: 1.5px solid currentColor; cursor: pointer;
+  font-size: 11px; font-weight: 700; color: inherit; white-space: nowrap;
+  padding: 3px 10px; border-radius: 20px; line-height: 1.4;
+  font-family: inherit; letter-spacing: 0.3px;
   transition: background .15s, transform .1s;
 }
-.editor-mode-cancel:hover { background: rgba(0,0,0,.16); transform: scale(1.05); }
+.editor-mode-cancel:hover { background: rgba(0,0,0,.18); transform: scale(1.05); }
 .editor-mode-cancel:active { transform: scale(.97); }
 .editor-mode-cancel.hidden { display: none; }
 

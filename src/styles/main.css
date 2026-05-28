@@ -852,14 +852,15 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .saved-section-hdr { display: none !important; }
   svg.fb { min-width: 0 !important; }
 
-  /* 印刷時: 編集/削除ボタンと指板上のオーバーレイ名は隠す */
+  /* 印刷時: 編集/削除ボタン・バッジ・指板上のオーバーレイ名は隠す */
   .saved-card-header { display: none !important; }
   .title-overlay { display: none !important; }
+  .new-badge, .edit-badge { display: none !important; }
   /* スケール名は指板の上にシンプルに印字 */
   .saved-print-title {
     display: block !important;
     font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-    font-size: 13pt;
+    font-size: 9pt;
     font-weight: 600;
     color: #18170f;
     letter-spacing: .5px;

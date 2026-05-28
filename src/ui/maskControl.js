@@ -1,6 +1,6 @@
 export function initMaskControl(container, store) {
   container.innerHTML = `
-    <button class="btn-mask" data-el="toggle">Mask OFF</button>
+    <button class="btn-mask" data-el="toggle">マスクOFF</button>
     <div class="mask-sliders" data-el="sliders" style="display:none">
       <div class="mslider-group">
         <span class="mslider-lbl">Min</span>
@@ -39,7 +39,7 @@ export function initMaskControl(container, store) {
 
   function sync() {
     const { mask } = store.get().edit;
-    toggle.textContent = mask.enabled ? 'Mask ON' : 'Mask OFF';
+    toggle.textContent = mask.enabled ? 'マスクON' : 'マスクOFF';
     toggle.classList.toggle('on', mask.enabled);
     sliders.style.display = mask.enabled ? 'flex' : 'none';
     minIn.value = mask.min;

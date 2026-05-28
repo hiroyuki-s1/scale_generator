@@ -10,9 +10,59 @@ function toKatakana(str) {
   return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 }
 
+const WARN_KEY = 'deleteWarnDisabled';
+
+/** カスタム削除確認ダイアログ。resolve(true)=削除OK、resolve(false)=キャンセル */
+function confirmDelete(message) {
+  return new Promise(resolve => {
+    const modal    = document.getElementById('deleteConfirmModal');
+    const msgEl    = document.getElementById('deleteConfirmMsg');
+    const checkbox = document.getElementById('deleteWarnDontShow');
+    const okBtn    = document.getElementById('deleteConfirmOk');
+    const cancelBtn = document.getElementById('deleteConfirmCancel');
+
+    msgEl.textContent = message;
+    checkbox.checked = false;
+    modal.classList.add('show');
+
+    function finish(result) {
+      modal.classList.remove('show');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onOverlay);
+      if (result && checkbox.checked) {
+        localStorage.setItem(WARN_KEY, '1');
+        updateRestoreBtn();
+      }
+      resolve(result);
+    }
+    const onOk      = () => finish(true);
+    const onCancel  = () => finish(false);
+    const onOverlay = e => { if (e.target === modal) finish(false); };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onOverlay);
+  });
+}
+
+function updateRestoreBtn() {
+  const restoreEl = document.getElementById('savedWarnRestore');
+  if (restoreEl) restoreEl.classList.toggle('hidden', !localStorage.getItem(WARN_KEY));
+}
+
 export function initSavedTab(container, store, openFullscreen, onEditMode = null) {
   const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
+
+  // 再有効化ボタン
+  updateRestoreBtn();
+  const restoreBtn = document.getElementById('savedWarnRestoreBtn');
+  if (restoreBtn) {
+    restoreBtn.addEventListener('click', () => {
+      localStorage.removeItem(WARN_KEY);
+      updateRestoreBtn();
+    });
+  }
 
   container.classList.add('screen-grid');
   container.style.gridTemplateColumns = 'repeat(2, 1fr)';
@@ -63,8 +113,13 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.5V1h3v1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
   </svg>削除`;
-  del.addEventListener('click', () => {
-    store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
+  del.addEventListener('click', async () => {
+    if (localStorage.getItem(WARN_KEY)) {
+      store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
+      return;
+    }
+    const ok = await confirmDelete(`「${snap.title}」を削除しますか？`);
+    if (ok) store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
   });
 
   hdr.appendChild(editBtn);

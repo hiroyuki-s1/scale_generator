@@ -77,7 +77,7 @@ export function initDegreePicker(store) {
 
   function syncTrigger() {
     const { activeDegrees } = store.get().edit;
-    triggerBtn.textContent = `度数設定 (${activeDegrees.size}) ▾`;
+    triggerBtn.textContent = `スケール設定  設定数：${activeDegrees.size}`;
   }
 
   syncTrigger();

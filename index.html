@@ -121,7 +121,7 @@
 
       <!-- 度数行: [度数ボタン] + [度数チップ] -->
       <div class="deg-display-row">
-        <button class="deg-picker-btn" id="degPickerBtn">度数 ▾</button>
+        <button class="deg-picker-btn" id="degPickerBtn">スケール設定  設定数：0</button>
         <div class="legend" id="legend"></div>
       </div>
 
@@ -144,15 +144,14 @@
         </div>
         <div class="ireal-song-header hidden" id="irealSongName"></div>
         <div class="ireal-chip-strip" id="irealChordGrid"></div>
+        <button class="ireal-register-all-btn hidden" id="irealRegisterAll">
+          ⚠️ 全コードを登録スケールに一括登録（既存を全て削除）
+        </button>
       </div>
 
     </div><!-- /editor-fretboard -->
   </div><!-- /editor -->
 
-  <!-- ── 登録スケール名一覧（コンパクト） ──────────────────────────── -->
-  <div class="name-list-bar" id="nameListBar">
-    <div class="name-chips" id="nameChips"></div>
-  </div>
 
 </div><!-- /panelEditor -->
 
@@ -175,10 +174,28 @@
       <div class="saved-empty-hint">スケール名を入力して「登録」を押すとここに表示されます</div>
     </div>
     <div id="savedGrid"></div>
+    <div class="saved-warn-restore hidden" id="savedWarnRestore">
+      <button class="btn-warn-restore" id="savedWarnRestoreBtn">🔔 削除時の警告を有効にする</button>
+    </div>
   </section>
 </div><!-- /panelSaved -->
 
 </div><!-- /app-body -->
+
+<!-- ── 削除確認ダイアログ ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal-box">
+    <div class="modal-title">削除の確認</div>
+    <div class="modal-body" id="deleteConfirmMsg"></div>
+    <label class="delete-warn-check-label">
+      <input type="checkbox" id="deleteWarnDontShow"> 今後この警告を表示しない
+    </label>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="deleteConfirmCancel">キャンセル</button>
+      <button class="modal-confirm modal-confirm-danger" id="deleteConfirmOk">削除</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── キー選択ポップアップ ────────────────────────────────────────── -->
 <div class="picker-popup hidden" id="keyPickerPopup">

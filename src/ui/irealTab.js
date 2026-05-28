@@ -1,5 +1,6 @@
 import { parseIrealUrl } from '../domain/ireal.js';
 import { qualityToChordTones } from '../domain/chordTones.js';
+import { cloneEditAsSnapshot } from '../state/snapshot.js';
 
 /**
  * iReal Pro section — lives in the edit tab sidebar.
@@ -10,12 +11,13 @@ import { qualityToChordTones } from '../domain/chordTones.js';
  * all work naturally with iReal chords.
  */
 export function initIrealSection(store) {
-  const fileBtn    = document.getElementById('irealFileBtn');
-  const input      = document.getElementById('irealInput');
-  const parseBtn   = document.getElementById('irealParseBtn');
-  const sectionEl  = document.getElementById('irealSection');
-  const songNameEl = document.getElementById('irealSongName');
-  const gridEl     = document.getElementById('irealChordGrid');
+  const fileBtn        = document.getElementById('irealFileBtn');
+  const input          = document.getElementById('irealInput');
+  const parseBtn       = document.getElementById('irealParseBtn');
+  const sectionEl      = document.getElementById('irealSection');
+  const songNameEl     = document.getElementById('irealSongName');
+  const gridEl         = document.getElementById('irealChordGrid');
+  const registerAllBtn = document.getElementById('irealRegisterAll');
 
   let chords = [];
 
@@ -71,7 +73,10 @@ export function initIrealSection(store) {
       songNameEl.textContent = `${song.title}  /  Key: ${song.key}`;
       songNameEl.classList.remove('hidden');
       buildGrid();
-      if (chords.length > 0) selectChord(0);
+      if (chords.length > 0) {
+        selectChord(0);
+        registerAllBtn.classList.remove('hidden');
+      }
     } catch (e) {
       songNameEl.textContent = `エラー: ${e.message}`;
       songNameEl.classList.remove('hidden');
@@ -96,6 +101,30 @@ export function initIrealSection(store) {
       gridEl.appendChild(chip);
     });
   }
+
+  registerAllBtn.addEventListener('click', () => {
+    if (chords.length === 0) return;
+    const { saved } = store.get();
+    const msg = saved.length > 0
+      ? `登録済みのスケール ${saved.length} 件をすべて削除して、\niReal Proのコード ${chords.length} 件を新たに登録します。\nこの操作は元に戻せません。よろしいですか？`
+      : `iReal Proのコード ${chords.length} 件を登録スケールに追加します。\nよろしいですか？`;
+    if (!confirm(msg)) return;
+    store.set(state => {
+      let nextId = 1;
+      const newSaved = chords.map(c => {
+        const editSnap = {
+          rootIndex: c.rootPc,
+          activeDegrees: new Set(qualityToChordTones(c.quality)),
+          presetName: c.quality || c.displayName,
+          mode: 'chord',
+          mask: { enabled: false, min: 1, max: 15 },
+          degreeColors: state.edit.degreeColors,
+        };
+        return { title: c.displayName, ...cloneEditAsSnapshot(editSnap), id: nextId++ };
+      });
+      return { ...state, saved: newSaved, nextId };
+    });
+  });
 
   function selectChord(idx) {
     gridEl.querySelectorAll('.ireal-chip').forEach((el, i) => {

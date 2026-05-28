@@ -95,7 +95,7 @@ function setEditMode(snap) {
   banner.style.animation = 'none';
   requestAnimationFrame(() => { banner.style.animation = ''; });
   document.getElementById('editorModeLabel').innerHTML =
-    `<span class="editor-mode-label-icon">✏️</span>編集中: ${snap.title}`;
+    '<span class="editor-mode-label-icon">✏️</span>編集中';
   document.getElementById('registerBtnLabel').textContent = '更新';
   document.getElementById('editorModeCancel').classList.remove('hidden');
   document.querySelector('.editor')?.classList.add('editor--edit-mode');
@@ -211,24 +211,6 @@ function closeFbFullscreen() {
 fbFullscreen.addEventListener('click', closeFbFullscreen);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
-});
-
-// ── 登録スケール名チップ（コンパクト一覧） ─────────────────────────────
-const nameChipsEl = document.getElementById('nameChips');
-function updateNameChips(saved) {
-  nameChipsEl.innerHTML = '';
-  saved.forEach(snap => {
-    const chip = document.createElement('button');
-    chip.className = 'name-chip';
-    chip.textContent = snap.title;
-    chip.addEventListener('click', () => openFbFullscreen(snap, snap.title));
-    nameChipsEl.appendChild(chip);
-  });
-}
-updateNameChips(store.get().saved);
-store.subscribe((s, p) => {
-  if (p && s.saved === p.saved) return;
-  updateNameChips(s.saved);
 });
 
 // 編集指板クリックで全画面

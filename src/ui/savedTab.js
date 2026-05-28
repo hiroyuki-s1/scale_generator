@@ -123,13 +123,24 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     container.querySelectorAll('.saved-card').forEach(c => {
       const match = Number(c.dataset.id) === id;
       c.classList.toggle('newly-added', match);
-      if (match) spawnParticles(c);
+      if (match) {
+        spawnParticles(c);
+        if (!c.querySelector('.new-badge')) {
+          const badge = document.createElement('div');
+          badge.className = 'new-badge';
+          badge.textContent = 'NEW!';
+          c.appendChild(badge);
+        }
+      }
     });
   }
 
   function clearNewlyAdded() {
     currentNewId = null;
-    container.querySelectorAll('.newly-added').forEach(c => c.classList.remove('newly-added'));
+    container.querySelectorAll('.newly-added').forEach(c => {
+      c.classList.remove('newly-added');
+      c.querySelector('.new-badge')?.remove();
+    });
   }
 
   render();

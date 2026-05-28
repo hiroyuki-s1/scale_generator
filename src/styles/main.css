@@ -1063,3 +1063,33 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   transform-origin: center;
   animation: particle-fly 0.65s cubic-bezier(.22,1,.36,1) forwards;
 }
+
+/* NEW! バッジ */
+@keyframes new-badge-pop {
+  0%   { transform: rotate(-15deg) scale(0) translate(-50%, -50%); opacity: 0; }
+  60%  { transform: rotate(-15deg) scale(1.25) translate(-50%, -50%); opacity: 1; }
+  80%  { transform: rotate(-15deg) scale(.92) translate(-50%, -50%); }
+  100% { transform: rotate(-15deg) scale(1) translate(-50%, -50%); opacity: 1; }
+}
+.new-badge {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: rotate(-15deg) translate(-50%, -50%);
+  transform-origin: center;
+  background: linear-gradient(135deg, #ff4d6d, #ff9f1c);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(255,77,109,.5), 0 1px 0 rgba(255,255,255,.3) inset;
+  pointer-events: none;
+  z-index: 10;
+  animation: new-badge-pop 0.45s cubic-bezier(.34,1.56,.64,1) both;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  white-space: nowrap;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+.saved-card { position: relative; }

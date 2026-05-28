@@ -59,8 +59,15 @@ function renderCard(snap, store) {
   inp.type = 'text';
   inp.className = 'saved-title-input';
   inp.value = snap.title;
+
+  // Print copy: <input> value doesn't render in print; use a visible span instead
+  const printTitle = document.createElement('span');
+  printTitle.className = 'saved-title-print';
+  printTitle.textContent = snap.title;
+
   inp.addEventListener('input', e => {
     const newTitle = e.target.value;
+    printTitle.textContent = newTitle;
     store.set(state => ({
       ...state,
       saved: state.saved.map(s => s.id === snap.id ? { ...s, title: newTitle } : s),
@@ -75,6 +82,7 @@ function renderCard(snap, store) {
   });
 
   hdr.appendChild(inp);
+  hdr.appendChild(printTitle);
   hdr.appendChild(del);
   card.appendChild(hdr);
 

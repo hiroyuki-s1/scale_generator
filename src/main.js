@@ -17,7 +17,6 @@ import {
   setMaskOverlayVisible,
 } from './ui/fretboardSvg.js';
 import { renderLegend } from './ui/legend.js';
-import { initTabs } from './ui/tabs.js';
 import { initSavedTab } from './ui/savedTab.js';
 import { initSaveModal } from './ui/saveModal.js';
 import { initColorModal } from './ui/colorModal.js';
@@ -61,8 +60,20 @@ initPiano(document.getElementById('piano'), store);
 initPresetSelector(document.getElementById('presetSelectorMount'), store);
 initDegreeToggle(document.getElementById('degBtns'), store);
 initMaskControl(document.getElementById('maskControl'), store);
-initTabs(store);
 initSavedTab(document.getElementById('savedGrid'), store);
+
+// Update saved badge count
+const savedBadgeEl = document.getElementById('savedBadge');
+function updateBadge(n) {
+  if (!savedBadgeEl) return;
+  savedBadgeEl.textContent = n;
+  savedBadgeEl.style.display = n > 0 ? '' : 'none';
+}
+updateBadge(store.get().saved.length);
+store.subscribe((s, p) => {
+  if (p && s.saved.length === p.saved.length) return;
+  updateBadge(s.saved.length);
+});
 initSaveModal(store, document.getElementById('saveBtn'));
 initColorModal(store, document.getElementById('colorBtn'));
 initIrealSection(store);

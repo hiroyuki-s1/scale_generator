@@ -231,12 +231,32 @@ body {
   font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
 }
 .scale-cat-sel:focus, .scale-name-sel:focus { border-color: var(--accent); }
-.scale-apply-btn {
-  padding: 8px 14px; border: none; background: var(--accent);
-  color: #fff; border-radius: 7px; font-size: 12px; font-weight: 700;
-  font-family: inherit; cursor: pointer; width: 100%; transition: opacity .1s;
+/* ── エディターモードバナー ── */
+.editor-mode-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; border-radius: 7px 7px 0 0;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  font-family: inherit;
 }
-.scale-apply-btn:hover { opacity: .85; }
+.editor-mode-banner.new-mode {
+  background: #e8f5e9; color: #2e7d32;
+}
+.editor-mode-banner.edit-mode {
+  background: #fff3e0; color: #e65100;
+}
+.editor-mode-cancel {
+  background: none; border: none; cursor: pointer; font-size: 14px;
+  color: inherit; opacity: .7; padding: 0 2px; line-height: 1;
+}
+.editor-mode-cancel:hover { opacity: 1; }
+.editor-mode-cancel.hidden { display: none; }
+
+/* 編集モード中の指板エリアにボーダー */
+.editor--edit-mode .editor-fretboard {
+  outline: 2px solid #f5a623;
+  outline-offset: -2px;
+  border-radius: 4px;
+}
 
 .editor-fretboard {
   flex: 1; display: flex; flex-direction: column;
@@ -829,25 +849,23 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* ── Editor: 縦積み ── */
   .editor { flex-direction: column; overflow: visible; height: auto; }
 
-  /* スケール（左）+ キー（右）グリッド、反映ボタンをキーの下に */
+  /* スケール（左）+ キー（右）グリッド */
   .editor-sidebar {
     width: 100%; border-right: none; border-bottom: 1px solid var(--border);
     padding: 10px 12px 12px; overflow-y: visible;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-areas: "scale key" "scale apply";
-    grid-template-rows: auto 44px;
+    grid-template-areas: "scale key";
+    grid-template-rows: auto;
     gap: 8px 12px;
     align-items: start;
   }
   .editor-sidebar .ctrl-group:first-child  { grid-area: key; }
   .editor-sidebar .ctrl-group:nth-child(2) { grid-area: scale; }
-  .editor-sidebar .scale-apply-btn         { grid-area: apply; align-self: stretch; }
   .ctrl-group { flex: none; }
   .ctrl-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
   .key-picker-btn { font-size: 18px; height: 44px; width: 100%; }
   .scale-cat-sel, .scale-name-sel { font-size: 15px; height: 44px; min-height: 44px; }
-  .scale-apply-btn { height: 44px; font-size: 15px; width: 100%; }
 
   /* ── 指板エリア ── */
   .editor-fretboard { padding: 8px 8px 12px; gap: 4px; }

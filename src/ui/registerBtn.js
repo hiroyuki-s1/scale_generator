@@ -1,15 +1,29 @@
 import { cloneEditAsSnapshot } from '../state/snapshot.js';
 
-/** 登録ボタン: モーダルなしで即座に保存 + トーストを表示 */
-export function initRegisterBtn(store, registerBtn, titleInputEl) {
+/**
+ * 登録ボタン。
+ * options.getEditingId() が非 null のとき → 既存スケールを上書き更新（編集モード）
+ * options.onComplete()  → 保存後に呼ばれる（編集モード解除など）
+ */
+export function initRegisterBtn(store, registerBtn, titleInputEl, options = {}) {
   registerBtn.addEventListener('click', () => {
-    const title = (titleInputEl?.value?.trim()) || '無題';
+    const title     = (titleInputEl?.value?.trim()) || '無題';
+    const editingId = options.getEditingId?.() ?? null;
+
     store.set(state => {
+      const snap = { title, ...cloneEditAsSnapshot(state.edit) };
+      if (editingId != null) {
+        return {
+          ...state,
+          saved: state.saved.map(s => s.id === editingId ? { ...snap, id: editingId } : s),
+        };
+      }
       const id = state.nextId;
-      const snap = { id, title, ...cloneEditAsSnapshot(state.edit) };
-      return { ...state, saved: [...state.saved, snap], nextId: id + 1 };
+      return { ...state, saved: [...state.saved, { ...snap, id }], nextId: id + 1 };
     });
-    showToast('登録しました');
+
+    showToast(editingId != null ? '更新しました' : '登録しました');
+    options.onComplete?.();
   });
 }
 

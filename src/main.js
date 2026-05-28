@@ -84,8 +84,50 @@ initKeyPicker(store);
 initScalePicker(store);
 initDegreePicker(store);
 initMaskControl(document.getElementById('maskControl'), store);
-initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl);
-initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title));
+// ── 編集モード管理 ────────────────────────────────────────────────────
+let editingId = null;
+
+function setEditMode(snap) {
+  editingId = snap.id;
+  document.getElementById('editorModeLabel').textContent = `編集中: ${snap.title}`;
+  document.getElementById('editorModeBanner').className = 'editor-mode-banner edit-mode';
+  document.getElementById('registerBtnLabel').textContent = '更新';
+  document.getElementById('editorModeCancel').classList.remove('hidden');
+  document.querySelector('.editor')?.classList.add('editor--edit-mode');
+}
+
+function clearEditMode() {
+  editingId = null;
+  document.getElementById('editorModeLabel').textContent = '新規登録';
+  document.getElementById('editorModeBanner').className = 'editor-mode-banner new-mode';
+  document.getElementById('registerBtnLabel').textContent = '登録';
+  document.getElementById('editorModeCancel').classList.add('hidden');
+  document.querySelector('.editor')?.classList.remove('editor--edit-mode');
+}
+
+function loadSnapToEditor(snap) {
+  store.updateEdit({
+    rootIndex: snap.rootIndex,
+    activeDegrees: new Set(snap.activeDegrees),
+    presetName: snap.presetName,
+    mode: snap.mode,
+    mask: { ...snap.mask },
+    degreeColors: snap.degreeColors,
+  });
+  titleInputEl.value = snap.title;
+  userEditedTitle = true;
+  setEditMode(snap);
+  tabNav.querySelector('[data-tab="editor"]')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('editorModeCancel').addEventListener('click', clearEditMode);
+
+initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
+  getEditingId: () => editingId,
+  onComplete: clearEditMode,
+});
+initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
 initColorModal(store, document.getElementById('colorBtn'));
 initIrealSection(store);
 initLayoutPicker(store);

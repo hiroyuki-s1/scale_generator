@@ -11,7 +11,7 @@ function toKatakana(str) {
   return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 }
 
-export function initSavedTab(container, store, openFullscreen) {
+export function initSavedTab(container, store, openFullscreen, onEditMode) {
   const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
 
@@ -56,20 +56,7 @@ function renderCard(snap, store, openFullscreen) {
   editBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/>
   </svg>編集`;
-  editBtn.addEventListener('click', () => {
-    if (!confirm(`「${snap.title}」を読み込みます。\n現在の編集内容は失われます。よろしいですか？`)) return;
-    store.updateEdit({
-      rootIndex:     snap.rootIndex,
-      activeDegrees: new Set(snap.activeDegrees),
-      presetName:    snap.presetName,
-      mode:          snap.mode,
-      mask:          { ...snap.mask },
-      degreeColors:  snap.degreeColors,
-    });
-    const ti = document.getElementById('fbTitleInput');
-    if (ti) { ti.value = snap.title; }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  editBtn.addEventListener('click', () => onEditMode?.(snap));
 
   const del = document.createElement('button');
   del.className = 'btn-delete';

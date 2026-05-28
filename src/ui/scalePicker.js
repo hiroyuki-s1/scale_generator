@@ -10,11 +10,10 @@ const GROUPS = [
   { label: 'コード / テンション', presets: CHORD_GROUPS[2].presets, mode: 'chord' },
 ];
 
-/** 2段階スケール選択 + 反映ボタン */
+/** 2段階スケール選択（自動反映） */
 export function initScalePicker(store) {
-  const catSel   = document.getElementById('scaleCatSel');
-  const nameSel  = document.getElementById('scaleNameSel');
-  const applyBtn = document.getElementById('scaleApplyBtn');
+  const catSel  = document.getElementById('scaleCatSel');
+  const nameSel = document.getElementById('scaleNameSel');
 
   // 大カテゴリを構築
   GROUPS.forEach((g, i) => {
@@ -35,16 +34,27 @@ export function initScalePicker(store) {
     });
   }
 
-  catSel.addEventListener('change', fillNames);
-  applyBtn.addEventListener('click', () => {
+  function applySelected() {
     const found = findPresetEverywhere(nameSel.value);
     if (!found) return;
+    const { edit } = store.get();
+    if (edit.presetName === null) {
+      if (!confirm('カスタム設定した度数が失われます。\nスケールを変更しますか？')) {
+        syncSel();  // revert dropdown to current store state
+        return;
+      }
+    }
     store.updateEdit({
       presetName: found.preset.name,
       mode: found.mode,
       activeDegrees: new Set(found.preset.degrees),
     });
-  });
+  }
+
+  // カテゴリ変更 → 名前リスト再構築して即反映
+  catSel.addEventListener('change', () => { fillNames(); applySelected(); });
+  // 名前変更 → 即反映
+  nameSel.addEventListener('change', applySelected);
 
   function syncSel() {
     const { presetName } = store.get().edit;

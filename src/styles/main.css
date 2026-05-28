@@ -469,7 +469,7 @@ input[type=range].mslider::-moz-range-thumb {
 }
 .note-key-white { background: var(--surface); color: var(--text); }
 .note-key-black { background: #2a2520; color: rgba(255,255,255,.8); border-color: #1a1512; }
-.note-key.note-key-active { background: var(--accent); border-color: #8a3013; color: #fff; }
+.note-key.note-key-active { background: #e53e3e; border-color: #c53030; color: #fff; }
 .note-key.root-key { cursor: default; opacity: .75; }
 .note-key:hover:not(.root-key) { border-color: var(--accent); opacity: .85; }
 

@@ -1,8 +1,6 @@
 import { DEGREES } from '../domain/constants.js';
 import { renderLegend } from './legend.js';
 
-const BLACK_SEMITONES = new Set([1, 3, 6, 8, 10]);
-
 /** 度数設定ボタン + ドロップダウングリッド + 指板下の度数チップ表示 */
 export function initDegreePicker(store) {
   const triggerBtn = document.getElementById('degPickerBtn');
@@ -13,18 +11,14 @@ export function initDegreePicker(store) {
 
   let isOpen = false;
 
-  // Build 12-degree grid once
+  // Build 12-degree grid once — all white, selected = red via CSS
   DEGREES.forEach(deg => {
     const semi = deg.semi;
     const btn = document.createElement('button');
-    btn.className = 'note-key ' + (BLACK_SEMITONES.has(semi) ? 'note-key-black' : 'note-key-white');
+    btn.className = 'note-key note-key-white';
     btn.dataset.semi = semi;
     btn.textContent = deg.name;
-    if (semi === 0) {
-      btn.classList.add('root-key');
-    } else {
-      btn.addEventListener('click', () => toggle(semi));
-    }
+    btn.addEventListener('click', () => toggle(semi));
     gridEl.appendChild(btn);
   });
 
@@ -67,21 +61,9 @@ export function initDegreePicker(store) {
   }
 
   function syncStyles() {
-    const { activeDegrees, degreeColors } = store.get().edit;
+    const { activeDegrees } = store.get().edit;
     gridEl.querySelectorAll('.note-key').forEach(btn => {
-      const semi = Number(btn.dataset.semi);
-      const isActive = activeDegrees.has(semi);
-      const dc = isActive ? degreeColors[semi] : null;
-      btn.classList.toggle('note-key-active', isActive);
-      if (isActive && dc) {
-        btn.style.background  = dc.solid ? dc.color : (BLACK_SEMITONES.has(semi) ? '#2a2520' : 'var(--surface)');
-        btn.style.borderColor = dc.color;
-        btn.style.color       = dc.text;
-      } else {
-        btn.style.background  = '';
-        btn.style.borderColor = '';
-        btn.style.color       = '';
-      }
+      btn.classList.toggle('note-key-active', activeDegrees.has(Number(btn.dataset.semi)));
     });
   }
 
@@ -89,7 +71,6 @@ export function initDegreePicker(store) {
     store.updateEdit(edit => {
       const next = new Set(edit.activeDegrees);
       if (next.has(semi)) next.delete(semi); else next.add(semi);
-      next.add(0); // ルートは常にオン
       return { activeDegrees: next, presetName: null };
     });
   }
@@ -103,9 +84,7 @@ export function initDegreePicker(store) {
   renderLegend(legendEl, store.get().edit);
 
   store.subscribe((s, p) => {
-    const degChanged   = !p || s.edit.activeDegrees !== p.edit.activeDegrees;
-    const colorChanged = !p || s.edit.degreeColors  !== p.edit.degreeColors;
-    if (!degChanged && !colorChanged) return;
+    if (p && s.edit.activeDegrees === p.edit.activeDegrees) return;
     syncTrigger();
     renderLegend(legendEl, s.edit);
     if (isOpen) syncStyles();

@@ -62,8 +62,20 @@
   </div>
 </header>
 
+<!-- ── タブナビゲーション ──────────────────────────────────────────── -->
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="editor">エディター</button>
+  <button class="tab-btn" data-tab="saved">
+    登録スケール
+    <span class="tab-badge" id="savedBadge" style="display:none">0</span>
+  </button>
+</div>
+
 <!-- ── 1画面レイアウト ──────────────────────────────────────────────── -->
 <div class="app-body">
+
+<!-- ── エディターパネル ────────────────────────────────────────────── -->
+<div class="tab-panel" id="panelEditor">
 
   <!-- ── スケールエディター ──────────────────────────────────────────── -->
   <div class="editor">
@@ -92,11 +104,11 @@
 
       <!-- スケール名 (編集可能) + 登録ボタン -->
       <div class="fb-header">
-        <input class="fb-title-input" id="fbTitleInput" placeholder="スケール名を入力..." autocomplete="off" spellcheck="false">
         <button class="btn-register" id="registerBtn">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4.5L10.5 0H2zM10 1.5V5h3.5L10 1.5z"/><path d="M8.5 11.5v-3h1v3h-1zm0 1.5h1v1h-1v-1z" fill="#fff"/></svg>
           登録
         </button>
+        <input class="fb-title-input" id="fbTitleInput" placeholder="スケール名を入力..." autocomplete="off" spellcheck="false">
       </div>
 
       <!-- 指板 -->
@@ -134,12 +146,16 @@
     </div><!-- /editor-fretboard -->
   </div><!-- /editor -->
 
-  <!-- ── 登録済みスケール ────────────────────────────────────────────── -->
+  <!-- ── 登録スケール名一覧（コンパクト） ──────────────────────────── -->
+  <div class="name-list-bar" id="nameListBar">
+    <div class="name-chips" id="nameChips"></div>
+  </div>
+
+</div><!-- /panelEditor -->
+
+<!-- ── 登録スケールパネル ─────────────────────────────────────────── -->
+<div class="tab-panel hidden" id="panelSaved">
   <section class="saved-section" id="savedSection">
-    <div class="saved-section-hdr">
-      <span class="saved-section-title">登録済みスケール</span>
-      <span class="tab-badge" id="savedBadge" style="display:none">0</span>
-    </div>
     <div class="saved-empty" id="savedEmpty">
       <div class="saved-empty-icon">📋</div>
       <div class="saved-empty-title">登録済みのスケールはありません</div>
@@ -147,6 +163,7 @@
     </div>
     <div id="savedGrid"></div>
   </section>
+</div><!-- /panelSaved -->
 
 </div><!-- /app-body -->
 

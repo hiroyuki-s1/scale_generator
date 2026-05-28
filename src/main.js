@@ -93,6 +93,19 @@ initOrientation(store);
 initHeaderMenu(store);
 initPrintCss(store);
 
+// ── タブナビゲーション ─────────────────────────────────────────────────
+const tabNav      = document.getElementById('tabNav');
+const panelEditor = document.getElementById('panelEditor');
+const panelSaved  = document.getElementById('panelSaved');
+tabNav.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    panelEditor.classList.toggle('hidden', btn.dataset.tab !== 'editor');
+    panelSaved.classList.toggle('hidden', btn.dataset.tab !== 'saved');
+    if (btn.dataset.tab === 'editor') window.scrollTo({ top: 0, behavior: 'instant' });
+  });
+});
+
 // ── 保存済みバッジ ─────────────────────────────────────────────────────
 const savedBadgeEl = document.getElementById('savedBadge');
 function updateBadge(n) {
@@ -140,6 +153,24 @@ fbFullscreen.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
+});
+
+// ── 登録スケール名チップ（コンパクト一覧） ─────────────────────────────
+const nameChipsEl = document.getElementById('nameChips');
+function updateNameChips(saved) {
+  nameChipsEl.innerHTML = '';
+  saved.forEach(snap => {
+    const chip = document.createElement('button');
+    chip.className = 'name-chip';
+    chip.textContent = snap.title;
+    chip.addEventListener('click', () => openFbFullscreen(snap, snap.title));
+    nameChipsEl.appendChild(chip);
+  });
+}
+updateNameChips(store.get().saved);
+store.subscribe((s, p) => {
+  if (p && s.saved === p.saved) return;
+  updateNameChips(s.saved);
 });
 
 // 編集指板クリックで全画面

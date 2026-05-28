@@ -1,5 +1,23 @@
 import { SCALE_GROUPS, CHORD_GROUPS, findPresetEverywhere } from '../domain/constants.js';
 
+const JA_NAMES = {
+  'Major Penta':   'メジャーペンタ',
+  'Minor Penta':   'マイナーペンタ',
+  'Blues':         'ブルース',
+  'Major':         'メジャー',
+  'Lydian':        'リディアン',
+  'Mixolydian':    'ミクソリディアン',
+  'Dorian':        'ドリアン',
+  'Natural Minor': 'ナチュラルマイナー',
+  'Phrygian':      'フリジアン',
+  'Locrian':       'ロクリアン',
+  'Lydian Dom':    'リディアンドミナント',
+  'Altered':       'オルタード',
+  'Locrian #2':    'ロクリアン♯2',
+  'Harmonic Min':  'ハーモニックマイナー',
+  'Diminished':    'ディミニッシュド',
+};
+
 const GROUPS = [
   { label: 'ペンタトニック', presets: SCALE_GROUPS[0].presets, mode: 'scale' },
   { label: 'ダイアトニック',  presets: SCALE_GROUPS[1].presets, mode: 'scale' },
@@ -29,7 +47,7 @@ export function initScalePicker(store) {
     GROUPS[gi].presets.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.name;
-      opt.textContent = p.name;
+      opt.textContent = JA_NAMES[p.name] || p.name;
       nameSel.appendChild(opt);
     });
   }

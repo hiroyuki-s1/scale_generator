@@ -850,16 +850,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-areas: "scale key" "scale apply";
+    grid-template-rows: auto 48px;
     gap: 8px 12px;
+    align-items: start;
   }
   .editor-sidebar .ctrl-group:first-child  { grid-area: key; }
   .editor-sidebar .ctrl-group:nth-child(2) { grid-area: scale; }
-  .editor-sidebar .scale-apply-btn         { grid-area: apply; align-self: end; }
+  .editor-sidebar .scale-apply-btn         { grid-area: apply; align-self: stretch; }
   .ctrl-group { flex: none; }
   .ctrl-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
-  .key-picker-btn { font-size: 18px; min-height: 48px; width: 100%; }
+  .key-picker-btn { font-size: 18px; height: 48px; width: 100%; }
   .scale-cat-sel, .scale-name-sel { font-size: 15px; min-height: 44px; }
-  .scale-apply-btn { min-height: 48px; font-size: 15px; width: 100%; }
+  .scale-apply-btn { height: 48px; font-size: 15px; width: 100%; }
 
   /* ── 指板エリア ── */
   .editor-fretboard { padding: 8px 8px 12px; gap: 4px; }

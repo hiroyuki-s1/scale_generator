@@ -72,13 +72,20 @@ optgroup付き `<select>` で全グループ・全プリセットを選択する
 | Penta     | Major Penta    | 0, 2, 4, 7, 9                   |
 | Penta     | Minor Penta    | 0, 3, 5, 7, 10                  |
 | Penta     | Blues          | 0, 3, 5, 6, 7, 10               |
-| Diatonic  | Major          | 0, 2, 4, 5, 7, 9, 11            |
-| Diatonic  | Natural Minor  | 0, 2, 3, 5, 7, 8, 10            |
-| Diatonic  | Dorian         | 0, 2, 3, 5, 7, 9, 10            |
+| Diatonic  | Ionian         | 0, 2, 4, 5, 7, 9, 11            |
+| Diatonic  | Lydian         | 0, 2, 4, 6, 7, 9, 11            |
 | Diatonic  | Mixolydian     | 0, 2, 4, 5, 7, 9, 10            |
+| Diatonic  | Dorian         | 0, 2, 3, 5, 7, 9, 10            |
+| Diatonic  | Natural Minor  | 0, 2, 3, 5, 7, 8, 10            |
+| Diatonic  | Phrygian       | 0, 1, 3, 5, 7, 8, 10            |
+| Diatonic  | Locrian        | 0, 1, 3, 5, 6, 8, 10            |
 | Advanced  | Lydian Dom     | 0, 2, 4, 6, 7, 9, 10            |
 | Advanced  | Altered        | 0, 1, 3, 4, 6, 8, 10            |
+| Advanced  | Locrian #2     | 0, 2, 3, 5, 6, 8, 10            |
 | Advanced  | Harmonic Min   | 0, 2, 3, 5, 7, 8, 11            |
+| Advanced  | Diminished     | 0, 1, 3, 4, 6, 7, 9, 10         |
+
+チャーチモードは慣用名ではなくモード名で表記する（Ionian であって Major ではない）。
 
 **コードトーン** (mode: 'chord')
 

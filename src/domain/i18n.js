@@ -3,7 +3,7 @@ export const SCALE_NAME_JA = {
   'Major Penta':   'メジャーペンタ',
   'Minor Penta':   'マイナーペンタ',
   'Blues':         'ブルース',
-  'Major':         'メジャー',
+  'Ionian':        'アイオニアン',
   'Lydian':        'リディアン',
   'Mixolydian':    'ミクソリディアン',
   'Dorian':        'ドリアン',

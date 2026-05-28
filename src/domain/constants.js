@@ -27,7 +27,7 @@ export const SCALE_GROUPS = [
   {
     label: 'Diatonic',
     presets: [
-      { name: 'Major',         degrees: [0, 2, 4, 5, 7, 9, 11] },
+      { name: 'Ionian',        degrees: [0, 2, 4, 5, 7, 9, 11] },
       { name: 'Lydian',        degrees: [0, 2, 4, 6, 7, 9, 11] },
       { name: 'Mixolydian',    degrees: [0, 2, 4, 5, 7, 9, 10] },
       { name: 'Dorian',        degrees: [0, 2, 3, 5, 7, 9, 10] },

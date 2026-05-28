@@ -199,6 +199,12 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
   hdr.appendChild(del);
   card.appendChild(hdr);
 
+  // ── 印刷専用タイトル (画面では非表示、印刷時のみ指板の上に印字) ──
+  const printTitle = document.createElement('div');
+  printTitle.className = 'saved-print-title';
+  printTitle.textContent = toKatakana(localizeTitle(snap.title));
+  card.appendChild(printTitle);
+
   // ── 指板 (クリックで全画面) ──
   const wrap = document.createElement('div');
   wrap.className = 'fb-wrap saved-fb-wrap';
@@ -261,8 +267,11 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
   filter.appendChild(shadow);
   defs.appendChild(filter);
 
-  // Overlay group — appended LAST so it renders above dots
+  // Overlay group — appended LAST so it renders above dots.
+  // class="title-overlay" lets print CSS hide it (print shows the plain
+  // .saved-print-title above the board instead).
   const overlayGroup = document.createElementNS(NS, 'g');
+  overlayGroup.setAttribute('class', 'title-overlay');
   overlayGroup.setAttribute('clip-path', `url(#${clipId})`);
 
   const bgRect = document.createElementNS(NS, 'rect');

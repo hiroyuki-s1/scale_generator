@@ -1,5 +1,6 @@
 import { SVG } from '../domain/constants.js';
 import { buildTitle } from '../domain/title.js';
+import { localizeTitle } from '../domain/i18n.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
 
@@ -170,7 +171,7 @@ function renderCard(snap, store, openFullscreen) {
   titleOverlay.setAttribute('letter-spacing', '5');
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('filter', `url(#${filterId})`);
-  titleOverlay.textContent = toKatakana(snap.title).toUpperCase();
+  titleOverlay.textContent = toKatakana(localizeTitle(snap.title));
   overlayGroup.appendChild(titleOverlay);
 
   svg.appendChild(overlayGroup);  // frontmost — above all dots

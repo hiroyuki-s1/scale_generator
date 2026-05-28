@@ -2,6 +2,7 @@ import './styles/main.css';
 
 import { DEFAULT_COLORS, findPresetEverywhere, SVG } from './domain/constants.js';
 import { buildTitle } from './domain/title.js';
+import { localizeTitle } from './domain/i18n.js';
 import { createStore } from './state/store.js';
 import { attachPersist, restoreFromStorage } from './state/persist.js';
 import { cloneColors } from './state/snapshot.js';
@@ -65,7 +66,7 @@ const titleInputEl = document.getElementById('fbTitleInput');
 let userEditedTitle = false;
 
 function autoTitle(edit) {
-  if (!userEditedTitle) titleInputEl.value = buildTitle(edit);
+  if (!userEditedTitle) titleInputEl.value = localizeTitle(buildTitle(edit));
 }
 autoTitle(store.get().edit);
 

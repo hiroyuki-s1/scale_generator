@@ -212,8 +212,8 @@ function updateMaskOverlay(svgEl, scale) {
 /** Compute the viewBox that crops to the mask range (for print). */
 export function maskViewBox(mask) {
   if (!mask?.enabled) return null;
-  const padX = 14;
-  const padY = 8;
+  const padX = 18;
+  const padY = 16;
   const x = SVG.ML + (mask.min - SVG.F0) * SVG.FW - padX;
   const w = (mask.max - mask.min + 1) * SVG.FW + padX * 2;
   // Crop vertical dead space too so the masked region fills the card area

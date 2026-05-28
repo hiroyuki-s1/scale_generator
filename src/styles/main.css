@@ -377,16 +377,6 @@ input[type=range].mslider::-moz-range-thumb {
 
 /* Saved section (inside tab panel — always visible, scrollable) */
 .saved-section { flex: 1; overflow-y: auto; padding: 16px 20px 24px; }
-.saved-layout-bar {
-  display: flex; align-items: flex-start; gap: 10px;
-  margin-bottom: 12px;
-}
-.saved-layout-label {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1.4px; color: var(--text-3);
-  padding-top: 7px; white-space: nowrap; flex-shrink: 0;
-}
-.saved-layout-bar .layout-menu-grid { flex: 1; }
 .saved-section-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; justify-content: space-between; }
 .saved-section-title {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -792,7 +782,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .ireal-section { display: none !important; }
   .app-body { overflow: visible !important; height: auto !important; display: block !important; }
   .saved-section { display: block !important; padding: 0 !important; overflow: visible !important; }
-  .saved-section-hdr, .saved-layout-bar { display: none !important; }
+  .saved-section-hdr { display: none !important; }
   .saved-title-input { display: none !important; }
   .saved-title-print { display: block !important; font-weight: 700; }
   svg.fb { min-width: 0 !important; }

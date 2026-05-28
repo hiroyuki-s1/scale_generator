@@ -8,24 +8,16 @@ const NS = 'http://www.w3.org/2000/svg';
 export function initSavedTab(container, store, openFullscreen) {
   const emptyEl = document.getElementById('savedEmpty');
   let lastIdsKey = '';
-  let lastCols = 0;
+
+  container.classList.add('screen-grid');
+  container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+  container.style.gap = '16px';
 
   function render() {
-    const { saved, layout } = store.get();
-    if (layout.cols > 1) {
-      container.classList.add('screen-grid');
-      container.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
-      container.style.gap = '16px';
-    } else {
-      container.classList.remove('screen-grid');
-      container.style.gridTemplateColumns = '1fr';
-      container.style.gap = '24px';
-    }
-
+    const { saved } = store.get();
     container.innerHTML = '';
     if (emptyEl) emptyEl.style.display = saved.length === 0 ? '' : 'none';
     lastIdsKey = saved.map(s => s.id).join(',');
-    lastCols = layout.cols;
     saved.forEach(snap => {
       try {
         container.appendChild(renderCard(snap, store, openFullscreen));
@@ -38,8 +30,7 @@ export function initSavedTab(container, store, openFullscreen) {
   render();
   store.subscribe((s, p) => {
     const idsKey = s.saved.map(c => c.id).join(',');
-    const colsChanged = s.layout.cols !== lastCols;
-    if (idsKey === lastIdsKey && !colsChanged) return;
+    if (idsKey === lastIdsKey) return;
     render();
   });
 }
@@ -65,6 +56,7 @@ function renderCard(snap, store, openFullscreen) {
   inp.addEventListener('input', e => {
     const newTitle = e.target.value;
     printTitle.textContent = newTitle;
+    if (titleOverlay) titleOverlay.textContent = newTitle;
     store.set(state => ({
       ...state,
       saved: state.saved.map(s => s.id === snap.id ? { ...s, title: newTitle } : s),
@@ -133,6 +125,35 @@ function renderCard(snap, store, openFullscreen) {
   card.appendChild(leg);
 
   drawFretboardBase(svg);
+
+  // Title overlay: faint text centered on the fretboard
+  const cx = SVG.ML + SVG.FBW / 2;
+  const cy = SVG.MT + SVG.FBH / 2;
+  const defs = svg.querySelector('defs');
+  const clipId = 'tclip-' + snap.id;
+  const clipPath = document.createElementNS(NS, 'clipPath');
+  clipPath.setAttribute('id', clipId);
+  const clipRect = document.createElementNS(NS, 'rect');
+  clipRect.setAttribute('x', SVG.ML);
+  clipRect.setAttribute('y', SVG.MT);
+  clipRect.setAttribute('width', SVG.FBW);
+  clipRect.setAttribute('height', SVG.FBH);
+  clipPath.appendChild(clipRect);
+  defs.appendChild(clipPath);
+
+  const titleOverlay = document.createElementNS(NS, 'text');
+  titleOverlay.setAttribute('x', String(cx));
+  titleOverlay.setAttribute('y', String(cy));
+  titleOverlay.setAttribute('text-anchor', 'middle');
+  titleOverlay.setAttribute('dominant-baseline', 'middle');
+  titleOverlay.setAttribute('fill', 'rgba(100,55,10,0.22)');
+  titleOverlay.setAttribute('font-size', '30');
+  titleOverlay.setAttribute('font-weight', '700');
+  titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
+  titleOverlay.setAttribute('clip-path', `url(#${clipId})`);
+  titleOverlay.textContent = snap.title;
+  svg.insertBefore(titleOverlay, svg.querySelector('.dot-layer'));
+
   applyFretboardDiff(svg, snap, null);
   renderLegend(leg, snap);
 

@@ -40,14 +40,12 @@ export function initLayoutPicker(store) {
   const menu         = document.getElementById('layoutMenu');
   const headerGrid   = document.getElementById('layoutMenuGrid');
   const printGrid    = document.getElementById('printLayoutGrid');
-  const savedGrid    = document.getElementById('savedLayoutGrid');
   const triggerIcon  = document.getElementById('layoutTriggerIcon');
   const triggerLabel = document.getElementById('layoutTriggerLabel');
 
   function buildMenus() {
     if (headerGrid) buildLayoutGrid(headerGrid, store, 28, closeMenu);
     if (printGrid)  buildLayoutGrid(printGrid,  store, 28, null);
-    if (savedGrid)  buildLayoutGrid(savedGrid,  store, 28, null);
   }
 
   function updateTrigger() {

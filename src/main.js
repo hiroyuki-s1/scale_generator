@@ -104,17 +104,28 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ── 保存済みバッジ ─────────────────────────────────────────────────────
-const savedBadgeEl = document.getElementById('savedBadge');
-function updateBadge(n) {
-  if (!savedBadgeEl) return;
-  savedBadgeEl.textContent = n;
-  savedBadgeEl.style.display = n > 0 ? '' : 'none';
+// ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────
+const savedBadgeEl    = document.getElementById('savedBadge');
+const savedSectionHdr = document.getElementById('savedSectionHdr');
+function updateSavedCount(n) {
+  if (savedBadgeEl) {
+    savedBadgeEl.textContent = n;
+    savedBadgeEl.style.display = n > 0 ? '' : 'none';
+  }
+  if (savedSectionHdr) savedSectionHdr.style.display = n > 0 ? '' : 'none';
 }
-updateBadge(store.get().saved.length);
+updateSavedCount(store.get().saved.length);
 store.subscribe((s, p) => {
   if (p && s.saved.length === p.saved.length) return;
-  updateBadge(s.saved.length);
+  updateSavedCount(s.saved.length);
+});
+
+// ── 一括削除ボタン ─────────────────────────────────────────────────────
+document.getElementById('deleteAllBtn').addEventListener('click', () => {
+  const { saved } = store.get();
+  if (saved.length === 0) return;
+  if (!confirm(`登録済みのスケール ${saved.length} 件をすべて削除します。\nこの操作は元に戻せません。よろしいですか？`)) return;
+  store.set(state => ({ ...state, saved: [] }));
 });
 
 // ── 全画面フレットボード ──────────────────────────────────────────────

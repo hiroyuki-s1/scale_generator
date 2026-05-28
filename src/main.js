@@ -99,6 +99,7 @@ function setEditMode(snap) {
   document.getElementById('registerBtnLabel').textContent = '更新';
   document.getElementById('editorModeCancel').classList.remove('hidden');
   document.querySelector('.editor')?.classList.add('editor--edit-mode');
+  savedTab?.applyEditingHighlight(snap.id);
 }
 
 function clearEditMode() {
@@ -112,6 +113,7 @@ function clearEditMode() {
   document.getElementById('registerBtnLabel').textContent = '登録';
   document.getElementById('editorModeCancel').classList.add('hidden');
   document.querySelector('.editor')?.classList.remove('editor--edit-mode');
+  savedTab?.applyEditingHighlight(null);
 }
 
 function loadSnapToEditor(snap) {
@@ -139,7 +141,7 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,
   onComplete: clearEditMode,
 });
-initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
+const savedTab = initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
 initColorModal(store, document.getElementById('colorBtn'));
 initIrealSection(store);
 initLayoutPicker(store);

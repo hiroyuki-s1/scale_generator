@@ -82,12 +82,24 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
+  let currentEditingId = null;
+
+  function applyEditingHighlight(editingId) {
+    currentEditingId = editingId;
+    container.querySelectorAll('.saved-card').forEach(c => {
+      c.classList.toggle('editing-target', editingId != null && Number(c.dataset.id) === editingId);
+    });
+  }
+
   render();
   store.subscribe(s => {
     const idsKey = s.saved.map(c => c.id).join(',');
     if (idsKey === lastIdsKey) return;
     render();
+    applyEditingHighlight(currentEditingId);
   });
+
+  return { applyEditingHighlight };
 }
 
 function renderCard(snap, store, openFullscreen, onEditMode) {

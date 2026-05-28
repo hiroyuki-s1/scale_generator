@@ -875,6 +875,21 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .header { animation: slideDown .32s cubic-bezier(.22,1,.36,1) both; }
 .panel  { animation: fadeUp .38s .08s ease both; }
 .saved-card { animation: fadeUp .3s ease both; }
+@keyframes card-edit-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,112,67,.55), 0 0 0 2px #ff7043; }
+  50%       { box-shadow: 0 0 0 7px rgba(255,112,67,.0), 0 0 0 2px #ffab91; }
+}
+@keyframes card-edit-border-shift {
+  0%   { outline-color: #ff7043; }
+  50%  { outline-color: #ffab91; }
+  100% { outline-color: #ff7043; }
+}
+.saved-card.editing-target {
+  outline: 2.5px solid #ff7043;
+  animation: fadeUp .3s ease both,
+             card-edit-glow 1.6s ease-in-out infinite,
+             card-edit-border-shift 1.6s ease-in-out infinite;
+}
 
 .fb-dot {
   animation: dotPop .3s cubic-bezier(.34,1.56,.64,1) both;

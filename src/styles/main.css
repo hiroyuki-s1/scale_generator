@@ -337,6 +337,7 @@ input[type=range].mslider::-moz-range-thumb {
   display: flex; align-items: stretch;
   border-bottom: 2px solid var(--border);
   background: var(--bg-2); flex-shrink: 0;
+  position: sticky; top: 52px; z-index: 90;
 }
 .tab-btn {
   display: flex; align-items: center; gap: 6px;
@@ -905,10 +906,13 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .ireal-url-input  { min-height: 44px; font-size: 13px; padding: 10px 10px; }
   .ireal-parse-btn  { min-height: 44px; font-size: 13px; padding: 10px 14px; }
 
+  /* ── Tab nav: adjust sticky top for taller mobile header ── */
+  .tab-nav { top: 60px; }
+
   /* ── Tab panel: auto height on mobile ── */
   .tab-panel { flex: none; overflow: visible; min-height: 0; }
   .tab-panel.hidden { display: none; }
-  .saved-section { overflow: visible; padding: 12px 12px 20px; }
+  .saved-section { flex: none; height: auto; overflow: visible; padding: 12px 12px 20px; }
   #savedGrid { gap: 14px; }
   .fb-title, .saved-title-input { font-size: 17px; }
   .tab-btn { padding: 8px 14px; font-size: 12px; }

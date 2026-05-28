@@ -102,7 +102,7 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
     tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
     panelEditor.classList.toggle('hidden', btn.dataset.tab !== 'editor');
     panelSaved.classList.toggle('hidden', btn.dataset.tab !== 'saved');
-    if (btn.dataset.tab === 'editor') window.scrollTo({ top: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   });
 });
 

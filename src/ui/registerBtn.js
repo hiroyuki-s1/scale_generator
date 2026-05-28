@@ -10,6 +10,7 @@ export function initRegisterBtn(store, registerBtn, titleInputEl, options = {}) 
     const title     = (titleInputEl?.value?.trim()) || '無題';
     const editingId = options.getEditingId?.() ?? null;
 
+    let savedId = editingId;
     store.set(state => {
       const snap = { title, ...cloneEditAsSnapshot(state.edit) };
       if (editingId != null) {
@@ -18,12 +19,13 @@ export function initRegisterBtn(store, registerBtn, titleInputEl, options = {}) 
           saved: state.saved.map(s => s.id === editingId ? { ...snap, id: editingId } : s),
         };
       }
-      const id = state.nextId;
-      return { ...state, saved: [...state.saved, { ...snap, id }], nextId: id + 1 };
+      savedId = state.nextId;
+      return { ...state, saved: [...state.saved, { ...snap, id: savedId }], nextId: savedId + 1 };
     });
 
     showToast(editingId != null ? '更新しました' : '登録しました');
     options.onComplete?.();
+    options.onSaved?.(savedId);
   });
 }
 

@@ -83,6 +83,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   }
 
   let currentEditingId = null;
+  let currentNewId = null;
 
   function applyEditingHighlight(editingId) {
     currentEditingId = editingId;
@@ -91,15 +92,28 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
+  function highlightNewCard(id) {
+    currentNewId = id;
+    container.querySelectorAll('.saved-card').forEach(c => {
+      c.classList.toggle('newly-added', Number(c.dataset.id) === id);
+    });
+  }
+
+  function clearNewlyAdded() {
+    currentNewId = null;
+    container.querySelectorAll('.newly-added').forEach(c => c.classList.remove('newly-added'));
+  }
+
   render();
   store.subscribe(s => {
     const idsKey = s.saved.map(c => c.id).join(',');
     if (idsKey === lastIdsKey) return;
     render();
     applyEditingHighlight(currentEditingId);
+    if (currentNewId != null) highlightNewCard(currentNewId);
   });
 
-  return { applyEditingHighlight };
+  return { applyEditingHighlight, highlightNewCard, clearNewlyAdded };
 }
 
 function renderCard(snap, store, openFullscreen, onEditMode) {

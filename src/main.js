@@ -137,11 +137,19 @@ document.getElementById('editorModeCancel').addEventListener('click', () => {
   clearEditMode();
 });
 
+const savedTab = initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
+
 initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,
   onComplete: clearEditMode,
+  onSaved: (id) => {
+    // 登録スケールタブへスライド移動
+    const savedBtn = tabNav.querySelector('[data-tab="saved"]');
+    savedBtn?.click();
+    // カードが描画されてからハイライト
+    requestAnimationFrame(() => requestAnimationFrame(() => savedTab.highlightNewCard(id)));
+  },
 });
-const savedTab = initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
 initColorModal(store, document.getElementById('colorBtn'));
 initIrealSection(store);
 initLayoutPicker(store);
@@ -155,8 +163,14 @@ const panelSaved  = document.getElementById('panelSaved');
 tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
-    panelEditor.classList.toggle('hidden', btn.dataset.tab !== 'editor');
-    panelSaved.classList.toggle('hidden', btn.dataset.tab !== 'saved');
+    const goingSaved = btn.dataset.tab === 'saved';
+    panelEditor.classList.toggle('hidden', !goingSaved);
+    panelSaved.classList.toggle('hidden', goingSaved);
+    if (!goingSaved) savedTab.clearNewlyAdded();
+    // スライドアニメーション
+    const panel = goingSaved ? panelSaved : panelEditor;
+    panel.classList.remove('slide-in');
+    requestAnimationFrame(() => panel.classList.add('slide-in'));
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
 });

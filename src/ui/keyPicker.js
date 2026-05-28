@@ -17,6 +17,10 @@ export function initKeyPicker(store) {
     btn.dataset.idx = i;
     btn.textContent = note;
     btn.addEventListener('click', () => {
+      const { edit } = store.get();
+      if (edit.presetName === null) {
+        if (!confirm('カスタム設定した度数が失われます。\nキーを変更しますか？')) { close(); return; }
+      }
       store.updateEdit({ rootIndex: i });
       close();
     });

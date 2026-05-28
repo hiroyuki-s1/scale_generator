@@ -124,6 +124,7 @@ export function initIrealSection(store) {
       });
       return { ...state, saved: newSaved, nextId };
     });
+    registerAllBtn.classList.add('hidden');
   });
 
   function selectChord(idx) {

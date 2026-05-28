@@ -130,7 +130,10 @@ function loadSnapToEditor(snap) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-document.getElementById('editorModeCancel').addEventListener('click', clearEditMode);
+document.getElementById('editorModeCancel').addEventListener('click', () => {
+  if (!confirm('編集をキャンセルします。\n変更内容は破棄されます。よろしいですか？')) return;
+  clearEditMode();
+});
 
 initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,

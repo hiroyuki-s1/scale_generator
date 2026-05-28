@@ -88,7 +88,15 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   function applyEditingHighlight(editingId) {
     currentEditingId = editingId;
     container.querySelectorAll('.saved-card').forEach(c => {
-      c.classList.toggle('editing-target', editingId != null && Number(c.dataset.id) === editingId);
+      const match = editingId != null && Number(c.dataset.id) === editingId;
+      c.classList.toggle('editing-target', match);
+      c.querySelector('.edit-badge')?.remove();
+      if (match) {
+        const badge = document.createElement('div');
+        badge.className = 'edit-badge';
+        badge.textContent = 'EDIT!';
+        c.appendChild(badge);
+      }
     });
   }
 

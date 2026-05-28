@@ -1066,25 +1066,25 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* NEW! バッジ */
 @keyframes new-badge-pop {
-  0%   { transform: rotate(-15deg) scale(0) translate(-50%, -50%); opacity: 0; }
-  60%  { transform: rotate(-15deg) scale(1.25) translate(-50%, -50%); opacity: 1; }
-  80%  { transform: rotate(-15deg) scale(.92) translate(-50%, -50%); }
-  100% { transform: rotate(-15deg) scale(1) translate(-50%, -50%); opacity: 1; }
+  0%   { transform: rotate(-12deg) scale(0); opacity: 0; }
+  60%  { transform: rotate(-12deg) scale(1.2); opacity: 1; }
+  80%  { transform: rotate(-12deg) scale(.93); }
+  100% { transform: rotate(-12deg) scale(1); opacity: 1; }
 }
 .new-badge {
   position: absolute;
-  top: 18%;
-  left: 50%;
-  transform: rotate(-15deg) translate(-50%, -50%);
-  transform-origin: center;
+  top: 30px;
+  left: -6px;
+  transform: rotate(-12deg);
+  transform-origin: left center;
   background: linear-gradient(135deg, #ff4d6d, #ff9f1c);
   color: #fff;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 1.5px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(255,77,109,.5), 0 1px 0 rgba(255,255,255,.3) inset;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(255,77,109,.5), 0 1px 0 rgba(255,255,255,.3) inset;
   pointer-events: none;
   z-index: 10;
   animation: new-badge-pop 0.45s cubic-bezier(.34,1.56,.64,1) both;

@@ -89,8 +89,13 @@ let editingId = null;
 
 function setEditMode(snap) {
   editingId = snap.id;
-  document.getElementById('editorModeLabel').textContent = `編集中: ${snap.title}`;
-  document.getElementById('editorModeBanner').className = 'editor-mode-banner edit-mode';
+  const banner = document.getElementById('editorModeBanner');
+  // Re-trigger animation by cloning
+  banner.className = 'editor-mode-banner edit-mode';
+  banner.style.animation = 'none';
+  requestAnimationFrame(() => { banner.style.animation = ''; });
+  document.getElementById('editorModeLabel').innerHTML =
+    `<span class="editor-mode-label-icon">✏️</span>編集中: ${snap.title}`;
   document.getElementById('registerBtnLabel').textContent = '更新';
   document.getElementById('editorModeCancel').classList.remove('hidden');
   document.querySelector('.editor')?.classList.add('editor--edit-mode');
@@ -98,8 +103,12 @@ function setEditMode(snap) {
 
 function clearEditMode() {
   editingId = null;
-  document.getElementById('editorModeLabel').textContent = '新規登録';
-  document.getElementById('editorModeBanner').className = 'editor-mode-banner new-mode';
+  const banner = document.getElementById('editorModeBanner');
+  banner.className = 'editor-mode-banner new-mode';
+  banner.style.animation = 'none';
+  requestAnimationFrame(() => { banner.style.animation = ''; });
+  document.getElementById('editorModeLabel').innerHTML =
+    '<span class="editor-mode-label-icon">✨</span>新規登録';
   document.getElementById('registerBtnLabel').textContent = '登録';
   document.getElementById('editorModeCancel').classList.add('hidden');
   document.querySelector('.editor')?.classList.remove('editor--edit-mode');

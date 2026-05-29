@@ -81,6 +81,7 @@ export function initScalePicker(store) {
   btn.addEventListener('click', openModal);
   closeBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('show')) closeModal(); });
 
   // ── ボタンラベル同期 ──────────────────────────────────
   function syncBtn() {

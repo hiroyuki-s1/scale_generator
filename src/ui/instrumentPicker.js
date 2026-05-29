@@ -81,6 +81,9 @@ export function initInstrumentPicker(btnEl, modalEl, store) {
   modalEl.addEventListener('click', e => {
     if (e.target === modalEl) modalEl.classList.remove('show');
   });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modalEl.classList.contains('show')) modalEl.classList.remove('show');
+  });
 
   store.subscribe((s, p) => {
     if (p && s.edit.instrument === p.edit.instrument) return;

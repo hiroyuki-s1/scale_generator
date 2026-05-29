@@ -278,7 +278,8 @@ function closeFbFullscreen() {
   document.body.style.overflow = '';
 }
 
-fbFullscreen.addEventListener('click', closeFbFullscreen);
+fbFullscreenClose.addEventListener('click', closeFbFullscreen);
+fbFullscreen.addEventListener('click', e => { if (e.target === fbFullscreen) closeFbFullscreen(); });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
 });

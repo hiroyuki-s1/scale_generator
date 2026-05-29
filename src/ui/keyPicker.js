@@ -1,19 +1,17 @@
 import { NOTES } from '../domain/constants.js';
 
-const WHITE_KEY_INDICES = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B
-
-/** キー選択モーダル (ピアノ白鍵) */
+/** キー選択モーダル — 全12キー */
 export function initKeyPicker(store) {
   const triggerBtn = document.getElementById('keyPickerBtn');
   const modal      = document.getElementById('keyPickerModal');
   const closeBtn   = document.getElementById('keyPickerClose');
   const listEl     = document.getElementById('keyPickerList');
 
-  WHITE_KEY_INDICES.forEach(i => {
+  NOTES.forEach((note, i) => {
     const btn = document.createElement('button');
     btn.className = 'picker-sq-btn';
     btn.dataset.idx = i;
-    btn.textContent = NOTES[i];
+    btn.textContent = note;
     btn.addEventListener('click', () => {
       store.updateEdit({ rootIndex: i });
       closeModal();
@@ -36,7 +34,7 @@ export function initKeyPicker(store) {
 
   function syncActive() {
     const { rootIndex } = store.get().edit;
-    listEl.querySelectorAll('.picker-sq-btn').forEach(btn => {
+    listEl.querySelectorAll('[data-idx]').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.idx) === rootIndex);
     });
   }

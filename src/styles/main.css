@@ -255,9 +255,6 @@ body {
 /* ── キー選択グリッド ── */
 /* ── キー / 度数選択 — 四角グリッドボタン ── */
 .picker-modal-large { width: min(560px, 96vw); }
-.key-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
-}
 .deg-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
 }
@@ -272,7 +269,7 @@ body {
   line-height: 1.1; text-align: center;
 }
 .picker-sq-btn:hover { background: #32324a; border-color: #6060a0; transform: scale(1.05); }
-.picker-sq-btn.active { background: #35354e; border-color: #8080c8; color: #a0a0ff; }
+.picker-sq-btn.active { background: #e53e3e; border-color: #c53030; color: #fff; }
 .picker-done-btn {
   display: block; width: 100%; margin-top: 14px;
   padding: 14px; border: none; background: var(--accent); color: #fff;

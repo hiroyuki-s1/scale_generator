@@ -111,11 +111,6 @@ function spawnFretboardParticles(wrapEl, instrument) {
     document.body.appendChild(p);
     p.addEventListener('animationend', () => p.remove(), { once: true });
   }
-  // 指板全体をひと瞬間フラッシュ
-  wrapEl.classList.remove('fb-instrument-flash');
-  void wrapEl.offsetWidth; // reflow
-  wrapEl.classList.add('fb-instrument-flash');
-  wrapEl.addEventListener('animationend', () => wrapEl.classList.remove('fb-instrument-flash'), { once: true });
 }
 
 function syncEditorFretboard(s, p) {
@@ -130,7 +125,11 @@ function syncEditorFretboard(s, p) {
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
     lastFbInstrument = instrument;
-    // layout 確定後にパーティクル
+    // フェードイン + 周囲パーティクル
+    fretboardEl.classList.remove('fb-instrument-change');
+    void fretboardEl.offsetWidth;
+    fretboardEl.classList.add('fb-instrument-change');
+    fretboardEl.addEventListener('animationend', () => fretboardEl.classList.remove('fb-instrument-change'), { once: true });
     requestAnimationFrame(() => spawnFretboardParticles(editFbWrapEl, instrument));
     return;
   }

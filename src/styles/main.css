@@ -1277,10 +1277,12 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .instr-choice-label { font-size: 15px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .instr-choice-sub { font-size: 11px; color: #9090b8; font-weight: 500; letter-spacing: .05em; }
 
-/* 楽器切り替え時の指板フラッシュ */
-@keyframes fb-instrument-flash {
-  0%   { filter: brightness(2.2) saturate(1.8); }
-  40%  { filter: brightness(1.4) saturate(1.3); }
-  100% { filter: brightness(1)   saturate(1);   }
+/* 楽器切り替え時の指板フェードイン */
+@keyframes fb-instrument-change {
+  from { opacity: 0; transform: scaleY(0.95); }
+  to   { opacity: 1; transform: scaleY(1); }
 }
-.fb-instrument-flash { animation: fb-instrument-flash 0.55s ease-out; }
+.fb-instrument-change {
+  animation: fb-instrument-change 0.35s cubic-bezier(.22,1,.36,1) both;
+  transform-origin: top center;
+}

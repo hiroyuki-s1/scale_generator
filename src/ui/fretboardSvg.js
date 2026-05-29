@@ -35,10 +35,14 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
   svgEl.innerHTML = '';
   svgEl.appendChild(el('rect', { x: 0, y: 0, width: SVG.W, height: SVG.H, fill: '#fff' }));
 
+  // Guitar: warm maple tone / Bass: darker rosewood tone
+  const [gradTop, gradBot] = instrument === 'bass'
+    ? ['#f0e8d8', '#e4d4b8']
+    : ['#fef6e7', '#f8ead0'];
   const defs = el('defs', {});
   const grad = el('linearGradient', { id: 'g' + uid, x1: '0', y1: '0', x2: '0', y2: '1' });
-  grad.appendChild(el('stop', { offset: '0%',   'stop-color': '#fef6e7' }));
-  grad.appendChild(el('stop', { offset: '100%', 'stop-color': '#f8ead0' }));
+  grad.appendChild(el('stop', { offset: '0%',   'stop-color': gradTop }));
+  grad.appendChild(el('stop', { offset: '100%', 'stop-color': gradBot }));
   defs.appendChild(grad);
   svgEl.appendChild(defs);
   svgEl.appendChild(el('rect', {
@@ -83,25 +87,14 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
     }));
   }
 
-  // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — below fretboard
-  const posY = SVG.MT + SVG.FBH + 32;
+  // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — above top string
+  const posY = SVG.MT + SVG.SP / 2 + 2;
   [0, 3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
-      x: fx(f), y: posY, 'text-anchor': 'middle',
-      fill: '#8a8079', 'font-size': '18', 'font-family': 'monospace', 'font-weight': 'bold',
+      x: fx(f), y: posY, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      fill: '#8a8079', 'font-size': '12', 'font-family': 'monospace', 'font-weight': 'bold',
     }, String(f)));
-  });
-  // Inlay dots below numbers
-  [3, 5, 7, 9].forEach(f => {
-    if (f < SVG.F0 || f > SVG.F1) return;
-    svgEl.appendChild(el('circle', { cx: fx(f), cy: SVG.MT + SVG.FBH + 46, r: 3, fill: '#d0cbc3' }));
-  });
-  [-6, 6].forEach(dx => {
-    if (12 < SVG.F0 || 12 > SVG.F1) return;
-    svgEl.appendChild(el('circle', {
-      cx: fx(12) + dx, cy: SVG.MT + SVG.FBH + 46, r: 3, fill: '#d0cbc3',
-    }));
   });
 
   // Strings — guitar: 6 wound strings, bass: 4 thicker strings
@@ -183,7 +176,7 @@ function repaintDotColors(svgEl, colors) {
 
 function appendDot(svgEl, n, colors, sh) {
   const { string: s, fret: f, degree: deg } = n;
-  const cx = fx(f), cy = SVG.MT + s * sh;
+  const cx = fx(f), cy = SVG.MT + SVG.SP + s * sh;
   const { name } = DEGREES[deg];
   const isRoot = deg === 0;
   const dc = colors[deg];

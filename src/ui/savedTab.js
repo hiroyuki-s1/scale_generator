@@ -163,8 +163,11 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
       startY: e.clientY,
       active: false,
     };
+    // setPointerCapture でポインター離れても pointermove を受け取る。
+    // preventDefault は呼ばない — iOS Safari では pointerdown で preventDefault
+    // すると後続の pointermove が発火しなくなる。
+    // スクロール抑制は CSS touch-action:none (drag-handle) が担う。
     card.setPointerCapture(e.pointerId);
-    e.preventDefault();
   });
 
   container.addEventListener('pointermove', e => {

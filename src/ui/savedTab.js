@@ -132,7 +132,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
     // ポインターキャプチャ: ブラウザがスクロールを奪うのを防ぐ
-    try { dragState.card.setPointerCapture(dragState.pointerId); } catch (_) {}
+    dragState.card.setPointerCapture(dragState.pointerId);
   }
 
   function endDrag(cancelled = false) {

@@ -32,29 +32,30 @@ export function drawFretboardBase(svgEl) {
     fill: `url(#g${uid})`, stroke: '#cca86a', 'stroke-width': '1.5', rx: '4',
   }));
 
-  // Fret 0 area (open strings) — slightly different shade
+  // Fret 0 area (nut zone) — ivory/bone background to suggest guitar nut
   const nutX = SVG.ML + SVG.FW; // nut = line between fret 0 and fret 1
   svgEl.appendChild(el('rect', {
     x: SVG.ML + 0.75, y: SVG.MT + 0.75,
     width: SVG.FW - 1.5, height: SVG.FBH - 1.5,
-    fill: 'rgba(200,180,140,.18)',
+    fill: 'rgba(240,228,200,.65)',
   }));
 
   // Inlay dots (3,5,7,9,12,15,17,19,21)
   [3, 5, 7, 9, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('circle', {
-      cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 4, fill: 'rgba(180,140,80,.22)',
+      cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 4, fill: 'rgba(80,55,20,.50)',
     }));
   });
   [SVG.MT + SVG.FBH / 3, SVG.MT + SVG.FBH * 2 / 3].forEach(cy => {
     if (12 < SVG.F0 || 12 > SVG.F1) return;
-    svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 4, fill: 'rgba(180,140,80,.22)' }));
+    svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 4, fill: 'rgba(80,55,20,.50)' }));
   });
 
-  // Nut bar (between fret 0 and fret 1)
-  svgEl.appendChild(el('rect', { x: nutX - 5, y: SVG.MT, width: 6, height: SVG.FBH, fill: '#d8c8a0', rx: '1.5' }));
-  svgEl.appendChild(el('rect', { x: nutX - 5, y: SVG.MT, width: 3, height: SVG.FBH, fill: 'rgba(255,255,255,.35)', rx: '1.5' }));
+  // Nut bar — prominent ivory/bone bar (guitar nut)
+  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 10, height: SVG.FBH + 2, fill: '#c8b870', rx: '2' }));
+  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 5,  height: SVG.FBH + 2, fill: 'rgba(255,255,255,.50)', rx: '2' }));
+  svgEl.appendChild(el('rect', { x: nutX + 1,  y: SVG.MT,    width: 2,  height: SVG.FBH, fill: 'rgba(0,0,0,.18)' }));
 
   // Fret lines (skip fret 1 line — that's the nut)
   for (let f = SVG.F0; f <= SVG.F1 + 1; f++) {
@@ -68,9 +69,9 @@ export function drawFretboardBase(svgEl) {
     }));
   }
 
-  // Fret position numbers (3,5,7,9,12,15,17,19,21,22) — below fretboard
+  // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — below fretboard
   const posY = SVG.MT + SVG.FBH + 22;
-  [3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
+  [0, 3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
       x: fx(f), y: posY, 'text-anchor': 'middle',
@@ -234,7 +235,7 @@ function updateMaskOverlay(svgEl, scale) {
 /** Compute the viewBox that crops to the mask range (for print/fullscreen). */
 export function maskViewBox(mask) {
   if (!mask?.enabled) return null;
-  const padX = 14;
+  const padX = 4;  // ドット半径(CR=10) より小さくして範囲外ドットが見えないようにする
   const padY = SVG.CR + 4;
   const x = SVG.ML + (mask.min - SVG.F0) * SVG.FW - padX;
   const w = (mask.max - mask.min + 1) * SVG.FW + padX * 2;

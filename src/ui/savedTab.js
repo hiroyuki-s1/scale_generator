@@ -135,6 +135,10 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     draggingId = Number(dragState.card.dataset.id);
     dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
+    // マウスのみ: pointermove ハンドラ内で呼ぶので setPointerCapture が有効
+    if (dragState.pointerId !== undefined) {
+      dragState.card.setPointerCapture(dragState.pointerId);
+    }
   }
 
   function endDrag(cancelled = false) {
@@ -227,7 +231,6 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
       pending: true,
       timer: null,
     };
-    card.setPointerCapture(e.pointerId);
   });
 
   container.addEventListener('pointermove', e => {

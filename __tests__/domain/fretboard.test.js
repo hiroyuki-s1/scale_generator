@@ -37,12 +37,9 @@ describe('computeFretNotes', () => {
       mask: { enabled: true, min: 5, max: 7 },
     });
     expect(masked.length).toBeLessThan(all.length);
-    // Fret 0 (open strings) is always shown regardless of mask
     masked.forEach(n => {
-      if (n.fret !== 0) {
-        expect(n.fret).toBeGreaterThanOrEqual(5);
-        expect(n.fret).toBeLessThanOrEqual(7);
-      }
+      expect(n.fret).toBeGreaterThanOrEqual(5);
+      expect(n.fret).toBeLessThanOrEqual(7);
     });
   });
 

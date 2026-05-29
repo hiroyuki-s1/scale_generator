@@ -74,12 +74,9 @@ describe('mask range — all presets stay within fret bounds', () => {
         activeDegrees,
         mask: { enabled: true, min: MIN, max: MAX },
       });
-      // Fret 0 (open strings) is always shown regardless of mask
       notes.forEach(n => {
-        if (n.fret !== 0) {
-          expect(n.fret).toBeGreaterThanOrEqual(MIN);
-          expect(n.fret).toBeLessThanOrEqual(MAX);
-        }
+        expect(n.fret).toBeGreaterThanOrEqual(MIN);
+        expect(n.fret).toBeLessThanOrEqual(MAX);
       });
     });
   });

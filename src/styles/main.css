@@ -819,13 +819,21 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 .color-modal-box {
   background: var(--surface); border-radius: 14px;
-  padding: 24px 24px 20px; width: 100%; max-width: 500px;
+  padding: 0; width: 100%; max-width: 500px;
   box-shadow: var(--shadow-md);
   transform: translateY(8px); transition: transform .18s;
-  max-height: 85vh; overflow-y: auto;
+  max-height: 85vh; overflow: hidden;
+  display: flex; flex-direction: column;
 }
 .modal-overlay.show .color-modal-box { transform: translateY(0); }
-.color-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.color-modal-header {
+  flex-shrink: 0; padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.color-modal-header .modal-title { margin-bottom: 0; }
+.color-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 16px 24px 20px; }
 .color-row {
   display: flex; flex-direction: column; gap: 6px;
   padding: 8px 10px; border: 1px solid var(--border-2);

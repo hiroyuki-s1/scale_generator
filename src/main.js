@@ -183,19 +183,6 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ── スワイプでタブ切替（モバイル） ────────────────────────────────────
-let swipeStartX = 0;
-document.addEventListener('touchstart', e => {
-  swipeStartX = e.touches[0].clientX;
-}, { passive: true });
-document.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  if (Math.abs(dx) < 60) return; // 閾値: 60px
-  const goSaved = dx < 0; // 左スワイプ → 登録スケール
-  const targetTab = goSaved ? 'saved' : 'editor';
-  const btn = tabNav.querySelector(`[data-tab="${targetTab}"]`);
-  btn?.click();
-}, { passive: true });
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────
 const savedBadgeEl    = document.getElementById('savedBadge');

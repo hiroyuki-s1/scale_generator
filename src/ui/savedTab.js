@@ -69,12 +69,13 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gap = '16px';
 
   // ── ドラッグ&ドロップ並べ替え (Pointer Events) ───────────────────────
-  // .drag-handle に touch-action:none を設定しているため、ハンドルからの
-  // タッチはブラウザがスクロールを開始しない。ハンドル専用でドラッグ開始。
-  // タイマー不要: ハンドルを触ったらすぐに 5px 移動でドラッグ確定。
+  // カード全体をタップして 300ms 長押しでドラッグ開始。
+  // 300ms 経過前に 8px 以上動いたらスクロール意図として取消。
+  // 300ms 後に setPointerCapture でスクロールを停止しドラッグ継続。
   let draggingId   = null;
   let dropTargetEl = null;
-  let dragState    = null; // { card, pointerId, startX, startY, active }
+  let dragState    = null;
+  // dragState: null | { card, pointerId, startX, startY, pending:bool, timer }
 
   function clearDropTarget() {
     dropTargetEl?.classList.remove('drop-target');
@@ -125,34 +126,38 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
-  function startDrag() {
-    if (!dragState || dragState.active) return;
-    dragState.active = true;
+  /** 300ms 経過後にドラッグ確定 */
+  function activateDrag() {
+    if (!dragState || !dragState.pending) return;
+    dragState.pending = false;
     draggingId = Number(dragState.card.dataset.id);
     dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
+    // 長押し確定後にキャプチャ: これ以降スクロールを防ぎドラッグに専念
+    dragState.card.setPointerCapture(dragState.pointerId);
   }
 
   function endDrag(cancelled = false) {
     if (!dragState) return;
-    const { card, active } = dragState;
+    const { card, pending } = dragState;
+    if (pending) clearTimeout(dragState.timer);
     card.classList.remove('dragging');
-    if (active && !cancelled && dropTargetEl && dropTargetEl !== card) {
+    const wasActive = !pending;
+    if (wasActive && !cancelled && dropTargetEl && dropTargetEl !== card) {
       swapCards(card, dropTargetEl);
       animateSwap(card, dropTargetEl);
     }
     clearDropTarget();
-    const wasActive = active;
     const savedId = draggingId;
     dragState = null;
     draggingId = null;
     if (wasActive && savedId != null) commitOrder();
   }
 
-  // ドラッグハンドルでのみポインターダウンを受け付ける
+  // カード全体がタップ対象（ただし編集/削除ボタンは除外）
   container.addEventListener('pointerdown', e => {
     if (dragState) return;
-    if (!e.target.closest('.drag-handle')) return;
+    if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
 
@@ -161,26 +166,26 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
-      active: false,
+      pending: true,
+      timer: setTimeout(activateDrag, 300),
     };
-    // setPointerCapture でポインター離れても pointermove を受け取る。
-    // preventDefault は呼ばない — iOS Safari では pointerdown で preventDefault
-    // すると後続の pointermove が発火しなくなる。
-    // スクロール抑制は CSS touch-action:none (drag-handle) が担う。
-    card.setPointerCapture(e.pointerId);
   });
 
   container.addEventListener('pointermove', e => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
-    e.preventDefault();
 
-    if (!dragState.active) {
+    if (dragState.pending) {
+      // 300ms 前に 8px 以上動いたらスクロール意図 → ドラッグ取消
       const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
-      if (dist > 5) startDrag();
+      if (dist > 8) {
+        clearTimeout(dragState.timer);
+        dragState = null;
+      }
       return;
     }
 
-    // 画面端付近で自動スクロール
+    // ドラッグ確定後: スクロール抑制 + ドロップターゲット更新
+    e.preventDefault();
     const edgeZone = 80, vy = e.clientY, vh = window.innerHeight;
     if (vy < edgeZone)           window.scrollBy({ top: -8, behavior: 'instant' });
     else if (vy > vh - edgeZone) window.scrollBy({ top:  8, behavior: 'instant' });

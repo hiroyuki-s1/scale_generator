@@ -37,7 +37,7 @@ export function drawFretboardBase(svgEl) {
   svgEl.appendChild(el('rect', {
     x: SVG.ML + 0.75, y: SVG.MT + 0.75,
     width: SVG.FW - 1.5, height: SVG.FBH - 1.5,
-    fill: 'rgba(255,255,255,.85)',
+    fill: '#ffffff',
   }));
 
   // Inlay dots (3,5,7,9,12,15,17,19,21)
@@ -94,7 +94,7 @@ export function drawFretboardBase(svgEl) {
   for (let s = 0; s < TUNING.length; s++) {
     const y = sy(s);
     svgEl.appendChild(el('line', {
-      x1: SVG.ML, y1: y, x2: SVG.ML + SVG.FBW, y2: y,
+      x1: nutX, y1: y, x2: SVG.ML + SVG.FBW, y2: y,
       stroke: sc[s], 'stroke-width': (0.8 + s * 0.42).toFixed(2),
     }));
     svgEl.appendChild(el('text', {

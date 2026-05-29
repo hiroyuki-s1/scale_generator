@@ -87,8 +87,8 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
     }));
   }
 
-  // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — above top string
-  const posY = SVG.MT + SVG.SP / 2 + 2;
+  // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — below bottom string
+  const posY = SVG.MT + SVG.FBH - SVG.SP / 2;
   [0, 3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {

@@ -274,7 +274,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     lastIdsKey = saved.map(s => s.id).join(',');
     saved.forEach(snap => {
       try {
-        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode));
+        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId));
       } catch (e) {
         console.warn('savedTab: failed to render card', snap.id, e);
       }
@@ -366,7 +366,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   return { applyEditingHighlight, highlightNewCard, clearNewlyAdded, scrollToCard };
 }
 
-function renderCard(snap, store, openFullscreen, onEditMode) {
+function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   const card = document.createElement('div');
   card.className = 'saved-card';
   card.dataset.id = snap.id;
@@ -401,7 +401,7 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.5V1h3v1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
   </svg>削除`;
   del.addEventListener('click', async () => {
-    if (snap.id === currentEditingId) {
+    if (snap.id === getEditingId?.()) {
       alert('編集中のスケールは削除できません。\n一度編集を終了してください。');
       return;
     }

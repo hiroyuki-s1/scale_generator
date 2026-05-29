@@ -1,69 +1,68 @@
 import { DEGREES } from '../domain/constants.js';
 import { renderLegend } from './legend.js';
 
-/** 度数設定ボタン + ドロップダウングリッド + 指板下の度数チップ表示 */
+// White key semitones (piano layout order)
+const WHITE_SEMIS = [0, 2, 4, 5, 7, 9, 11];
+// Black key semitones and their left-% positions on the keyboard
+const BLACK_KEYS = [
+  { semi: 1,  left: 10       },  // b9  (C#)
+  { semi: 3,  left: 24.286   },  // m3  (D#)
+  { semi: 6,  left: 52.857   },  // #11 (F#)
+  { semi: 8,  left: 67.143   },  // b13 (G#)
+  { semi: 10, left: 81.429   },  // m7  (A#)
+];
+
+/** 度数設定モーダル — フルピアノ鍵盤 */
 export function initDegreePicker(store) {
   const triggerBtn = document.getElementById('degPickerBtn');
-  const popup      = document.getElementById('degPickerPopup');
-  const gridEl     = document.getElementById('degPickerPiano');
+  const modal      = document.getElementById('degPickerModal');
+  const closeBtn   = document.getElementById('degPickerClose');
   const doneBtn    = document.getElementById('degPickerDone');
+  const pianoEl    = document.getElementById('degPickerPiano');
   const legendEl   = document.getElementById('legend');
 
-  let isOpen = false;
-
-  // Build 12-degree grid once — all white, selected = red via CSS
-  DEGREES.forEach(deg => {
-    const semi = deg.semi;
+  // Build keyboard once
+  WHITE_SEMIS.forEach(semi => {
+    const deg = DEGREES.find(d => d.semi === semi);
+    if (!deg) return;
     const btn = document.createElement('button');
-    btn.className = 'note-key note-key-white';
+    btn.className = 'piano-white-key';
     btn.dataset.semi = semi;
     btn.textContent = deg.name;
     btn.addEventListener('click', () => toggle(semi));
-    gridEl.appendChild(btn);
+    pianoEl.appendChild(btn);
   });
 
-  triggerBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    isOpen ? close() : open();
+  BLACK_KEYS.forEach(({ semi, left }) => {
+    const deg = DEGREES.find(d => d.semi === semi);
+    if (!deg) return;
+    const btn = document.createElement('button');
+    btn.className = 'piano-black-key';
+    btn.dataset.semi = semi;
+    btn.style.left = left + '%';
+    btn.textContent = deg.name;
+    btn.addEventListener('click', () => toggle(semi));
+    pianoEl.appendChild(btn);
   });
-  doneBtn.addEventListener('click', close);
-  document.addEventListener('click', e => {
-    if (isOpen && !popup.contains(e.target) && e.target !== triggerBtn) close();
-  });
+
+  triggerBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  doneBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && isOpen) close();
+    if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
   });
 
-  function open() {
-    isOpen = true;
-    popup.classList.remove('hidden');
-    position();
+  function openModal() {
     syncStyles();
+    modal.classList.add('show');
   }
-  function close() {
-    isOpen = false;
-    popup.classList.add('hidden');
-  }
-  function position() {
-    const r = triggerBtn.getBoundingClientRect();
-    const pW = 340;
-    let left = r.left;
-    if (left + pW > window.innerWidth - 8) left = window.innerWidth - pW - 8;
-    const spaceBelow = window.innerHeight - r.bottom;
-    if (spaceBelow < 160) {
-      popup.style.bottom = `${window.innerHeight - r.top + 6}px`;
-      popup.style.top = 'auto';
-    } else {
-      popup.style.top    = `${r.bottom + 6}px`;
-      popup.style.bottom = 'auto';
-    }
-    popup.style.left = `${Math.max(8, left)}px`;
-  }
+  function closeModal() { modal.classList.remove('show'); }
 
   function syncStyles() {
     const { activeDegrees } = store.get().edit;
-    gridEl.querySelectorAll('.note-key').forEach(btn => {
-      btn.classList.toggle('note-key-active', activeDegrees.has(Number(btn.dataset.semi)));
+    pianoEl.querySelectorAll('[data-semi]').forEach(btn => {
+      btn.classList.toggle('active', activeDegrees.has(Number(btn.dataset.semi)));
     });
   }
 
@@ -87,6 +86,6 @@ export function initDegreePicker(store) {
     if (p && s.edit.activeDegrees === p.edit.activeDegrees) return;
     syncTrigger();
     renderLegend(legendEl, s.edit);
-    if (isOpen) syncStyles();
+    if (modal.classList.contains('show')) syncStyles();
   });
 }

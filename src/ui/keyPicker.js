@@ -2,7 +2,7 @@ import { NOTES } from '../domain/constants.js';
 
 const WHITE_KEY_INDICES = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B
 
-/** キー選択モーダル */
+/** キー選択モーダル (ピアノ白鍵) */
 export function initKeyPicker(store) {
   const triggerBtn = document.getElementById('keyPickerBtn');
   const modal      = document.getElementById('keyPickerModal');
@@ -11,7 +11,7 @@ export function initKeyPicker(store) {
 
   WHITE_KEY_INDICES.forEach(i => {
     const btn = document.createElement('button');
-    btn.className = 'key-choice-btn';
+    btn.className = 'piano-white-key';
     btn.dataset.idx = i;
     btn.textContent = NOTES[i];
     btn.addEventListener('click', () => {
@@ -36,8 +36,8 @@ export function initKeyPicker(store) {
 
   function syncActive() {
     const { rootIndex } = store.get().edit;
-    listEl.querySelectorAll('.key-choice-btn').forEach(btn => {
-      btn.classList.toggle('key-choice-btn--active', Number(btn.dataset.idx) === rootIndex);
+    listEl.querySelectorAll('.piano-white-key').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.idx) === rootIndex);
     });
   }
 

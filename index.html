@@ -136,20 +136,21 @@
         <div class="legend" id="legend"></div>
       </div>
 
-      <!-- フレット範囲 + iReal Proボタン -->
+      <!-- フレット範囲 -->
       <div class="mask-section">
         <div class="ctrl-label">フレット範囲</div>
-        <div class="mask-ireal-row">
-          <div class="mask-row" id="maskControl"></div>
-          <button class="ireal-file-btn" id="irealFileBtn" title="iReal Proファイルを読み込む">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg>
-            iReal
-          </button>
-        </div>
+        <div class="mask-row" id="maskControl"></div>
       </div>
 
-      <!-- iReal Pro コードグリッド -->
+      <!-- iReal Pro -->
       <div class="ireal-section" id="irealSection">
+        <div class="ireal-section-header">
+          <span class="ctrl-label" style="margin-bottom:0">iReal Pro</span>
+          <button class="ireal-file-btn" id="irealFileBtn" title="iReal Proファイルを読み込む">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg>
+            ファイルを開く
+          </button>
+        </div>
         <div class="ireal-chip-strip" id="irealChordGrid"></div>
         <button class="ireal-register-all-btn hidden" id="irealRegisterAll">
           全コードを一括登録
@@ -215,21 +216,24 @@
 
 <!-- ── キー選択モーダル ────────────────────────────────────────────── -->
 <div class="modal-overlay" id="keyPickerModal">
-  <div class="instr-modal-box">
+  <div class="instr-modal-box piano-modal-box">
     <div class="picker-modal-header">
       <span class="picker-modal-title">キーを選択</span>
       <button class="scale-modal-close" id="keyPickerClose">✕</button>
     </div>
-    <div class="key-choice-grid" id="keyPickerList"></div>
+    <div class="piano-keyboard" id="keyPickerList"></div>
   </div>
 </div>
 
-<!-- ── 度数選択ポップアップ ────────────────────────────────────────── -->
-<div class="picker-popup hidden" id="degPickerPopup">
-  <div class="picker-popup-label">度数を選択</div>
-  <div class="note-grid" id="degPickerPiano"></div>
-  <div class="picker-popup-footer">
-    <button class="picker-done-btn" id="degPickerDone">完了</button>
+<!-- ── 度数選択モーダル ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="degPickerModal">
+  <div class="instr-modal-box piano-modal-box">
+    <div class="picker-modal-header">
+      <span class="picker-modal-title">スケール設定</span>
+      <button class="scale-modal-close" id="degPickerClose">✕</button>
+    </div>
+    <div class="piano-keyboard" id="degPickerPiano"></div>
+    <button class="piano-done-btn" id="degPickerDone">完了</button>
   </div>
 </div>
 

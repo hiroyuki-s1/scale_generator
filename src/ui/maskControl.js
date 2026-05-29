@@ -5,9 +5,6 @@ export function initMaskControl(container, store) {
   container.innerHTML = `
     <button class="btn-mask" data-el="toggle">マスクOFF</button>
     <div class="mask-panel" data-el="panel" style="display:none">
-      <div class="mask-track-wrap">
-        <div class="mask-track-fill" data-el="fill"></div>
-      </div>
       <div class="mask-stepper-row">
         <div class="mask-stepper-group">
           <span class="mask-stepper-lbl">MIN</span>
@@ -33,7 +30,6 @@ export function initMaskControl(container, store) {
   const el = key => container.querySelector(`[data-el="${key}"]`);
   const toggle   = el('toggle');
   const panel    = el('panel');
-  const fill     = el('fill');
   const minDecBtn = el('minDec');
   const minIncBtn = el('minInc');
   const maxDecBtn = el('maxDec');
@@ -66,8 +62,6 @@ export function initMaskControl(container, store) {
     if (!on) return;
     minValEl.textContent = mask.min;
     maxValEl.textContent = mask.max;
-    fill.style.left  = `${(mask.min / FRET_MAX) * 100}%`;
-    fill.style.width = `${((mask.max - mask.min) / FRET_MAX) * 100}%`;
     minDecBtn.disabled = mask.min <= FRET_MIN;
     minIncBtn.disabled = mask.min >= mask.max - 1;
     maxDecBtn.disabled = mask.max <= mask.min + 1;

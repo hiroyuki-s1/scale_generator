@@ -48,10 +48,14 @@ const NOTE_PC = {
  */
 function qualityToDisplay(quality) {
   return quality
-    .replace(/^\^7?/, 'M7')    // ^ or ^7  → M7
-    .replace(/^h7?$/, 'm7b5')  // h or h7  → m7b5
-    .replace(/^o7?$/, 'dim7')  // o or o7  → dim7
-    .replace(/^-/, 'm');       // -7→m7, -6→m6, -→m
+    .replace(/^\^7/, 'M7')       // ^7        → M7  (before generic ^ rule)
+    .replace(/^\^(\d)/, 'M$1')   // ^9 / ^11  → M9 / M11
+    .replace(/^\^$/, '')          // ^ alone   → '' (major triad, no suffix)
+    .replace(/^\^/, 'M')          // ^sus etc. → Msus
+    .replace(/^[Mm]aj/, 'M')      // maj7/Maj9 → M7/M9
+    .replace(/^h7?$/, 'm7b5')    // h / h7    → m7b5
+    .replace(/^o7?$/, 'dim7')    // o / o7    → dim7
+    .replace(/^-/, 'm');          // -7/-      → m7/m
 }
 
 /**

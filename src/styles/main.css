@@ -595,7 +595,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .saved-print-title { display: none; }
 
 /* ドラッグ&ドロップ並べ替え */
-.saved-card.dragging { opacity: .45; }
+.saved-card.dragging { opacity: .35; outline: 2px dashed var(--accent); outline-offset: 2px; }
+.saved-card.drop-target { outline: 2px solid #f59e0b; outline-offset: 2px; background: rgba(245,158,11,.06); }
 .drag-handle {
   margin-right: auto;            /* ハンドルは左、ボタンは右 */
   display: flex; align-items: center;
@@ -1154,6 +1155,35 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   pointer-events: none;
   z-index: 10;
   animation: edit-badge-pop 0.45s cubic-bezier(.34,1.56,.64,1) both;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  white-space: nowrap;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* UPDATE! バッジ (編集後更新) */
+@keyframes update-badge-pop {
+  0%   { transform: rotate(-30deg) scale(0); opacity: 0; }
+  60%  { transform: rotate(-30deg) scale(1.2); opacity: 1; }
+  80%  { transform: rotate(-30deg) scale(.93); }
+  100% { transform: rotate(-30deg) scale(1); opacity: 1; }
+}
+.update-badge {
+  position: absolute;
+  top: 18px;
+  left: 2px;
+  transform: rotate(-30deg);
+  transform-origin: left center;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(99,102,241,.5), 0 1px 0 rgba(255,255,255,.3) inset;
+  pointer-events: none;
+  z-index: 10;
+  animation: update-badge-pop 0.45s cubic-bezier(.34,1.56,.64,1) both;
   text-shadow: 0 1px 2px rgba(0,0,0,.25);
   white-space: nowrap;
   font-family: 'Space Grotesk', system-ui, sans-serif;

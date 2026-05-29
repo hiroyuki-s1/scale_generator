@@ -1,5 +1,4 @@
 import { parseIrealUrl } from '../domain/ireal.js';
-import { qualityToChordTones } from '../domain/chordTones.js';
 import { cloneEditAsSnapshot } from '../state/snapshot.js';
 
 /**
@@ -114,9 +113,9 @@ export function initIrealSection(store) {
       const newSaved = chords.map(c => {
         const editSnap = {
           rootIndex: c.rootPc,
-          activeDegrees: new Set(qualityToChordTones(c.quality)),
-          presetName: c.quality || c.displayName,
-          mode: 'chord',
+          activeDegrees: new Set(c.degrees),
+          presetName: c.scaleName,
+          mode: 'scale',
           mask: { enabled: false, min: 1, max: 15 },
           degreeColors: state.edit.degreeColors,
         };
@@ -134,9 +133,9 @@ export function initIrealSection(store) {
     const c = chords[idx];
     store.updateEdit({
       rootIndex: c.rootPc,
-      activeDegrees: new Set(qualityToChordTones(c.quality)),
-      presetName: c.quality || c.displayName,
-      mode: 'chord',
+      activeDegrees: new Set(c.degrees),
+      presetName: c.scaleName,
+      mode: 'scale',
     });
   }
 }

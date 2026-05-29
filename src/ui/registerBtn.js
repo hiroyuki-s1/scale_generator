@@ -23,9 +23,10 @@ export function initRegisterBtn(store, registerBtn, titleInputEl, options = {}) 
       return { ...state, saved: [...state.saved, { ...snap, id: savedId }], nextId: savedId + 1 };
     });
 
-    showToast(editingId != null ? '更新しました' : '登録しました');
+    const wasUpdate = editingId != null;
+    showToast(wasUpdate ? '更新しました' : '登録しました');
     options.onComplete?.();
-    options.onSaved?.(savedId);
+    options.onSaved?.(savedId, wasUpdate);
   });
 }
 

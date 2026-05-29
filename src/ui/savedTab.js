@@ -68,27 +68,33 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gridTemplateColumns = 'repeat(2, 1fr)';
   container.style.gap = '16px';
 
-  // ── ドラッグ&ドロップ並べ替え (コンテナレベルで委譲) ──
-  let draggingId = null;
+  // ── ドラッグ&ドロップ並べ替え ──────────────────────────────────────────
+  // ドラッグ中にDOMを動かさず、ドロップ時にスワップする方式。
+  // ドラッグ先候補: ポインターがカードの内側にあるもの（最も中心が近い）。
+  let draggingId  = null;
+  let dropTargetEl = null;
 
-  function getDragAfterElement(x, y) {
-    const els = [...container.querySelectorAll('.saved-card:not(.dragging)')];
-    let result = null;
-    let closest = Infinity;
-    for (const el of els) {
-      const box = el.getBoundingClientRect();
-      const cx = box.left + box.width / 2;
-      const cy = box.top + box.height / 2;
-      // reading-order「後ろ」: 下の行、または同じ行で右側にある要素
-      const isAfter = (y < cy - box.height / 2) ||
-        (Math.abs(y - cy) <= box.height / 2 && x < cx);
-      if (!isAfter) continue;
-      const dist = Math.hypot(x - cx, y - cy);
-      if (dist < closest) { closest = dist; result = el; }
-    }
-    return result;
+  function clearDropTarget() {
+    dropTargetEl?.classList.remove('drop-target');
+    dropTargetEl = null;
   }
 
+  /** ポインター位置に基づいてスワップ先カードを探す (dragging カード除外) */
+  function findDropTarget(x, y) {
+    const els = [...container.querySelectorAll('.saved-card:not(.dragging)')];
+    let bestEl   = null;
+    let bestDist = Infinity;
+    for (const el of els) {
+      const box = el.getBoundingClientRect();
+      // 1/4 overlap: ポインターがカード内にある場合のみ候補
+      if (x < box.left || x > box.right || y < box.top || y > box.bottom) continue;
+      const dist = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
+      if (dist < bestDist) { bestDist = dist; bestEl = el; }
+    }
+    return bestEl;
+  }
+
+  /** DOM順を store に反映 */
   function commitOrder() {
     const orderedIds = [...container.querySelectorAll('.saved-card')]
       .map(c => Number(c.dataset.id));
@@ -96,9 +102,17 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (orderedIds.join(',') === cur.map(s => s.id).join(',')) return;
     const byId = new Map(cur.map(s => [s.id, s]));
     const reordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
-    // DOM はすでに新しい順なので、subscribe の再描画はスキップさせたい
     lastIdsKey = orderedIds.join(',');
     store.set(state => ({ ...state, saved: reordered }));
+  }
+
+  /** 2つのカードの位置を DOM でスワップ */
+  function swapCards(a, b) {
+    const marker = document.createComment('swap');
+    a.parentNode.insertBefore(marker, a);
+    b.parentNode.insertBefore(a, b.nextSibling);
+    marker.parentNode.insertBefore(b, marker);
+    marker.remove();
   }
 
   container.addEventListener('dragstart', e => {
@@ -109,22 +123,34 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', card.dataset.id);
   });
+
   container.addEventListener('dragover', e => {
     if (draggingId == null) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    const dragging = container.querySelector('.saved-card.dragging');
-    if (!dragging) return;
-    const after = getDragAfterElement(e.clientX, e.clientY);
-    if (after == null) {
-      if (dragging !== container.lastElementChild) container.appendChild(dragging);
-    } else if (after !== dragging) {
-      container.insertBefore(dragging, after);
+    const candidate = findDropTarget(e.clientX, e.clientY);
+    if (candidate !== dropTargetEl) {
+      clearDropTarget();
+      dropTargetEl = candidate;
+      dropTargetEl?.classList.add('drop-target');
     }
   });
-  container.addEventListener('drop', e => { e.preventDefault(); });
-  container.addEventListener('dragend', e => {
-    e.target.closest('.saved-card')?.classList.remove('dragging');
+
+  container.addEventListener('dragleave', e => {
+    if (!container.contains(e.relatedTarget)) clearDropTarget();
+  });
+
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const dragging = container.querySelector('.saved-card.dragging');
+    if (dragging && dropTargetEl && dropTargetEl !== dragging) {
+      swapCards(dragging, dropTargetEl);
+    }
+  });
+
+  container.addEventListener('dragend', () => {
+    container.querySelector('.saved-card.dragging')?.classList.remove('dragging');
+    clearDropTarget();
     if (draggingId != null) { draggingId = null; commitOrder(); }
   });
 
@@ -186,19 +212,18 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     }
   }
 
-  function highlightNewCard(id) {
+  function highlightNewCard(id, isUpdate = false) {
     currentNewId = id;
     container.querySelectorAll('.saved-card').forEach(c => {
       const match = Number(c.dataset.id) === id;
       c.classList.toggle('newly-added', match);
       if (match) {
         spawnParticles(c);
-        if (!c.querySelector('.new-badge')) {
-          const badge = document.createElement('div');
-          badge.className = 'new-badge';
-          badge.textContent = 'NEW!';
-          c.appendChild(badge);
-        }
+        c.querySelector('.new-badge, .update-badge')?.remove();
+        const badge = document.createElement('div');
+        badge.className = isUpdate ? 'update-badge' : 'new-badge';
+        badge.textContent = isUpdate ? 'UPDATE!' : 'NEW!';
+        c.appendChild(badge);
       }
     });
   }
@@ -207,7 +232,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     currentNewId = null;
     container.querySelectorAll('.newly-added').forEach(c => {
       c.classList.remove('newly-added');
-      c.querySelector('.new-badge')?.remove();
+      c.querySelector('.new-badge, .update-badge')?.remove();
     });
   }
 

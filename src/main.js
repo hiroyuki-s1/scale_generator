@@ -55,8 +55,8 @@ attachPersist(store);
 // ── 指板 ──────────────────────────────────────────────────────────────
 const fretboardEl   = document.getElementById('fretboard');
 const editFbWrapEl  = document.getElementById('editFbWrap');
-let lastFbInstrument = null;
-
+const LAST_INSTR_KEY = 'sg.lastInstrument';
+let lastFbInstrument = null; // セッション内で描画済み楽器を追跡
 
 function syncEditorFretboard(s, p) {
   const instrument = s.edit.instrument;
@@ -69,12 +69,17 @@ function syncEditorFretboard(s, p) {
     // 楽器変更 → base を再描画してドットをすべて追加
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
+
+    // 前回保存した楽器と異なる場合だけ glow burst（F5後の同楽器は除く）
+    const prevSaved = localStorage.getItem(LAST_INSTR_KEY);
+    if (prevSaved !== null && prevSaved !== instrument) {
+      editFbWrapEl.classList.remove('fb-instrument-pop');
+      void editFbWrapEl.offsetWidth;
+      editFbWrapEl.classList.add('fb-instrument-pop');
+      editFbWrapEl.addEventListener('animationend', () => editFbWrapEl.classList.remove('fb-instrument-pop'), { once: true });
+    }
     lastFbInstrument = instrument;
-    // glow burst (NEW! カードと同系統)
-    editFbWrapEl.classList.remove('fb-instrument-pop');
-    void editFbWrapEl.offsetWidth;
-    editFbWrapEl.classList.add('fb-instrument-pop');
-    editFbWrapEl.addEventListener('animationend', () => editFbWrapEl.classList.remove('fb-instrument-pop'), { once: true });
+    localStorage.setItem(LAST_INSTR_KEY, instrument);
     return;
   }
   if (p && s.edit === p.edit) return;

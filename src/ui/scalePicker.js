@@ -22,7 +22,7 @@ export function initScalePicker(store) {
   // ── カテゴリリスト構築 ──────────────────────────────
   GROUPS.forEach((g, i) => {
     const b = document.createElement('button');
-    b.className = 'scale-cat-item';
+    b.className = 'scale-cat-card';
     b.textContent = g.label;
     b.dataset.idx = i;
     b.addEventListener('click', () => selectCat(i));
@@ -30,7 +30,7 @@ export function initScalePicker(store) {
   });
 
   function selectCat(i) {
-    catList.querySelectorAll('.scale-cat-item').forEach((b, bi) =>
+    catList.querySelectorAll('.scale-cat-card').forEach((b, bi) =>
       b.classList.toggle('active', bi === i));
     fillNames(i);
   }

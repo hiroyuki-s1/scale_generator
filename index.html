@@ -213,10 +213,15 @@
   </div>
 </div>
 
-<!-- ── キー選択ポップアップ ────────────────────────────────────────── -->
-<div class="picker-popup hidden" id="keyPickerPopup">
-  <div class="picker-popup-label">キーを選択</div>
-  <div class="note-grid" id="keyPickerPiano"></div>
+<!-- ── キー選択モーダル ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="keyPickerModal">
+  <div class="instr-modal-box">
+    <div class="picker-modal-header">
+      <span class="picker-modal-title">キーを選択</span>
+      <button class="scale-modal-close" id="keyPickerClose">✕</button>
+    </div>
+    <div class="key-choice-grid" id="keyPickerList"></div>
+  </div>
 </div>
 
 <!-- ── 度数選択ポップアップ ────────────────────────────────────────── -->
@@ -303,14 +308,42 @@
 
 <!-- ── スケール / コード選択モーダル ──────────────────────────────── -->
 <div class="modal-overlay" id="scalePickerModal">
-  <div class="scale-modal-box">
-    <div class="scale-modal-header">
-      <span class="modal-title">スケール / コードを選択</span>
+  <div class="instr-modal-box scale-modal-wide">
+    <div class="picker-modal-header">
+      <span class="picker-modal-title">スケール / コードを選択</span>
       <button class="scale-modal-close" id="scalePickerClose">✕</button>
     </div>
-    <div class="scale-modal-body">
-      <div class="scale-cat-list" id="scaleCatList"></div>
-      <div class="scale-name-list" id="scaleNameList"></div>
+    <div class="scale-cat-grid" id="scaleCatList"></div>
+    <div class="scale-name-list" id="scaleNameList"></div>
+  </div>
+</div>
+
+<!-- ── フレット範囲モーダル ────────────────────────────────────────── -->
+<div class="modal-overlay" id="maskModal">
+  <div class="instr-modal-box">
+    <div class="picker-modal-header">
+      <span class="picker-modal-title">フレット範囲</span>
+      <button class="scale-modal-close" id="maskModalClose">✕</button>
+    </div>
+    <button class="mask-toggle-btn" id="maskToggle">マスクOFF</button>
+    <div class="mask-modal-range" id="maskModalRange" style="display:none">
+      <div class="mask-modal-group">
+        <div class="mask-modal-lbl">MIN</div>
+        <div class="mask-modal-stepper">
+          <button class="mask-modal-step" id="maskMinDec">−</button>
+          <span class="mask-modal-val" id="maskMinVal">1</span>
+          <button class="mask-modal-step" id="maskMinInc">＋</button>
+        </div>
+      </div>
+      <div class="mask-modal-sep">〜</div>
+      <div class="mask-modal-group">
+        <div class="mask-modal-lbl">MAX</div>
+        <div class="mask-modal-stepper">
+          <button class="mask-modal-step" id="maskMaxDec">−</button>
+          <span class="mask-modal-val" id="maskMaxVal">22</span>
+          <button class="mask-modal-step" id="maskMaxInc">＋</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

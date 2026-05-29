@@ -6,6 +6,7 @@ export function createStore(initial) {
   let state = initial;
   const listeners = new Set();
   const set = (patch) => {
+    if (patch === state) return;
     const next = typeof patch === 'function' ? patch(state) : { ...state, ...patch };
     if (next === state) return;
     const prev = state;

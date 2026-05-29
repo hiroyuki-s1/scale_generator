@@ -1,66 +1,47 @@
 import { NOTES } from '../domain/constants.js';
 
-const BLACK_PCS = new Set([1, 3, 6, 8, 10]);
+const WHITE_KEY_INDICES = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B
 
-/** キー選択ボタン + ドロップダウングリッド */
+/** キー選択モーダル */
 export function initKeyPicker(store) {
   const triggerBtn = document.getElementById('keyPickerBtn');
-  const popup      = document.getElementById('keyPickerPopup');
-  const gridEl     = document.getElementById('keyPickerPiano');
+  const modal      = document.getElementById('keyPickerModal');
+  const closeBtn   = document.getElementById('keyPickerClose');
+  const listEl     = document.getElementById('keyPickerList');
 
-  let isOpen = false;
-
-  // Build 12-note grid once
-  NOTES.forEach((note, i) => {
+  WHITE_KEY_INDICES.forEach(i => {
     const btn = document.createElement('button');
-    btn.className = 'note-key ' + (BLACK_PCS.has(i) ? 'note-key-black' : 'note-key-white');
+    btn.className = 'key-choice-btn';
     btn.dataset.idx = i;
-    btn.textContent = note;
+    btn.textContent = NOTES[i];
     btn.addEventListener('click', () => {
       const { edit } = store.get();
-      if (edit.presetName === null) {
-        if (!confirm('カスタム設定した度数が失われます。\nキーを変更しますか？')) { close(); return; }
+      if (edit.presetName === null && edit.activeDegrees.size > 0) {
+        if (!confirm('カスタム設定した度数が失われます。\nキーを変更しますか？')) { closeModal(); return; }
       }
       store.updateEdit({ rootIndex: i });
-      close();
+      closeModal();
     });
-    gridEl.appendChild(btn);
+    listEl.appendChild(btn);
   });
 
-  triggerBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    isOpen ? close() : open();
-  });
-  document.addEventListener('click', e => {
-    if (isOpen && !popup.contains(e.target)) close();
-  });
+  triggerBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && isOpen) close();
+    if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
   });
 
-  function open() {
-    isOpen = true;
-    popup.classList.remove('hidden');
-    position();
+  function openModal() {
     syncActive();
+    modal.classList.add('show');
   }
-  function close() {
-    isOpen = false;
-    popup.classList.add('hidden');
-  }
-  function position() {
-    const r = triggerBtn.getBoundingClientRect();
-    const pW = 340;
-    let left = r.left;
-    if (left + pW > window.innerWidth - 8) left = window.innerWidth - pW - 8;
-    popup.style.top  = `${r.bottom + 6}px`;
-    popup.style.left = `${Math.max(8, left)}px`;
-  }
+  function closeModal() { modal.classList.remove('show'); }
 
   function syncActive() {
     const { rootIndex } = store.get().edit;
-    gridEl.querySelectorAll('.note-key').forEach(btn => {
-      btn.classList.toggle('note-key-active', Number(btn.dataset.idx) === rootIndex);
+    listEl.querySelectorAll('.key-choice-btn').forEach(btn => {
+      btn.classList.toggle('key-choice-btn--active', Number(btn.dataset.idx) === rootIndex);
     });
   }
 
@@ -72,6 +53,6 @@ export function initKeyPicker(store) {
   store.subscribe((s, p) => {
     if (p && s.edit.rootIndex === p.edit.rootIndex) return;
     syncBtn();
-    if (isOpen) syncActive();
+    if (modal.classList.contains('show')) syncActive();
   });
 }

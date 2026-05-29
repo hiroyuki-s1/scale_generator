@@ -54,7 +54,13 @@ export function initIrealSection(store) {
         registerAllBtn.classList.remove('hidden');
       }
     } catch (e) {
-      if (gridEl) gridEl.innerHTML = `<span class="ireal-error">エラー: ${e.message}</span>`;
+      if (gridEl) {
+        const errEl = document.createElement('span');
+        errEl.className = 'ireal-error';
+        errEl.textContent = `エラー: ${e.message}`;
+        gridEl.innerHTML = '';
+        gridEl.appendChild(errEl);
+      }
     }
   }
 

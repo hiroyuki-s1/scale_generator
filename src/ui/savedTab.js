@@ -68,14 +68,16 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gridTemplateColumns = 'repeat(2, 1fr)';
   container.style.gap = '16px';
 
-  // ── ドラッグ&ドロップ並べ替え (Pointer Events) ───────────────────────
-  // カード全体をタップして 300ms 長押しでドラッグ開始。
-  // 300ms 経過前に 8px 以上動いたらスクロール意図として取消。
-  // 300ms 後に setPointerCapture でスクロールを停止しドラッグ継続。
+  // ── ドラッグ&ドロップ並べ替え ──────────────────────────────────────
+  // タッチ: touchmove の preventDefault でスクロール停止(ポインターイベントより確実)。
+  //   300ms 長押し確定 → 次の touchmove で drag 開始・スクロール停止。
+  //   300ms 前に 10px 以上動いたらスクロール意図として取消。
+  // マウス: pointermove 5px でドラッグ開始（従来通り）。
   let draggingId   = null;
   let dropTargetEl = null;
   let dragState    = null;
-  // dragState: null | { card, pointerId, startX, startY, pending:bool, timer }
+  // dragState: null | { card, startX, startY, pending:bool, timer,
+  //                     touchId?:number, pointerId?:number }
 
   function clearDropTarget() {
     dropTargetEl?.classList.remove('drop-target');
@@ -126,21 +128,19 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
-  /** 300ms 経過後にドラッグ確定 */
+  /** ドラッグ確定 (300ms 長押し後 or マウス5px移動後に呼ぶ) */
   function activateDrag() {
     if (!dragState || !dragState.pending) return;
     dragState.pending = false;
     draggingId = Number(dragState.card.dataset.id);
     dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
-    // 長押し確定後にキャプチャ: これ以降スクロールを防ぎドラッグに専念
-    dragState.card.setPointerCapture(dragState.pointerId);
   }
 
   function endDrag(cancelled = false) {
     if (!dragState) return;
     const { card, pending } = dragState;
-    if (pending) clearTimeout(dragState.timer);
+    if (pending && dragState.timer) clearTimeout(dragState.timer);
     card.classList.remove('dragging');
     const wasActive = !pending;
     if (wasActive && !cancelled && dropTargetEl && dropTargetEl !== card) {
@@ -154,38 +154,92 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (wasActive && savedId != null) commitOrder();
   }
 
-  // カード全体がタップ対象（ただし編集/削除ボタンは除外）
-  container.addEventListener('pointerdown', e => {
+  // ── タッチイベント (iOS/Android): touchmove+preventDefault でスクロール抑制 ──
+  container.addEventListener('touchstart', e => {
     if (dragState) return;
     if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
+    const t = e.changedTouches[0];
+    dragState = {
+      card,
+      touchId: t.identifier,
+      startX: t.clientX,
+      startY: t.clientY,
+      pending: true,
+      timer: setTimeout(activateDrag, 300),
+    };
+  }, { passive: true });
 
+  container.addEventListener('touchmove', e => {
+    if (!dragState || dragState.touchId === undefined) return;
+    const touch = [...e.changedTouches].find(t => t.identifier === dragState.touchId);
+    if (!touch) return;
+
+    if (dragState.pending) {
+      // 300ms 前に 10px 以上動いたらスクロール意図 → ドラッグ取消
+      const dist = Math.hypot(touch.clientX - dragState.startX, touch.clientY - dragState.startY);
+      if (dist > 10) {
+        clearTimeout(dragState.timer);
+        dragState = null;
+      }
+      return; // pending 中はスクロールを妨げない
+    }
+
+    // ドラッグ確定後: スクロール抑制 + ドロップターゲット更新
+    e.preventDefault();
+    const vy = touch.clientY, vh = window.innerHeight, edgeZone = 80;
+    if (vy < edgeZone)           window.scrollBy({ top: -8, behavior: 'instant' });
+    else if (vy > vh - edgeZone) window.scrollBy({ top:  8, behavior: 'instant' });
+
+    const candidate = findDropTarget(touch.clientX, touch.clientY);
+    if (candidate !== dropTargetEl) {
+      clearDropTarget();
+      dropTargetEl = candidate;
+      dropTargetEl?.classList.add('drop-target');
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', e => {
+    if (!dragState || dragState.touchId === undefined) return;
+    const touch = [...e.changedTouches].find(t => t.identifier === dragState.touchId);
+    if (!touch) return;
+    endDrag();
+  }, { passive: true });
+
+  container.addEventListener('touchcancel', () => {
+    if (!dragState || dragState.touchId === undefined) return;
+    endDrag(true);
+  }, { passive: true });
+
+  // ── マウスイベント: pointerType === 'mouse' のみ ──
+  container.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse') return;
+    if (dragState) return;
+    if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
+    const card = e.target.closest('.saved-card');
+    if (!card) return;
     dragState = {
       card,
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
       pending: true,
-      timer: setTimeout(activateDrag, 300),
+      timer: null,
     };
+    card.setPointerCapture(e.pointerId);
   });
 
   container.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
     if (!dragState || e.pointerId !== dragState.pointerId) return;
 
     if (dragState.pending) {
-      // 300ms 前に 8px 以上動いたらスクロール意図 → ドラッグ取消
       const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
-      if (dist > 8) {
-        clearTimeout(dragState.timer);
-        dragState = null;
-      }
+      if (dist > 5) activateDrag();
       return;
     }
 
-    // ドラッグ確定後: スクロール抑制 + ドロップターゲット更新
-    e.preventDefault();
     const edgeZone = 80, vy = e.clientY, vh = window.innerHeight;
     if (vy < edgeZone)           window.scrollBy({ top: -8, behavior: 'instant' });
     else if (vy > vh - edgeZone) window.scrollBy({ top:  8, behavior: 'instant' });
@@ -199,11 +253,13 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   }, { passive: false });
 
   container.addEventListener('pointerup', e => {
+    if (e.pointerType !== 'mouse') return;
     if (!dragState || e.pointerId !== dragState.pointerId) return;
     endDrag();
   });
 
   container.addEventListener('pointercancel', e => {
+    if (e.pointerType !== 'mouse') return;
     if (!dragState || e.pointerId !== dragState.pointerId) return;
     endDrag(true);
   });

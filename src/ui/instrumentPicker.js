@@ -72,6 +72,10 @@ export function initInstrumentPicker(btnEl, modalEl, store) {
   modalEl.querySelectorAll('.instr-choice-btn').forEach(choiceBtn => {
     choiceBtn.addEventListener('click', () => {
       const chosen = choiceBtn.dataset.instrument;
+      const { edit } = store.get();
+      if (edit.presetName === null && edit.activeDegrees.size > 0) {
+        if (!confirm('カスタム設定した度数が失われます。\n楽器を変更しますか？')) return;
+      }
       store.updateEdit({ instrument: chosen });
       modalEl.classList.remove('show');
     });

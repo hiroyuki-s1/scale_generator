@@ -57,61 +57,6 @@ const fretboardEl   = document.getElementById('fretboard');
 const editFbWrapEl  = document.getElementById('editFbWrap');
 let lastFbInstrument = null;
 
-/** 楽器変更時に指板の周囲からパーティクルをばらまく */
-function spawnFretboardParticles(wrapEl, instrument) {
-  const rect = wrapEl.getBoundingClientRect();
-  if (rect.width === 0) return; // 非表示なら何もしない
-  const guitarColors = ['#f59e0b','#ef4444','#22c55e','#fbbf24','#f97316','#a3e635','#84cc16'];
-  const bassColors   = ['#6366f1','#8b5cf6','#a78bfa','#60a5fa','#38bdf8','#f472b6','#c084fc'];
-  const colors = instrument === 'bass' ? bassColors : guitarColors;
-  const count = 80;
-  // 周長の合計
-  const perimeter = 2 * (rect.width + rect.height);
-  for (let i = 0; i < count; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle-burst';
-    // 周上のランダムな点を選ぶ
-    let t = Math.random() * perimeter;
-    let startX, startY, baseAngleDeg;
-    if (t < rect.width) {                        // 上辺
-      startX = rect.left + t;
-      startY = rect.top;
-      baseAngleDeg = -90;
-    } else if (t < rect.width + rect.height) {   // 右辺
-      t -= rect.width;
-      startX = rect.right;
-      startY = rect.top + t;
-      baseAngleDeg = 0;
-    } else if (t < 2 * rect.width + rect.height) { // 下辺
-      t -= rect.width + rect.height;
-      startX = rect.right - t;
-      startY = rect.bottom;
-      baseAngleDeg = 90;
-    } else {                                     // 左辺
-      t -= 2 * rect.width + rect.height;
-      startX = rect.left;
-      startY = rect.bottom - t;
-      baseAngleDeg = 180;
-    }
-    // 法線方向 ± 50° のスプレッド
-    const spread = (Math.random() - 0.5) * 100;
-    const angleDeg = baseAngleDeg + spread;
-    const dist   = 40 + Math.random() * 100;
-    const size   = 3 + Math.random() * 7;
-    const color  = colors[Math.floor(Math.random() * colors.length)];
-    const delay  = Math.random() * 0.3;
-    p.style.cssText = [
-      `left:${startX}px`, `top:${startY}px`,
-      `width:${size}px`,  `height:${size}px`,
-      `background:${color}`,
-      `--dx:${Math.cos(angleDeg * Math.PI / 180) * dist}px`,
-      `--dy:${Math.sin(angleDeg * Math.PI / 180) * dist}px`,
-      `animation-delay:${delay}s`,
-    ].join(';');
-    document.body.appendChild(p);
-    p.addEventListener('animationend', () => p.remove(), { once: true });
-  }
-}
 
 function syncEditorFretboard(s, p) {
   const instrument = s.edit.instrument;
@@ -125,12 +70,11 @@ function syncEditorFretboard(s, p) {
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
     lastFbInstrument = instrument;
-    // glow burst (NEW! カードと同系統) + 周囲パーティクル
+    // glow burst (NEW! カードと同系統)
     editFbWrapEl.classList.remove('fb-instrument-pop');
     void editFbWrapEl.offsetWidth;
     editFbWrapEl.classList.add('fb-instrument-pop');
     editFbWrapEl.addEventListener('animationend', () => editFbWrapEl.classList.remove('fb-instrument-pop'), { once: true });
-    requestAnimationFrame(() => spawnFretboardParticles(editFbWrapEl, instrument));
     return;
   }
   if (p && s.edit === p.edit) return;

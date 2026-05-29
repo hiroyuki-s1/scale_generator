@@ -286,6 +286,25 @@ body {
 .editor-mode-cancel:active { transform: scale(.97); }
 .editor-mode-cancel.hidden { display: none; }
 
+/* 作者リンク */
+.editor-footer {
+  padding: 10px 14px 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+.author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+  text-decoration: none;
+  opacity: .7;
+  transition: opacity .15s, color .15s;
+}
+.author-link:hover { opacity: 1; color: var(--text); }
+.author-link-icon { width: 13px; height: 13px; flex-shrink: 0; }
+
 /* 編集モード中は登録ボタンをオレンジに */
 .editor--edit-mode .btn-register { background: var(--accent); }
 .editor--edit-mode .btn-register:hover { background: #a0441a; }

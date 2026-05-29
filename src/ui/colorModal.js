@@ -46,6 +46,8 @@ export function initColorModal(store, openBtn) {
 
       const badge = document.createElement('div');
       badge.className = 'color-row-badge';
+      badge.textContent = d.name;
+      badge.style.fontSize = d.name.length >= 3 ? '9px' : d.name.length === 1 ? '14px' : '11px';
       applyBadge(badge, dc);
 
       const name = document.createElement('span');
@@ -130,4 +132,5 @@ export function initColorModal(store, openBtn) {
 function applyBadge(badge, dc) {
   badge.style.background  = dc.solid ? dc.color : '#fff';
   badge.style.borderColor = dc.color;
+  badge.style.color       = dc.text;
 }

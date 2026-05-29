@@ -104,8 +104,8 @@ export function findPresetEverywhere(name) {
 export const TUNING = [64, 59, 55, 50, 45, 40];
 export const STRING_LABELS = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
 
-export const FRET_START = 1;
-export const FRET_END = 15;
+export const FRET_START = 0;
+export const FRET_END = 22;
 
 export const WHITE_KEYS = [
   { note: 'C', idx: 0 }, { note: 'D', idx: 2 }, { note: 'E', idx: 4 },
@@ -139,9 +139,9 @@ export const LAYOUT_PRESETS = [
 
 export const SVG = {
   W: 960, H: 230,
-  ML: 50, MT: 20, MR: 10, MB: 42,
+  ML: 54, MT: 20, MR: 10, MB: 42,
   F0: FRET_START, F1: FRET_END,
-  CR: 12.5,
+  CR: 10,   // ドット半径: フレット数増加に合わせ少し小さく
 };
 SVG.FBW = SVG.W - SVG.ML - SVG.MR;
 SVG.FBH = SVG.H - SVG.MT - SVG.MB;

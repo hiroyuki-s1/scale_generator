@@ -4,13 +4,13 @@ export function initMaskControl(container, store) {
     <div class="mask-sliders" data-el="sliders" style="display:none">
       <div class="mslider-group">
         <span class="mslider-lbl">Min</span>
-        <input type="range" class="mslider" data-el="min" min="1" max="15" value="1">
+        <input type="range" class="mslider" data-el="min" min="0" max="22" value="1">
         <span class="mval" data-el="minVal">1</span>
       </div>
       <span class="msep">—</span>
       <div class="mslider-group">
         <span class="mslider-lbl">Max</span>
-        <input type="range" class="mslider" data-el="max" min="1" max="15" value="15">
+        <input type="range" class="mslider" data-el="max" min="0" max="22" value="22">
         <span class="mval" data-el="maxVal">15</span>
       </div>
     </div>

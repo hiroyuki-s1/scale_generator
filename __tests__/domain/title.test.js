@@ -36,6 +36,6 @@ describe('buildTitle', () => {
       rootIndex: 0,
       activeDegrees: new Set([0, 3, 7]),
       presetName: null,
-    })).toBe('C — カスタム (R, m3, P5)');
+    })).toBe('C (R, m3, P5)');
   });
 });

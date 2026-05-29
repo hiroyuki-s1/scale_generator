@@ -3,7 +3,7 @@
  * Verifies that computeFretNotes always returns:
  *   - only notes whose degree is in activeDegrees
  *   - at least 1 note
- *   - no more than (6 strings × 15 frets) = 90 notes
+ *   - no more than (6 strings × 23 fret positions) = 138 notes
  *   - the root note (degree 0) at least once per string
  *   - correct counts for well-known presets
  */
@@ -16,7 +16,7 @@ const ALL_PRESETS = [
   ...CHORD_GROUPS.flatMap(g => g.presets.map(p => ({ ...p, mode: 'chord', group: g.label }))),
 ];
 
-const MAX_FRET_NOTES = TUNING.length * (FRET_END - FRET_START + 1); // 6 × 15 = 90
+const MAX_FRET_NOTES = TUNING.length * (FRET_END - FRET_START + 1); // 6 × 23 = 138
 
 describe('all scale presets — every root', () => {
   SCALE_GROUPS.forEach(g => {
@@ -74,9 +74,12 @@ describe('mask range — all presets stay within fret bounds', () => {
         activeDegrees,
         mask: { enabled: true, min: MIN, max: MAX },
       });
+      // Fret 0 (open strings) is always shown regardless of mask
       notes.forEach(n => {
-        expect(n.fret).toBeGreaterThanOrEqual(MIN);
-        expect(n.fret).toBeLessThanOrEqual(MAX);
+        if (n.fret !== 0) {
+          expect(n.fret).toBeGreaterThanOrEqual(MIN);
+          expect(n.fret).toBeLessThanOrEqual(MAX);
+        }
       });
     });
   });
@@ -88,8 +91,8 @@ describe('known note counts (C root, no mask)', () => {
     mask: { enabled: false, min: FRET_START, max: FRET_END },
   });
 
-  it('Major Penta (5 degrees) has < 50 notes', () => {
-    expect(computeFretNotes(state([0, 2, 4, 7, 9])).length).toBeLessThan(50);
+  it('Major Penta (5 degrees) has < 80 notes', () => {
+    expect(computeFretNotes(state([0, 2, 4, 7, 9])).length).toBeLessThan(80);
   });
   it('Diminished (8 degrees) has >= Major Penta note count', () => {
     const penta = computeFretNotes(state([0, 2, 4, 7, 9])).length;

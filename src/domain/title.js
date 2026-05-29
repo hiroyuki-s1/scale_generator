@@ -20,5 +20,6 @@ export function buildTitle(state) {
     .sort((a, b) => a - b)
     .map(i => DEGREES[i].name)
     .join(', ');
-  return `${key} — カスタム (${names})`;
+  if (!names) return key;
+  return `${key} (${names})`;
 }

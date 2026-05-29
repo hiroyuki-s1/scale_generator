@@ -32,18 +32,34 @@ export function drawFretboardBase(svgEl) {
     fill: `url(#g${uid})`, stroke: '#cca86a', 'stroke-width': '1.5', rx: '4',
   }));
 
-  [3, 5, 7, 9].forEach(f => svgEl.appendChild(el('circle', {
-    cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 4.5, fill: 'rgba(180,140,80,.22)',
-  })));
-  [SVG.MT + SVG.FBH / 3, SVG.MT + SVG.FBH * 2 / 3].forEach(cy => svgEl.appendChild(el('circle', {
-    cx: fx(12), cy, r: 4.5, fill: 'rgba(180,140,80,.22)',
-  })));
+  // Fret 0 area (open strings) — slightly different shade
+  const nutX = SVG.ML + SVG.FW; // nut = line between fret 0 and fret 1
+  svgEl.appendChild(el('rect', {
+    x: SVG.ML + 0.75, y: SVG.MT + 0.75,
+    width: SVG.FW - 1.5, height: SVG.FBH - 1.5,
+    fill: 'rgba(200,180,140,.18)',
+  }));
 
-  svgEl.appendChild(el('rect', { x: SVG.ML - 5, y: SVG.MT, width: 6, height: SVG.FBH, fill: '#d8c8a0', rx: '1.5' }));
-  svgEl.appendChild(el('rect', { x: SVG.ML - 5, y: SVG.MT, width: 3, height: SVG.FBH, fill: 'rgba(255,255,255,.35)', rx: '1.5' }));
+  // Inlay dots (3,5,7,9,12,15,17,19,21)
+  [3, 5, 7, 9, 15, 17, 19, 21].forEach(f => {
+    if (f < SVG.F0 || f > SVG.F1) return;
+    svgEl.appendChild(el('circle', {
+      cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 4, fill: 'rgba(180,140,80,.22)',
+    }));
+  });
+  [SVG.MT + SVG.FBH / 3, SVG.MT + SVG.FBH * 2 / 3].forEach(cy => {
+    if (12 < SVG.F0 || 12 > SVG.F1) return;
+    svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 4, fill: 'rgba(180,140,80,.22)' }));
+  });
 
+  // Nut bar (between fret 0 and fret 1)
+  svgEl.appendChild(el('rect', { x: nutX - 5, y: SVG.MT, width: 6, height: SVG.FBH, fill: '#d8c8a0', rx: '1.5' }));
+  svgEl.appendChild(el('rect', { x: nutX - 5, y: SVG.MT, width: 3, height: SVG.FBH, fill: 'rgba(255,255,255,.35)', rx: '1.5' }));
+
+  // Fret lines (skip fret 1 line — that's the nut)
   for (let f = SVG.F0; f <= SVG.F1 + 1; f++) {
     const x = SVG.ML + (f - SVG.F0) * SVG.FW;
+    if (f === 1) continue; // nut already drawn
     const is12 = f === 12;
     svgEl.appendChild(el('line', {
       x1: x, y1: SVG.MT + 1, x2: x, y2: SVG.MT + SVG.FBH - 1,
@@ -52,20 +68,26 @@ export function drawFretboardBase(svgEl) {
     }));
   }
 
-  [3, 5, 7, 9, 12, 15].forEach(f => {
+  // Fret position numbers (3,5,7,9,12,15,17,19,21,22) — below fretboard
+  const posY = SVG.MT + SVG.FBH + 22;
+  [3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
-      x: fx(f), y: SVG.MT + SVG.FBH + 17, 'text-anchor': 'middle',
-      fill: '#8a8079', 'font-size': '15', 'font-family': 'monospace', 'font-weight': 'bold',
+      x: fx(f), y: posY, 'text-anchor': 'middle',
+      fill: '#8a8079', 'font-size': '22', 'font-family': 'monospace', 'font-weight': 'bold',
     }, String(f)));
   });
+  // Inlay dots below numbers
   [3, 5, 7, 9].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
-    svgEl.appendChild(el('circle', { cx: fx(f), cy: SVG.MT + SVG.FBH + 26, r: 3.5, fill: '#d0cbc3' }));
+    svgEl.appendChild(el('circle', { cx: fx(f), cy: SVG.MT + SVG.FBH + 36, r: 3, fill: '#d0cbc3' }));
   });
-  [-7, 7].forEach(dx => svgEl.appendChild(el('circle', {
-    cx: fx(12) + dx, cy: SVG.MT + SVG.FBH + 26, r: 3.5, fill: '#d0cbc3',
-  })));
+  [-6, 6].forEach(dx => {
+    if (12 < SVG.F0 || 12 > SVG.F1) return;
+    svgEl.appendChild(el('circle', {
+      cx: fx(12) + dx, cy: SVG.MT + SVG.FBH + 36, r: 3, fill: '#d0cbc3',
+    }));
+  });
 
   const sc = ['#b8b2a8', '#b0aaa0', '#a8a298', '#a09890', '#988f85', '#90877c'];
   for (let s = 0; s < TUNING.length; s++) {
@@ -75,7 +97,7 @@ export function drawFretboardBase(svgEl) {
       stroke: sc[s], 'stroke-width': (0.8 + s * 0.42).toFixed(2),
     }));
     svgEl.appendChild(el('text', {
-      x: SVG.ML - 7, y: y + 4, 'text-anchor': 'end',
+      x: SVG.ML - 5, y: y + 4, 'text-anchor': 'end',
       fill: '#c5bfb5', 'font-size': '9', 'font-family': 'monospace',
     }, STRING_LABELS[s]));
   }
@@ -199,27 +221,25 @@ function updateMaskOverlay(svgEl, scale) {
   }
   const rx = SVG.ML + (m.min - SVG.F0) * SVG.FW;
   const rw = (m.max - m.min + 1) * SVG.FW;
-  // Extend border to fully enclose dot circles on edge strings (CR = 12.5)
-  // so the stroke never crosses through dot labels
-  const bpad = SVG.CR + 2;
+  // Border: extend above fretboard (CR+2) and below to include fret numbers (MB-6)
+  const bpadTop = SVG.CR + 2;
+  const bpadBot = SVG.MB - 6;
   insert(el('rect', {
-    x: rx, y: SVG.MT - bpad, width: rw, height: SVG.FBH + bpad * 2,
+    x: rx, y: SVG.MT - bpadTop, width: rw, height: SVG.FBH + bpadTop + bpadBot,
     fill: 'none', stroke: '#7c3aed', 'stroke-width': '2', rx: '5', opacity: '.9',
     'data-mask': 'border',
   }));
 }
 
-/** Compute the viewBox that crops to the mask range (for print). */
+/** Compute the viewBox that crops to the mask range (for print/fullscreen). */
 export function maskViewBox(mask) {
   if (!mask?.enabled) return null;
-  const padX = 18;
-  const padY = 16;
+  const padX = 14;
+  const padY = SVG.CR + 4;
   const x = SVG.ML + (mask.min - SVG.F0) * SVG.FW - padX;
   const w = (mask.max - mask.min + 1) * SVG.FW + padX * 2;
-  // Crop vertical dead space too so the masked region fills the card area
-  // instead of letterboxing.
   const y = SVG.MT - padY;
-  const h = SVG.FBH + padY * 2 + 26;
+  const h = SVG.FBH + padY + SVG.MB;
   return `${x} ${y} ${w} ${h}`;
 }
 

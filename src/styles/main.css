@@ -80,7 +80,7 @@ body {
 .hdr-btn:hover { background: var(--bg); color: var(--text-2); }
 .hdr-btn.active { background: var(--text); color: #fff; }
 
-.layout-picker { position: relative; flex-shrink: 0; }
+.layout-picker { position: relative; flex-shrink: 0; display: none; }
 .layout-trigger {
   display: flex; align-items: center; gap: 6px;
   padding: 0 10px; height: 32px;
@@ -734,13 +734,17 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   border-radius: 8px; background: var(--surface-2);
 }
 .color-row-top { display: flex; align-items: center; gap: 8px; }
-.color-row-badge { width: 20px; height: 20px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
+.color-row-badge {
+  width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Courier New', monospace; font-weight: 700; font-size: 11px;
+}
 .color-row-name { font-family: 'Courier New', monospace; font-weight: 700; font-size: 12px; width: 28px; flex-shrink: 0; color: var(--text); }
 .color-mode-btns { display: flex; gap: 3px; flex-shrink: 0; }
 .color-mode-btn {
-  padding: 3px 9px; border: 1.5px solid var(--border);
+  padding: 5px 12px; border: 1.5px solid var(--border);
   border-radius: 5px; background: var(--surface); color: var(--text-3);
-  font-size: 10px; font-weight: 700; font-family: inherit;
+  font-size: 11px; font-weight: 700; font-family: inherit;
   cursor: pointer; transition: all .1s;
 }
 .color-mode-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
@@ -750,7 +754,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .color-palette-label { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; width: 18px; flex-shrink: 0; }
 .color-chips { display: flex; gap: 3px; flex-wrap: wrap; }
 .color-chip {
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   border: 2px solid transparent; cursor: pointer;
   padding: 0; flex-shrink: 0; transition: transform .1s;
 }
@@ -758,7 +762,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .color-chip.active { border-color: var(--text); transform: scale(1.15); }
 /* custom picker swatch */
 .color-swatch-custom {
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   cursor: pointer; flex-shrink: 0; display: block; position: relative;
   overflow: hidden; margin-left: 2px;
 }
@@ -1022,7 +1026,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
   /* ── Header: hide secondary controls, surface them via ⋮ ── */
   .header { height: 60px; padding: 0 12px; gap: 7px; position: relative; }
-  #layoutPicker, .hdr-group, .btn-color, .btn-reset { display: none; }
+  .hdr-group, .btn-color, .btn-reset { display: none; }
   .more-trigger { display: flex; }
   .btn-register, .btn-print { padding: 8px 10px; font-size: 12px; }
   .btn-print { gap: 4px; }

@@ -47,6 +47,36 @@ const RULES = [
   [/^\+|^aug/,                        'Ionian',       [0, 2, 4, 5, 7, 9, 11]],
 ];
 
+// ── Chord tone rules (used by iReal Pro, returns chord tones only) ──────
+const CHORD_TONE_RULES = [
+  [/m7b5|-7b5|^h7?$|^ø/,              [0, 3, 6, 10]],
+  [/^(o7|dim7)$/,                      [0, 3, 6, 9]],
+  [/^(mM7|m\^7|mMaj7|-M7)$/,          [0, 3, 7, 11]],
+  [/^\^7?|^M7|^[Mm]aj7|^Δ/,          [0, 4, 7, 11]],
+  [/^m9|-9/,                           [0, 2, 3, 7, 10]],
+  [/^9/,                               [0, 2, 4, 7, 10]],
+  [/^(m7|-7)/,                         [0, 3, 7, 10]],
+  [/^7/,                               [0, 4, 7, 10]],
+  [/^(m6?|-6?|min)$/,                  [0, 3, 7]],
+  [/^\+|^aug/,                         [0, 4, 8]],
+  [/^(o|dim)$/,                        [0, 3, 6]],
+  [/sus4|sus$/,                        [0, 5, 7]],
+  [/sus2/,                             [0, 2, 7]],
+];
+
+/**
+ * コードクオリティ → コードトーンのみ (iReal Pro 読み込み時に使用)
+ * @param {string} quality
+ * @returns {number[]}
+ */
+export function qualityToChordTones(quality) {
+  if (!quality) return [0, 4, 7];
+  for (const [re, degrees] of CHORD_TONE_RULES) {
+    if (re.test(quality)) return degrees;
+  }
+  return [0, 4, 7];
+}
+
 /** Default for major triad / empty quality. */
 const DEFAULT_SCALE = { scaleName: 'Major Penta', degrees: [0, 2, 4, 7, 9] };
 

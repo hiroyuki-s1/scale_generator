@@ -15,7 +15,8 @@ export function computeFretNotes(state) {
   const notes = [];
   for (let s = 0; s < TUNING.length; s++) {
     for (let f = FRET_START; f <= FRET_END; f++) {
-      if (useMask && (f < lo || f > hi)) continue;
+      // Fret 0 (open string) is always shown regardless of mask
+      if (useMask && f !== 0 && (f < lo || f > hi)) continue;
       const midi = TUNING[s] + f;
       const pc = midiToPitchClass(midi);
       const degree = pitchClassToDegree(pc, rootIndex);

@@ -15,6 +15,12 @@ export function initScalePicker(store) {
   const catSel  = document.getElementById('scaleCatSel');
   const nameSel = document.getElementById('scaleNameSel');
 
+  // 先頭に「--（指定なし）」カテゴリを追加
+  const blankCatOpt = document.createElement('option');
+  blankCatOpt.value = '-1';
+  blankCatOpt.textContent = '--';
+  catSel.appendChild(blankCatOpt);
+
   // 大カテゴリを構築
   GROUPS.forEach((g, i) => {
     const opt = document.createElement('option');
@@ -23,9 +29,16 @@ export function initScalePicker(store) {
     catSel.appendChild(opt);
   });
 
-  function fillNames() {
-    const gi = parseInt(catSel.value);
+  function fillNames(gi) {
     nameSel.innerHTML = '';
+    if (gi < 0) {
+      // 指定なし選択時は名前セレクトも '--'
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '--';
+      nameSel.appendChild(opt);
+      return;
+    }
     GROUPS[gi].presets.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.name;
@@ -35,12 +48,19 @@ export function initScalePicker(store) {
   }
 
   function applySelected() {
+    const gi = parseInt(catSel.value);
+    if (gi < 0) {
+      // '--' 選択: 度数をクリア
+      store.updateEdit({ presetName: null, activeDegrees: new Set() });
+      return;
+    }
     const found = findPresetEverywhere(nameSel.value);
     if (!found) return;
     const { edit } = store.get();
-    if (edit.presetName === null) {
+    // カスタム度数がある場合だけ警告（空 or プリセット選択中は警告不要）
+    if (edit.presetName === null && edit.activeDegrees.size > 0) {
       if (!confirm('カスタム設定した度数が失われます。\nスケールを変更しますか？')) {
-        syncSel();  // revert dropdown to current store state
+        syncSel();
         return;
       }
     }
@@ -51,25 +71,31 @@ export function initScalePicker(store) {
     });
   }
 
-  // カテゴリ変更 → 名前リスト再構築して即反映
-  catSel.addEventListener('change', () => { fillNames(); applySelected(); });
-  // 名前変更 → 即反映
+  catSel.addEventListener('change', () => {
+    const gi = parseInt(catSel.value);
+    fillNames(gi);
+    applySelected();
+  });
   nameSel.addEventListener('change', applySelected);
 
   function syncSel() {
     const { presetName } = store.get().edit;
-    if (!presetName) return;
+    if (!presetName) {
+      catSel.value = '-1';
+      fillNames(-1);
+      return;
+    }
     for (let gi = 0; gi < GROUPS.length; gi++) {
       if (GROUPS[gi].presets.some(p => p.name === presetName)) {
         catSel.value = gi;
-        fillNames();
+        fillNames(gi);
         nameSel.value = presetName;
         return;
       }
     }
   }
 
-  fillNames();
+  fillNames(parseInt(catSel.value));
   syncSel();
   store.subscribe((s, p) => {
     if (p && s.edit.presetName === p.edit.presetName) return;

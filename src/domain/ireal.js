@@ -17,8 +17,7 @@
  *   [A-G][#b]?... chord symbol
  */
 
-import { chordQualityToScaleCtx } from './chordScale.js';
-import { NOTES } from './constants.js';
+import { qualityToChordTones } from './chordScale.js';
 
 /** Pitch class for note names (supports # and b). */
 const NOTE_PC = {
@@ -48,14 +47,17 @@ const NOTE_PC = {
  */
 function qualityToDisplay(quality) {
   return quality
-    .replace(/^\^7/, 'M7')       // ^7        → M7  (before generic ^ rule)
-    .replace(/^\^(\d)/, 'M$1')   // ^9 / ^11  → M9 / M11
-    .replace(/^\^$/, '')          // ^ alone   → '' (major triad, no suffix)
-    .replace(/^\^/, 'M')          // ^sus etc. → Msus
-    .replace(/^[Mm]aj/, 'M')      // maj7/Maj9 → M7/M9
-    .replace(/^h7?$/, 'm7b5')    // h / h7    → m7b5
-    .replace(/^o7?$/, 'dim7')    // o / o7    → dim7
-    .replace(/^-/, 'm');          // -7/-      → m7/m
+    .replace(/^\^7/, 'M7')        // ^7        → M7
+    .replace(/^\^(\d)/, 'M$1')    // ^9/^11    → M9/M11
+    .replace(/^\^$/, '')           // ^ alone   → '' (major triad)
+    .replace(/^\^/, 'M')           // ^sus      → Msus
+    .replace(/^[Mm]aj7/, 'M7')    // maj7/Maj7 → M7
+    .replace(/^[Mm]aj/, 'M')      // maj9/Maj  → M9/M
+    .replace(/^h7?$/, 'm7b5')     // h/h7      → m7b5
+    .replace(/^o7$/, 'dim7')      // o7        → dim7
+    .replace(/^o$/, 'dim')        // o         → dim
+    .replace(/^-/, 'm')            // -7/-      → m7/m
+    .replace(/^min/, 'm');         // min       → m
 }
 
 /**
@@ -185,7 +187,6 @@ export function parseChordToken(token, keyPc = 0, keyIsMinor = false) {
   const prefixMatch = token.match(/^([\^ho-])(b?)([A-G][#b]?)(.*)/);
   if (prefixMatch) {
     const [, prefix, flat, letter, extra] = prefixMatch;
-    // Build root: if flat present, append 'b' to the letter (bB → Bb, bE → Eb)
     const root = flat ? (letter + 'b') : letter;
     const rootPc = NOTE_PC[root];
     if (rootPc === undefined) return null;
@@ -194,9 +195,9 @@ export function parseChordToken(token, keyPc = 0, keyIsMinor = false) {
                       : prefix === 'o' ? 'o7'
                       : /* '-' */        '-';
     const quality = baseQuality + extra;
-    const { scaleName, degrees } = chordQualityToScaleCtx(quality, rootPc, keyPc, keyIsMinor);
+    const degrees = qualityToChordTones(quality);
     const displayName = root + qualityToDisplay(quality);
-    return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
+    return { root, rootPc, quality, symbol: token, displayName, degrees };
   }
 
   // Standard root-first notation: Cm7, BbM7, G-7, Am7b5, Bb^, F
@@ -207,9 +208,9 @@ export function parseChordToken(token, keyPc = 0, keyIsMinor = false) {
   const rootPc = NOTE_PC[root];
   if (rootPc === undefined) return null;
   const quality = token.slice(root.length);
-  const { scaleName, degrees } = chordQualityToScaleCtx(quality, rootPc, keyPc, keyIsMinor);
+  const degrees = qualityToChordTones(quality);
   const displayName = root + qualityToDisplay(quality);
-  return { root, rootPc, quality, symbol: token, displayName, scaleName, degrees };
+  return { root, rootPc, quality, symbol: token, displayName, degrees };
 }
 
 /**

@@ -36,7 +36,7 @@ describe('parseChordToken — standard root-first', () => {
     const c = parseChordToken('Cm7');
     expect(c.root).toBe('C');
     expect(c.quality).toBe('m7');
-    expect(c.scaleName).toBe('Dorian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses BbM7', () => {
@@ -44,19 +44,19 @@ describe('parseChordToken — standard root-first', () => {
     expect(c.root).toBe('Bb');
     expect(c.rootPc).toBe(10);
     expect(c.quality).toBe('M7');
-    expect(c.scaleName).toBe('Ionian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses G7b9', () => {
     const c = parseChordToken('G7b9');
     expect(c.root).toBe('G');
-    expect(c.scaleName).toBe('Altered');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses Am7b5', () => {
     const c = parseChordToken('Am7b5');
     expect(c.root).toBe('A');
-    expect(c.scaleName).toBe('Locrian #2');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses F#m7', () => {
@@ -68,25 +68,25 @@ describe('parseChordToken — standard root-first', () => {
   it('parses G-7 (iReal minus notation)', () => {
     const c = parseChordToken('G-7');
     expect(c.root).toBe('G');
-    expect(c.scaleName).toBe('Dorian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses C-7', () => {
     const c = parseChordToken('C-7');
     expect(c.root).toBe('C');
-    expect(c.scaleName).toBe('Dorian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses Gm6', () => {
     const c = parseChordToken('Gm6');
     expect(c.root).toBe('G');
-    expect(c.scaleName).toBe('Minor Penta');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses Bb^ (maj7 with caret suffix)', () => {
     const c = parseChordToken('Bb^');
     expect(c.root).toBe('Bb');
-    expect(c.scaleName).toBe('Ionian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('returns null for non-chord tokens', () => {
@@ -103,43 +103,42 @@ describe('parseChordToken — quality-first (iReal Pro obfuscated)', () => {
     expect(c).not.toBeNull();
     expect(c.root).toBe('Bb');
     expect(c.rootPc).toBe(10);
-    expect(c.scaleName).toBe('Ionian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses ^bE → Ebmaj7', () => {
     const c = parseChordToken('^bE');
     expect(c.root).toBe('Eb');
     expect(c.rootPc).toBe(3);
-    expect(c.scaleName).toBe('Ionian');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses hA → Am7b5', () => {
     const c = parseChordToken('hA');
     expect(c.root).toBe('A');
     expect(c.rootPc).toBe(9);
-    expect(c.scaleName).toBe('Locrian #2');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses -G → Gm', () => {
     const c = parseChordToken('-G');
     expect(c.root).toBe('G');
     expect(c.rootPc).toBe(7);
-    expect(c.scaleName).toBe('Minor Penta');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
   it('parses oG → G diminished', () => {
     const c = parseChordToken('oG');
     expect(c.root).toBe('G');
-    expect(c.scaleName).toBe('Diminished');
+    expect(Array.isArray(c.degrees)).toBe(true);
   });
 
-  it('every quality-first chord has root, rootPc, scaleName, degrees', () => {
+  it('every quality-first chord has root, rootPc, degrees', () => {
     ['^bB', 'hA', '-G', '^bE', 'oC'].forEach(token => {
       const c = parseChordToken(token);
       expect(c).not.toBeNull();
       expect(c.root).toBeTruthy();
       expect(typeof c.rootPc).toBe('number');
-      expect(c.scaleName).toBeTruthy();
       expect(Array.isArray(c.degrees)).toBe(true);
     });
   });
@@ -177,13 +176,13 @@ describe('extractChords', () => {
   it('extracts G-6 embedded in noise', () => {
     const chords = extractChords('G-6XyQ');
     expect(chords.some(c => c.symbol === 'G-6')).toBe(true);
-    expect(chords.find(c => c.symbol === 'G-6').scaleName).toBe('Minor Penta');
+    expect(Array.isArray(chords.find(c => c.symbol === 'G-6').degrees)).toBe(true);
   });
 
   it('extracts D7b13 from D7b13XyQ', () => {
     const chords = extractChords('D7b13XyQ');
     expect(chords.some(c => c.symbol === 'D7b13')).toBe(true);
-    expect(chords.find(c => c.symbol === 'D7b13').scaleName).toBe('Altered');
+    expect(Array.isArray(chords.find(c => c.symbol === 'D7b13').degrees)).toBe(true);
   });
 });
 
@@ -202,22 +201,21 @@ describe('parseIrealUrl — old format (key at field 3)', () => {
     expect(chords.length).toBeGreaterThan(0);
   });
 
-  it('first chord of Autumn Leaves is Cm7 → Dorian', () => {
+  it('first chord of Autumn Leaves is Cm7', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_URL);
     expect(chords[0].symbol).toBe('Cm7');
-    expect(chords[0].scaleName).toBe('Dorian');
+    expect(Array.isArray(chords[0].degrees)).toBe(true);
   });
 
   it('throws on invalid URL', () => {
     expect(() => parseIrealUrl('irealb://foo=bar')).toThrow();
   });
 
-  it('every chord has root, rootPc, scaleName, degrees', () => {
+  it('every chord has root, rootPc, degrees', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_URL);
     chords.forEach(c => {
       expect(c.root).toBeTruthy();
       expect(typeof c.rootPc).toBe('number');
-      expect(c.scaleName).toBeTruthy();
       expect(Array.isArray(c.degrees)).toBe(true);
       expect(c.degrees).toContain(0);
     });
@@ -239,27 +237,30 @@ describe('parseIrealUrl — new format (key at field 4, empty fields at 2 and 5)
 
   it('finds Cm7 (C-7 notation) in actual chord data', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    const cm7 = chords.find(c => c.root === 'C' && c.scaleName === 'Dorian');
+    const cm7 = chords.find(c => c.root === 'C');
     expect(cm7).toBeTruthy();
+    expect(Array.isArray(cm7.degrees)).toBe(true);
   });
 
-  it('finds Am7b5 (hA notation) in actual chord data → Locrian #2', () => {
+  it('finds Am7b5 (hA notation) in actual chord data', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    const am7b5 = chords.find(c => c.root === 'A' && c.scaleName === 'Locrian #2');
+    const am7b5 = chords.find(c => c.root === 'A');
     expect(am7b5).toBeTruthy();
+    expect(Array.isArray(am7b5.degrees)).toBe(true);
   });
 
-  it('finds Ebmaj7 (^bE notation) in actual chord data → Lydian (bVIM7 in Gm)', () => {
+  it('finds Ebmaj7 (^bE notation) in actual chord data', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    // Eb is bVI of G minor → Lydian (not Ionian)
-    const ebM7 = chords.find(c => c.root === 'Eb' && c.scaleName === 'Lydian');
+    const ebM7 = chords.find(c => c.root === 'Eb');
     expect(ebM7).toBeTruthy();
+    expect(Array.isArray(ebM7.degrees)).toBe(true);
   });
 
   it('finds Bbmaj7 (^bB notation) in actual chord data', () => {
     const { chords } = parseIrealUrl(AUTUMN_LEAVES_ACTUAL_URL);
-    const bbM7 = chords.find(c => c.root === 'Bb' && c.scaleName === 'Ionian');
+    const bbM7 = chords.find(c => c.root === 'Bb');
     expect(bbM7).toBeTruthy();
+    expect(Array.isArray(bbM7.degrees)).toBe(true);
   });
 
   it('accepts HTML content directly', () => {

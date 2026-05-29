@@ -1,6 +1,6 @@
 import './styles/main.css';
 
-import { DEFAULT_COLORS, findPresetEverywhere, SVG } from './domain/constants.js';
+import { DEFAULT_COLORS, SVG } from './domain/constants.js';
 import { buildTitle } from './domain/title.js';
 import { localizeTitle } from './domain/i18n.js';
 import { createStore } from './state/store.js';
@@ -31,14 +31,13 @@ const verEl = document.getElementById('buildVer');
 if (verEl) verEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
 
 function defaultState() {
-  const initial = findPresetEverywhere('Minor Penta');
   return {
     edit: {
-      rootIndex: 9,
-      activeDegrees: new Set(initial.preset.degrees),
-      presetName: initial.preset.name,
-      mode: initial.mode,
-      mask: { enabled: false, min: 1, max: 15 },
+      rootIndex: 0,          // C
+      activeDegrees: new Set(),
+      presetName: null,
+      mode: 'scale',
+      mask: { enabled: false, min: 1, max: 22 },
       degreeColors: cloneColors(DEFAULT_COLORS),
     },
     saved: [],
@@ -152,8 +151,11 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
     // 登録スケールタブへスライド移動
     const savedBtn = tabNav.querySelector('[data-tab="saved"]');
     savedBtn?.click();
-    // カードが描画されてからハイライト
-    requestAnimationFrame(() => requestAnimationFrame(() => savedTab.highlightNewCard(id, isUpdate)));
+    // カードが描画されてからハイライト + スクロール（モバイル対応）
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      savedTab.highlightNewCard(id, isUpdate);
+      savedTab.scrollToCard(id);
+    }));
   },
 });
 initColorModal(store, document.getElementById('colorBtn'));
@@ -180,6 +182,20 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
 });
+
+// ── スワイプでタブ切替（モバイル） ────────────────────────────────────
+let swipeStartX = 0;
+document.addEventListener('touchstart', e => {
+  swipeStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  if (Math.abs(dx) < 60) return; // 閾値: 60px
+  const goSaved = dx < 0; // 左スワイプ → 登録スケール
+  const targetTab = goSaved ? 'saved' : 'editor';
+  const btn = tabNav.querySelector(`[data-tab="${targetTab}"]`);
+  btn?.click();
+}, { passive: true });
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────
 const savedBadgeEl    = document.getElementById('savedBadge');

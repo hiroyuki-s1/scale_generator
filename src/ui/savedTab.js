@@ -164,8 +164,14 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
       startX: e.clientX,
       startY: e.clientY,
       active: false,
-      timer: e.pointerType === 'touch' ? setTimeout(startDrag, 400) : null,
+      timer: null,
     };
+
+    if (e.pointerType === 'touch') {
+      // タッチは即キャプチャ: ブラウザのスクロールより先にポインターを確保する
+      card.setPointerCapture(e.pointerId);
+      dragState.timer = setTimeout(startDrag, 400);
+    }
   });
 
   container.addEventListener('pointermove', e => {
@@ -173,6 +179,12 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
 
     if (dragState.active) {
       e.preventDefault(); // スクロール抑制
+      // 画面端付近で自動スクロール
+      const edgeZone = 80;
+      const vy = e.clientY;
+      const vh = window.innerHeight;
+      if (vy < edgeZone)       window.scrollBy({ top: -8, behavior: 'instant' });
+      else if (vy > vh - edgeZone) window.scrollBy({ top: 8, behavior: 'instant' });
       const candidate = findDropTarget(e.clientX, e.clientY);
       if (candidate !== dropTargetEl) {
         clearDropTarget();
@@ -183,12 +195,16 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     }
 
     const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
-    if (dragState.pointerType !== 'touch') {
-      if (dist > 5) startDrag();
-    } else if (dist > 8) {
-      // スクロール判定: タイマーキャンセル
-      clearTimeout(dragState.timer);
-      dragState = null;
+    if (dragState.pointerType === 'touch') {
+      if (dist > 12) {
+        // 素早い移動 = スクロール意図: キャプチャ解放してタイマーキャンセル
+        clearTimeout(dragState.timer);
+        dragState.card.releasePointerCapture(dragState.pointerId);
+        dragState = null;
+      }
+      // キャプチャ中は e.preventDefault() 不要 (ブラウザスクロールはすでに無効)
+    } else if (dist > 5) {
+      startDrag();
     }
   }, { passive: false });
 
@@ -295,7 +311,12 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (currentNewId != null) highlightNewCard(currentNewId);
   });
 
-  return { applyEditingHighlight, highlightNewCard, clearNewlyAdded };
+  function scrollToCard(id) {
+    const card = container.querySelector(`.saved-card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  return { applyEditingHighlight, highlightNewCard, clearNewlyAdded, scrollToCard };
 }
 
 function renderCard(snap, store, openFullscreen, onEditMode) {

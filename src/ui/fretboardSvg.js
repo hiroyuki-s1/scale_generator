@@ -10,7 +10,7 @@ const fx = f => SVG.ML + (f - SVG.F0) * SVG.FW + SVG.FW / 2;
 
 /** instrument に応じた弦ピッチを返す */
 const getSH = (instrument) => instrument === 'bass' ? SVG.SH_BASS : SVG.SH;
-const makeSy = (sh) => (s) => SVG.MT + s * sh;
+const makeSy = (sh) => (s) => SVG.MT + SVG.SP + s * sh;
 
 function el(tag, attrs, txt) {
   const e = document.createElementNS(NS, tag);

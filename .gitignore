@@ -17,6 +17,9 @@ dist-ssr
 *.jpg
 *.jpeg
 *.png
+# But allow icon assets in public/
+!public/*.jpg
+!public/*.png
 # Exclude HTML files except index.html
 *.html
 !index.html

@@ -11,7 +11,7 @@ export function initKeyPicker(store) {
 
   WHITE_KEY_INDICES.forEach(i => {
     const btn = document.createElement('button');
-    btn.className = 'piano-white-key';
+    btn.className = 'picker-sq-btn';
     btn.dataset.idx = i;
     btn.textContent = NOTES[i];
     btn.addEventListener('click', () => {
@@ -36,7 +36,7 @@ export function initKeyPicker(store) {
 
   function syncActive() {
     const { rootIndex } = store.get().edit;
-    listEl.querySelectorAll('.piano-white-key').forEach(btn => {
+    listEl.querySelectorAll('.picker-sq-btn').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.idx) === rootIndex);
     });
   }

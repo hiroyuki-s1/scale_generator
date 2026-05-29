@@ -1,48 +1,22 @@
 import { DEGREES } from '../domain/constants.js';
 import { renderLegend } from './legend.js';
 
-// White key semitones (piano layout order)
-const WHITE_SEMIS = [0, 2, 4, 5, 7, 9, 11];
-// Black key semitones and their left-% positions on the keyboard
-const BLACK_KEYS = [
-  { semi: 1,  left: 10       },  // b9  (C#)
-  { semi: 3,  left: 24.286   },  // m3  (D#)
-  { semi: 6,  left: 52.857   },  // #11 (F#)
-  { semi: 8,  left: 67.143   },  // b13 (G#)
-  { semi: 10, left: 81.429   },  // m7  (A#)
-];
-
-/** 度数設定モーダル — フルピアノ鍵盤 */
+/** 度数設定モーダル — 四角グリッドボタン */
 export function initDegreePicker(store) {
   const triggerBtn = document.getElementById('degPickerBtn');
   const modal      = document.getElementById('degPickerModal');
   const closeBtn   = document.getElementById('degPickerClose');
   const doneBtn    = document.getElementById('degPickerDone');
-  const pianoEl    = document.getElementById('degPickerPiano');
+  const gridEl     = document.getElementById('degPickerPiano');
   const legendEl   = document.getElementById('legend');
 
-  // Build keyboard once
-  WHITE_SEMIS.forEach(semi => {
-    const deg = DEGREES.find(d => d.semi === semi);
-    if (!deg) return;
+  DEGREES.forEach(deg => {
     const btn = document.createElement('button');
-    btn.className = 'piano-white-key';
-    btn.dataset.semi = semi;
+    btn.className = 'picker-sq-btn';
+    btn.dataset.semi = deg.semi;
     btn.textContent = deg.name;
-    btn.addEventListener('click', () => toggle(semi));
-    pianoEl.appendChild(btn);
-  });
-
-  BLACK_KEYS.forEach(({ semi, left }) => {
-    const deg = DEGREES.find(d => d.semi === semi);
-    if (!deg) return;
-    const btn = document.createElement('button');
-    btn.className = 'piano-black-key';
-    btn.dataset.semi = semi;
-    btn.style.left = left + '%';
-    btn.textContent = deg.name;
-    btn.addEventListener('click', () => toggle(semi));
-    pianoEl.appendChild(btn);
+    btn.addEventListener('click', () => toggle(deg.semi));
+    gridEl.appendChild(btn);
   });
 
   triggerBtn.addEventListener('click', openModal);
@@ -61,7 +35,7 @@ export function initDegreePicker(store) {
 
   function syncStyles() {
     const { activeDegrees } = store.get().edit;
-    pianoEl.querySelectorAll('[data-semi]').forEach(btn => {
+    gridEl.querySelectorAll('.picker-sq-btn').forEach(btn => {
       btn.classList.toggle('active', activeDegrees.has(Number(btn.dataset.semi)));
     });
   }

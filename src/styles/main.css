@@ -29,6 +29,10 @@ body {
   display: flex;
   flex-direction: column;
 }
+@media (min-width: 900px) {
+  html { background: #d8d3cc; }
+  body { max-width: 900px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.13); }
+}
 
 /* HEADER */
 .header {
@@ -249,39 +253,33 @@ body {
 .picker-modal-title { font-size: 16px; font-weight: 700; color: #e8e4dc; }
 
 /* ── キー選択グリッド ── */
-/* ── ピアノ鍵盤 (キー選択 / スケール設定) ── */
-.piano-modal-box { width: min(520px, 96vw); }
-.piano-keyboard {
-  position: relative; display: flex; height: 130px; user-select: none;
+/* ── キー / 度数選択 — 四角グリッドボタン ── */
+.picker-modal-large { width: min(560px, 96vw); }
+.key-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
 }
-.piano-white-key {
-  flex: 1; height: 100%;
-  background: #f5f0e0; border: 1.5px solid #3a3530; border-radius: 0 0 8px 8px;
-  cursor: pointer; position: relative; z-index: 1;
-  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px;
-  font-size: 11px; font-weight: 800; color: #1a1510;
+.deg-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.picker-sq-btn {
+  aspect-ratio: 1;
+  background: #26263a; border: 2px solid #3c3c58; border-radius: 12px;
+  cursor: pointer; color: #e8e4dc;
+  font-size: clamp(12px, 4vw, 18px); font-weight: 800;
   font-family: 'Space Grotesk', 'Inter', sans-serif;
-  transition: background .08s, transform .05s;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, border-color .12s, transform .08s;
+  line-height: 1.1; text-align: center;
 }
-.piano-white-key:hover { background: #e8e3d0; transform: translateY(1px); }
-.piano-white-key.active { background: #7070c8 !important; color: #fff !important; border-color: #5050a0; }
-.piano-black-key {
-  position: absolute; top: 0; width: 8.5714%; height: 62%;
-  background: #1a1a28; border: 1.5px solid #0a0a1a; border-radius: 0 0 5px 5px;
-  cursor: pointer; z-index: 2;
-  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px;
-  font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.5);
-  font-family: 'Space Grotesk', 'Inter', sans-serif; transition: background .08s;
-}
-.piano-black-key:hover { background: #2a2a4a; }
-.piano-black-key.active { background: #6060b8 !important; color: #fff !important; border-color: #5050a0; }
-.piano-done-btn {
-  display: block; width: 100%; margin-top: 16px;
+.picker-sq-btn:hover { background: #32324a; border-color: #6060a0; transform: scale(1.05); }
+.picker-sq-btn.active { background: #35354e; border-color: #8080c8; color: #a0a0ff; }
+.picker-done-btn {
+  display: block; width: 100%; margin-top: 14px;
   padding: 14px; border: none; background: var(--accent); color: #fff;
   border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit;
   cursor: pointer; transition: opacity .1s;
 }
-.piano-done-btn:hover { opacity: .85; }
+.picker-done-btn:hover { opacity: .85; }
 
 /* ── スケール選択 (ワイドボックス + カテゴリグリッド) ── */
 .scale-modal-wide {

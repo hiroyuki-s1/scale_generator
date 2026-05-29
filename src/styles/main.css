@@ -847,7 +847,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .color-mode-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
 /* palette */
-.color-palettes { display: flex; flex-direction: column; gap: 4px; }
+.color-palettes { display: flex; flex-direction: column; gap: 12px; }
 .color-palette-row { display: flex; align-items: center; gap: 6px; }
 .color-palette-label { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; width: 18px; flex-shrink: 0; }
 .color-chips { display: flex; gap: 3px; flex-wrap: wrap; }

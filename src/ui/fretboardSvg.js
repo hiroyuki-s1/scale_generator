@@ -32,12 +32,12 @@ export function drawFretboardBase(svgEl) {
     fill: `url(#g${uid})`, stroke: '#cca86a', 'stroke-width': '1.5', rx: '4',
   }));
 
-  // Fret 0 area (nut zone) — ivory/bone background to suggest guitar nut
+  // Fret 0 area — 外枠なし・完全白 (外枠 stroke を覆うよう少し広げる)
   const nutX = SVG.ML + SVG.FW; // nut = line between fret 0 and fret 1
   svgEl.appendChild(el('rect', {
-    x: SVG.ML + 0.75, y: SVG.MT + 0.75,
-    width: SVG.FW - 1.5, height: SVG.FBH - 1.5,
-    fill: '#ffffff',
+    x: SVG.ML - 2, y: SVG.MT - 2,
+    width: SVG.FW + 2, height: SVG.FBH + 4,
+    fill: '#ffffff', rx: '3',
   }));
 
   // Inlay dots (3,5,7,9,12,15,17,19,21)
@@ -60,7 +60,7 @@ export function drawFretboardBase(svgEl) {
   // Fret lines (skip fret 1 line — that's the nut)
   for (let f = SVG.F0; f <= SVG.F1 + 1; f++) {
     const x = SVG.ML + (f - SVG.F0) * SVG.FW;
-    if (f === 1) continue; // nut already drawn
+    if (f === 1 || f === SVG.F0) continue; // nut and left edge already drawn
     const is12 = f === 12;
     svgEl.appendChild(el('line', {
       x1: x, y1: SVG.MT + 1, x2: x, y2: SVG.MT + SVG.FBH - 1,

@@ -100,11 +100,11 @@ export function initColorModal(store, openBtn) {
           chips.appendChild(chip);
         });
 
-        // custom picker at the end
+        // custom picker — input overlays the swatch so mobile can tap it directly
         const customInp = document.createElement('input');
         customInp.type  = 'color';
         customInp.value = dc[key];
-        customInp.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+        customInp.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;';
         customInp.addEventListener('input', e => {
           setColor(i, { [key]: e.target.value });
           applyBadge(badge, store.get().edit.degreeColors[i]);
@@ -114,7 +114,6 @@ export function initColorModal(store, openBtn) {
         customSw.className = 'color-swatch-custom';
         customSw.title = 'カスタム';
         customSw.appendChild(customInp);
-        customSw.addEventListener('click', () => customInp.click());
 
         prow.appendChild(lblEl);
         prow.appendChild(chips);

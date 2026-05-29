@@ -8,7 +8,7 @@
  *   - correct counts for well-known presets
  */
 import { describe, it, expect } from 'vitest';
-import { SCALE_GROUPS, CHORD_GROUPS, FRET_START, FRET_END, TUNING } from '../../src/domain/constants.js';
+import { SCALE_GROUPS, CHORD_GROUPS, FRET_START, FRET_END, TUNING_GUITAR } from '../../src/domain/constants.js';
 import { computeFretNotes } from '../../src/domain/fretboard.js';
 
 const ALL_PRESETS = [
@@ -16,7 +16,7 @@ const ALL_PRESETS = [
   ...CHORD_GROUPS.flatMap(g => g.presets.map(p => ({ ...p, mode: 'chord', group: g.label }))),
 ];
 
-const MAX_FRET_NOTES = TUNING.length * (FRET_END - FRET_START + 1); // 6 × 23 = 138
+const MAX_FRET_NOTES = TUNING_GUITAR.length * (FRET_END - FRET_START + 1); // 6 × 23 = 138
 
 describe('all scale presets — every root', () => {
   SCALE_GROUPS.forEach(g => {

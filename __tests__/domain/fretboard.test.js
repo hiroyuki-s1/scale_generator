@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeFretNotes, diffFretNotes } from '../../src/domain/fretboard.js';
-import { TUNING, TUNING_BASS, FRET_START, FRET_END } from '../../src/domain/constants.js';
+import { TUNING_GUITAR, TUNING_BASS, FRET_START, FRET_END } from '../../src/domain/constants.js';
 
 describe('computeFretNotes', () => {
   it('returns empty when no degrees active', () => {
@@ -22,7 +22,7 @@ describe('computeFretNotes', () => {
     // 6弦5フレットの A2 が含まれる
     const e2_a = aRoots.find(n => n.string === 5 && n.fret === 5);
     expect(e2_a).toBeDefined();
-    expect(e2_a.midi).toBe(TUNING[5] + 5);
+    expect(e2_a.midi).toBe(TUNING_GUITAR[5] + 5);
   });
 
   it('mask filters notes outside the range', () => {

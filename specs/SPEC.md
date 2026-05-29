@@ -159,42 +159,44 @@ state変更ごと（debounce 200ms）に保存。初回ロードで復元。
 ```
 scale_generator/
 ├─ index.html                    # マークアップのみ、見た目はCSSへ
-├─ public/
-│   └─ favicon.svg               # SG ロゴ
+├─ public/                       # アイコン・PWA用画像 (guitar/bass, icon-192/512 等)
 ├─ src/
-│   ├─ main.js                   # エントリ。各UIモジュールを初期化
+│   ├─ main.js                   # エントリ。各UIモジュールを初期化・オーケストレーション
 │   ├─ styles/
-│   │   ├─ main.css              # 画面表示用
-│   │   └─ print.css             # @media print 用ベース（動的部分はprintCss.jsで生成）
+│   │   └─ main.css              # 画面表示 + @media print
 │   ├─ domain/                   # 純粋ロジック。DOM非依存・テスト容易
-│   │   ├─ constants.js          # NOTES, DEGREES, PRESETS, TUNING, FRET_RANGE
+│   │   ├─ constants.js          # NOTES, DEGREES, SCALE/CHORD_GROUPS, TUNING_GUITAR/BASS, FRET_RANGE, SVG
 │   │   ├─ music.js              # pitchClass, degree変換
-│   │   ├─ fretboard.js          # computeFretNotes(state) -> Note[]
-│   │   └─ title.js              # buildTitle(state) -> string
+│   │   ├─ fretboard.js          # computeFretNotes(state) / diffFretNotes
+│   │   ├─ title.js              # buildTitle(state) -> string
+│   │   ├─ i18n.js               # スケール名の英→カナ対訳
+│   │   ├─ chordScale.js         # コードクオリティ → 推奨スケール
+│   │   ├─ chordTones.js         # コードクオリティ → コードトーン
+│   │   └─ ireal.js              # iReal Pro 形式のパース
 │   ├─ state/
-│   │   ├─ store.js              # シンプルなpub/sub store
-│   │   └─ persist.js            # localStorage 読み書き (debounce保存)
+│   │   ├─ store.js              # pub/sub store (state, prev)
+│   │   ├─ persist.js            # localStorage 読み書き (debounce保存)
+│   │   └─ snapshot.js           # edit スナップショット複製ヘルパー
 │   ├─ ui/                       # 各UIモジュール (DOM操作)
-│   │   ├─ header.js
-│   │   ├─ tabs.js
-│   │   ├─ piano.js
-│   │   ├─ presetSelector.js
-│   │   ├─ degreeToggle.js
-│   │   ├─ maskControl.js
-│   │   ├─ fretboardSvg.js       # SVG描画（純粋: state -> SVG要素群）
-│   │   ├─ legend.js
-│   │   ├─ savedTab.js
-│   │   ├─ saveModal.js
-│   │   ├─ colorModal.js
-│   │   ├─ layoutPicker.js
-│   │   └─ orientation.js
+│   │   ├─ keyPicker.js          # キー選択 (ダークモーダル)
+│   │   ├─ scalePicker.js        # スケール/コード選択
+│   │   ├─ degreePicker.js       # 度数トグル
+│   │   ├─ instrumentPicker.js   # ギター/ベース切替
+│   │   ├─ maskControl.js        # フレットマスク
+│   │   ├─ registerBtn.js        # 登録/更新ボタン
+│   │   ├─ savedTab.js           # 登録スケール一覧 (D&D並べ替え対応)
+│   │   ├─ colorModal.js         # 度数カラー設定
+│   │   ├─ irealTab.js           # iReal Pro 取り込みセクション
+│   │   ├─ layoutPicker.js       # 印刷レイアウト
+│   │   ├─ headerMenu.js         # ヘッダーメニュー
+│   │   ├─ fretboardSvg.js       # SVG描画 (base + diff、guitar/bass対応)
+│   │   └─ legend.js
 │   └─ print/
 │       └─ printCss.js           # 動的@pageレイアウトCSS生成
 ├─ __tests__/
-│   └─ domain/
-│       ├─ music.test.js
-│       ├─ fretboard.test.js
-│       └─ title.test.js
+│   ├─ domain/                   # music, fretboard, title, diff, presets,
+│   │                            #   chordScale, chordTones, ireal, allPatterns
+│   └─ state/                    # store, persist
 ├─ specs/SPEC.md                 # この仕様
 ├─ package.json
 ├─ vite.config.js

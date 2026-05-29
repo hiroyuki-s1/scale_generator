@@ -220,16 +220,6 @@ function updateMaskOverlay(svgEl, scale) {
       'data-mask': 'right',
     }));
   }
-  const rx = SVG.ML + (m.min - SVG.F0) * SVG.FW;
-  const rw = (m.max - m.min + 1) * SVG.FW;
-  // Border: extend above fretboard (CR+2) and below to include fret numbers (MB-6)
-  const bpadTop = SVG.CR + 2;
-  const bpadBot = SVG.MB - 6;
-  insert(el('rect', {
-    x: rx, y: SVG.MT - bpadTop, width: rw, height: SVG.FBH + bpadTop + bpadBot,
-    fill: 'none', stroke: '#7c3aed', 'stroke-width': '2', rx: '5', opacity: '.9',
-    'data-mask': 'border',
-  }));
 }
 
 /** Compute the viewBox that crops to the mask range (for print/fullscreen). */

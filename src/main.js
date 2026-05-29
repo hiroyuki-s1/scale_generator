@@ -113,6 +113,10 @@ function clearEditMode() {
   document.getElementById('editorModeCancel').classList.add('hidden');
   document.querySelector('.editor')?.classList.remove('editor--edit-mode');
   savedTab?.applyEditingHighlight(null);
+  // エディターを空状態に初期化
+  store.updateEdit({ activeDegrees: new Set(), presetName: null });
+  userEditedTitle = false;
+  titleInputEl.value = '';
 }
 
 function loadSnapToEditor(snap) {
@@ -142,12 +146,6 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,
   onComplete: clearEditMode,
   onSaved: (id, isUpdate) => {
-    // 新規登録後はエディターを空状態に初期化
-    if (!isUpdate) {
-      store.updateEdit({ activeDegrees: new Set(), presetName: null });
-      userEditedTitle = false;
-      titleInputEl.value = '';
-    }
     // 登録スケールタブへスライド移動
     const savedBtn = tabNav.querySelector('[data-tab="saved"]');
     savedBtn?.click();

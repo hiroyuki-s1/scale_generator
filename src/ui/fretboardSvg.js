@@ -52,10 +52,10 @@ export function drawFretboardBase(svgEl) {
     svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 4, fill: 'rgba(80,55,20,.50)' }));
   });
 
-  // Nut bar — prominent ivory/bone bar (guitar nut)
-  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 10, height: SVG.FBH + 2, fill: '#c8b870', rx: '2' }));
-  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 5,  height: SVG.FBH + 2, fill: 'rgba(255,255,255,.50)', rx: '2' }));
-  svgEl.appendChild(el('rect', { x: nutX + 1,  y: SVG.MT,    width: 2,  height: SVG.FBH, fill: 'rgba(0,0,0,.18)' }));
+  // Nut bar — silver metallic bar
+  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 10, height: SVG.FBH + 2, fill: '#8a9aaa', rx: '2' }));
+  svgEl.appendChild(el('rect', { x: nutX - 7, y: SVG.MT - 1, width: 5,  height: SVG.FBH + 2, fill: 'rgba(255,255,255,.55)', rx: '2' }));
+  svgEl.appendChild(el('rect', { x: nutX + 1,  y: SVG.MT,    width: 2,  height: SVG.FBH, fill: 'rgba(0,0,0,.22)' }));
 
   // Fret lines (skip fret 1 line — that's the nut)
   for (let f = SVG.F0; f <= SVG.F1 + 1; f++) {

@@ -57,6 +57,42 @@ const fretboardEl   = document.getElementById('fretboard');
 const editFbWrapEl  = document.getElementById('editFbWrap');
 let lastFbInstrument = null;
 
+/** 楽器変更時に指板上へパーティクルをばらまく */
+function spawnFretboardParticles(wrapEl, instrument) {
+  const rect = wrapEl.getBoundingClientRect();
+  if (rect.width === 0) return; // 非表示なら何もしない
+  const guitarColors = ['#f59e0b','#ef4444','#22c55e','#fbbf24','#f97316','#a3e635','#84cc16'];
+  const bassColors   = ['#6366f1','#8b5cf6','#a78bfa','#60a5fa','#38bdf8','#f472b6','#c084fc'];
+  const colors = instrument === 'bass' ? bassColors : guitarColors;
+  const count = 70;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle-burst';
+    const startX = rect.left + Math.random() * rect.width;
+    const startY = rect.top  + Math.random() * rect.height;
+    const angle  = Math.random() * 360;
+    const dist   = 25 + Math.random() * 90;
+    const size   = 3 + Math.random() * 7;
+    const color  = colors[Math.floor(Math.random() * colors.length)];
+    const delay  = Math.random() * 0.25;
+    p.style.cssText = [
+      `left:${startX}px`, `top:${startY}px`,
+      `width:${size}px`,  `height:${size}px`,
+      `background:${color}`,
+      `--dx:${Math.cos(angle * Math.PI / 180) * dist}px`,
+      `--dy:${Math.sin(angle * Math.PI / 180) * dist}px`,
+      `animation-delay:${delay}s`,
+    ].join(';');
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+  }
+  // 指板全体をひと瞬間フラッシュ
+  wrapEl.classList.remove('fb-instrument-flash');
+  void wrapEl.offsetWidth; // reflow
+  wrapEl.classList.add('fb-instrument-flash');
+  wrapEl.addEventListener('animationend', () => wrapEl.classList.remove('fb-instrument-flash'), { once: true });
+}
+
 function syncEditorFretboard(s, p) {
   const instrument = s.edit.instrument;
 
@@ -69,6 +105,8 @@ function syncEditorFretboard(s, p) {
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
     lastFbInstrument = instrument;
+    // layout 確定後にパーティクル
+    requestAnimationFrame(() => spawnFretboardParticles(editFbWrapEl, instrument));
     return;
   }
   if (p && s.edit === p.edit) return;

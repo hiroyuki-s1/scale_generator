@@ -125,11 +125,11 @@ function syncEditorFretboard(s, p) {
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
     lastFbInstrument = instrument;
-    // フェードイン + 周囲パーティクル
-    fretboardEl.classList.remove('fb-instrument-change');
-    void fretboardEl.offsetWidth;
-    fretboardEl.classList.add('fb-instrument-change');
-    fretboardEl.addEventListener('animationend', () => fretboardEl.classList.remove('fb-instrument-change'), { once: true });
+    // glow burst (NEW! カードと同系統) + 周囲パーティクル
+    editFbWrapEl.classList.remove('fb-instrument-pop');
+    void editFbWrapEl.offsetWidth;
+    editFbWrapEl.classList.add('fb-instrument-pop');
+    editFbWrapEl.addEventListener('animationend', () => editFbWrapEl.classList.remove('fb-instrument-pop'), { once: true });
     requestAnimationFrame(() => spawnFretboardParticles(editFbWrapEl, instrument));
     return;
   }

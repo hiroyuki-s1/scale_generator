@@ -1,25 +1,32 @@
+const FRET_MIN = 0;
+const FRET_MAX = 22;
+
 export function initMaskControl(container, store) {
   container.innerHTML = `
     <button class="btn-mask" data-el="toggle">マスクOFF</button>
-    <div class="mask-sliders" data-el="sliders" style="display:none">
-      <div class="mslider-group">
-        <span class="mslider-lbl">Min</span>
-        <input type="range" class="mslider" data-el="min" min="0" max="22" value="1">
+    <div class="mask-steppers" data-el="steppers" style="display:none">
+      <div class="mask-stepper-group">
+        <span class="mslider-lbl">MIN</span>
+        <button class="mask-step-btn" data-el="minDec">−</button>
         <span class="mval" data-el="minVal">1</span>
+        <button class="mask-step-btn" data-el="minInc">＋</button>
       </div>
       <span class="msep">—</span>
-      <div class="mslider-group">
-        <span class="mslider-lbl">Max</span>
-        <input type="range" class="mslider" data-el="max" min="0" max="22" value="22">
+      <div class="mask-stepper-group">
+        <span class="mslider-lbl">MAX</span>
+        <button class="mask-step-btn" data-el="maxDec">−</button>
         <span class="mval" data-el="maxVal">15</span>
+        <button class="mask-step-btn" data-el="maxInc">＋</button>
       </div>
     </div>
   `;
 
   const toggle   = container.querySelector('[data-el="toggle"]');
-  const sliders  = container.querySelector('[data-el="sliders"]');
-  const minIn    = container.querySelector('[data-el="min"]');
-  const maxIn    = container.querySelector('[data-el="max"]');
+  const steppers = container.querySelector('[data-el="steppers"]');
+  const minDecBtn = container.querySelector('[data-el="minDec"]');
+  const minIncBtn = container.querySelector('[data-el="minInc"]');
+  const maxDecBtn = container.querySelector('[data-el="maxDec"]');
+  const maxIncBtn = container.querySelector('[data-el="maxInc"]');
   const minLabel = container.querySelector('[data-el="minVal"]');
   const maxLabel = container.querySelector('[data-el="maxVal"]');
 
@@ -27,13 +34,16 @@ export function initMaskControl(container, store) {
     store.updateEdit(edit => ({ mask: { ...edit.mask, enabled: !edit.mask.enabled } }));
   });
 
-  minIn.addEventListener('input', () => updateFromInputs(true));
-  maxIn.addEventListener('input', () => updateFromInputs(false));
+  minDecBtn.addEventListener('click', () => step('min', -1));
+  minIncBtn.addEventListener('click', () => step('min', +1));
+  maxDecBtn.addEventListener('click', () => step('max', -1));
+  maxIncBtn.addEventListener('click', () => step('max', +1));
 
-  function updateFromInputs(minTouched) {
-    let lo = parseInt(minIn.value);
-    let hi = parseInt(maxIn.value);
-    if (lo > hi) { if (minTouched) hi = lo; else lo = hi; }
+  function step(which, delta) {
+    const { mask } = store.get().edit;
+    let lo = mask.min, hi = mask.max;
+    if (which === 'min') lo = Math.max(FRET_MIN, Math.min(hi - 1, lo + delta));
+    else                 hi = Math.min(FRET_MAX, Math.max(lo + 1, hi + delta));
     store.updateEdit(edit => ({ mask: { ...edit.mask, min: lo, max: hi } }));
   }
 
@@ -41,11 +51,13 @@ export function initMaskControl(container, store) {
     const { mask } = store.get().edit;
     toggle.textContent = mask.enabled ? 'マスクON' : 'マスクOFF';
     toggle.classList.toggle('on', mask.enabled);
-    sliders.style.display = mask.enabled ? 'flex' : 'none';
-    minIn.value = mask.min;
-    maxIn.value = mask.max;
+    steppers.style.display = mask.enabled ? 'flex' : 'none';
     minLabel.textContent = mask.min;
     maxLabel.textContent = mask.max;
+    minDecBtn.disabled = mask.min <= FRET_MIN;
+    minIncBtn.disabled = mask.min >= mask.max - 1;
+    maxDecBtn.disabled = mask.max <= mask.min + 1;
+    maxIncBtn.disabled = mask.max >= FRET_MAX;
   }
   sync();
   store.subscribe((s, p) => {

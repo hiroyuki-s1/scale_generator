@@ -98,8 +98,9 @@
       <!-- スケール / コード -->
       <div class="ctrl-group">
         <div class="ctrl-label">スケール / コード</div>
-        <select class="scale-cat-sel" id="scaleCatSel"></select>
-        <select class="scale-name-sel" id="scaleNameSel"></select>
+        <button class="scale-picker-btn" id="scalePickerBtn">
+          <span class="scale-picker-btn-text" id="scalePickerBtnText">スケール選択 ▾</span>
+        </button>
       </div>
 
 
@@ -290,6 +291,20 @@
       <svg class="fb" id="fbFullscreenSvg" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="legend" id="fbFullscreenLegend"></div>
+  </div>
+</div>
+
+<!-- ── スケール / コード選択モーダル ──────────────────────────────── -->
+<div class="modal-overlay" id="scalePickerModal">
+  <div class="scale-modal-box">
+    <div class="scale-modal-header">
+      <span class="modal-title">スケール / コードを選択</span>
+      <button class="scale-modal-close" id="scalePickerClose">✕</button>
+    </div>
+    <div class="scale-modal-body">
+      <div class="scale-cat-list" id="scaleCatList"></div>
+      <div class="scale-name-list" id="scaleNameList"></div>
+    </div>
   </div>
 </div>
 

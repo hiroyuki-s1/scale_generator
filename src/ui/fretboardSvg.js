@@ -181,8 +181,7 @@ function appendDot(svgEl, n, colors, sh) {
   const isRoot = deg === 0;
   const dc = colors[deg];
   const dotFill = dc.solid ? dc.color : '#ffffff';
-  // 1.3x increase: 8.5→11, 12→16, 15→20
-  const fs = name.length >= 4 ? '11' : name.length === 1 ? '20' : '16';
+  const fs = name.length >= 3 ? '9' : name.length === 2 ? '12' : '16';
   const delay = `${(f - SVG.F0) * 22}ms`;
   const pos = noteKey(n);
   // Set transform-origin explicitly in SVG user-space coordinates so that

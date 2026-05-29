@@ -45,14 +45,8 @@ const BASS_ICON = `<svg viewBox="0 0 36 100" fill="currentColor" aria-hidden="tr
 </svg>`;
 
 function renderBtnContent(instrument) {
-  if (!instrument) {
-    return `<span class="instr-btn-icon instr-icon-placeholder">🎸</span>
-            <span class="instr-btn-label">：楽器</span>
-            <svg class="instr-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,3.5 5,6.5 8,3.5"/></svg>`;
-  }
-  const icon = instrument === 'bass' ? BASS_ICON : GUITAR_ICON;
-  return `<span class="instr-btn-icon">${icon}</span>
-          <span class="instr-btn-label">${LABELS[instrument]}</span>
+  const label = instrument ? LABELS[instrument] : '：楽器';
+  return `<span class="instr-btn-label">${label}</span>
           <svg class="instr-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,3.5 5,6.5 8,3.5"/></svg>`;
 }
 

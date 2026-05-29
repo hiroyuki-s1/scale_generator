@@ -10,95 +10,99 @@ const GROUPS = [
   { label: 'コード / テンション', presets: CHORD_GROUPS[2].presets, mode: 'chord' },
 ];
 
-/** 2段階スケール選択（自動反映） */
+/** モーダル型スケール / コード選択 */
 export function initScalePicker(store) {
-  const catSel  = document.getElementById('scaleCatSel');
-  const nameSel = document.getElementById('scaleNameSel');
+  const btn        = document.getElementById('scalePickerBtn');
+  const btnText    = document.getElementById('scalePickerBtnText');
+  const modal      = document.getElementById('scalePickerModal');
+  const closeBtn   = document.getElementById('scalePickerClose');
+  const catList    = document.getElementById('scaleCatList');
+  const nameList   = document.getElementById('scaleNameList');
 
-  // 先頭に「--（指定なし）」カテゴリを追加
-  const blankCatOpt = document.createElement('option');
-  blankCatOpt.value = '-1';
-  blankCatOpt.textContent = '--';
-  catSel.appendChild(blankCatOpt);
-
-  // 大カテゴリを構築
+  // ── カテゴリリスト構築 ──────────────────────────────
   GROUPS.forEach((g, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = g.label;
-    catSel.appendChild(opt);
+    const b = document.createElement('button');
+    b.className = 'scale-cat-item';
+    b.textContent = g.label;
+    b.dataset.idx = i;
+    b.addEventListener('click', () => selectCat(i));
+    catList.appendChild(b);
   });
 
+  function selectCat(i) {
+    catList.querySelectorAll('.scale-cat-item').forEach((b, bi) =>
+      b.classList.toggle('active', bi === i));
+    fillNames(i);
+  }
+
   function fillNames(gi) {
-    nameSel.innerHTML = '';
-    if (gi < 0) {
-      // 指定なし選択時は名前セレクトも '--'
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = '--';
-      nameSel.appendChild(opt);
-      return;
-    }
+    const { presetName } = store.get().edit;
+    nameList.innerHTML = '';
     GROUPS[gi].presets.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.name;
-      opt.textContent = SCALE_NAME_JA[p.name] || p.name;
-      nameSel.appendChild(opt);
+      const b = document.createElement('button');
+      b.className = 'scale-name-item';
+      b.textContent = SCALE_NAME_JA[p.name] || p.name;
+      b.classList.toggle('active', p.name === presetName);
+      b.addEventListener('click', () => applyPreset(p.name));
+      nameList.appendChild(b);
     });
   }
 
-  function applySelected() {
-    const gi = parseInt(catSel.value);
-    if (gi < 0) {
-      // '--' 選択: 度数をクリア
-      store.updateEdit({ presetName: null, activeDegrees: new Set() });
-      return;
-    }
-    const found = findPresetEverywhere(nameSel.value);
+  function applyPreset(name) {
+    const found = findPresetEverywhere(name);
     if (!found) return;
     const { edit } = store.get();
-    // カスタム度数がある場合だけ警告（空 or プリセット選択中は警告不要）
     if (edit.presetName === null && edit.activeDegrees.size > 0) {
-      if (!confirm('カスタム設定した度数が失われます。\nスケールを変更しますか？')) {
-        syncSel();
-        return;
-      }
+      if (!confirm('カスタム設定した度数が失われます。\nスケールを変更しますか？')) return;
     }
     store.updateEdit({
       presetName: found.preset.name,
       mode: found.mode,
       activeDegrees: new Set(found.preset.degrees),
     });
+    closeModal();
   }
 
-  catSel.addEventListener('change', () => {
-    const gi = parseInt(catSel.value);
-    fillNames(gi);
-    applySelected();
-  });
-  nameSel.addEventListener('change', applySelected);
+  function openModal() {
+    // 現在のプリセットに合わせてカテゴリを初期選択
+    const { presetName } = store.get().edit;
+    let initCat = 0;
+    if (presetName) {
+      for (let i = 0; i < GROUPS.length; i++) {
+        if (GROUPS[i].presets.some(p => p.name === presetName)) { initCat = i; break; }
+      }
+    }
+    selectCat(initCat);
+    modal.classList.add('show');
+  }
 
-  function syncSel() {
+  function closeModal() { modal.classList.remove('show'); }
+
+  btn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  // ── ボタンラベル同期 ──────────────────────────────────
+  function syncBtn() {
     const { presetName } = store.get().edit;
     if (!presetName) {
-      catSel.value = '-1';
-      fillNames(-1);
+      btnText.textContent = 'スケール選択 ▾';
       return;
     }
-    for (let gi = 0; gi < GROUPS.length; gi++) {
-      if (GROUPS[gi].presets.some(p => p.name === presetName)) {
-        catSel.value = gi;
-        fillNames(gi);
-        nameSel.value = presetName;
+    // カテゴリラベルを探す
+    for (const g of GROUPS) {
+      const found = g.presets.find(p => p.name === presetName);
+      if (found) {
+        btnText.textContent = `${g.label} / ${SCALE_NAME_JA[found.name] || found.name} ▾`;
         return;
       }
     }
+    btnText.textContent = `${presetName} ▾`;
   }
 
-  fillNames(parseInt(catSel.value));
-  syncSel();
+  syncBtn();
   store.subscribe((s, p) => {
     if (p && s.edit.presetName === p.edit.presetName) return;
-    syncSel();
+    syncBtn();
   });
 }

@@ -401,6 +401,10 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.5V1h3v1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
   </svg>削除`;
   del.addEventListener('click', async () => {
+    if (snap.id === currentEditingId) {
+      alert('編集中のスケールは削除できません。\n一度編集を終了してください。');
+      return;
+    }
     if (localStorage.getItem(WARN_KEY)) {
       store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
       return;

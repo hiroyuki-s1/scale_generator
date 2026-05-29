@@ -1,6 +1,12 @@
 import { DEGREES } from '../domain/constants.js';
 import { renderLegend } from './legend.js';
 
+function setsEqual(a, b) {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
+
 /** 度数設定モーダル — 四角グリッドボタン */
 export function initDegreePicker(store) {
   const triggerBtn = document.getElementById('degPickerBtn');
@@ -27,11 +33,27 @@ export function initDegreePicker(store) {
     if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
   });
 
+  // モーダルを開いた瞬間の度数集合スナップショット。閉じる時にこれと比較し、
+  // 実際に変化があった場合のみ presetName=null (カスタム) を立てる。
+  // 他のUI (scalePicker / instrumentPicker) はこのフラグを見て
+  // 「カスタム設定が失われます」警告を出すか判断する。
+  let openSnapshot = null;
+
   function openModal() {
+    openSnapshot = new Set(store.get().edit.activeDegrees);
     syncStyles();
     modal.classList.add('show');
   }
-  function closeModal() { modal.classList.remove('show'); }
+  function closeModal() {
+    modal.classList.remove('show');
+    if (openSnapshot) {
+      const cur = store.get().edit.activeDegrees;
+      if (!setsEqual(openSnapshot, cur)) {
+        store.updateEdit({ presetName: null });
+      }
+      openSnapshot = null;
+    }
+  }
 
   function syncStyles() {
     const { activeDegrees } = store.get().edit;
@@ -41,10 +63,12 @@ export function initDegreePicker(store) {
   }
 
   function toggle(semi) {
+    // モーダル内のトグルでは presetName は変更しない。
+    // 閉じた時点で開時と差分があれば closeModal がカスタムフラグを立てる。
     store.updateEdit(edit => {
       const next = new Set(edit.activeDegrees);
       if (next.has(semi)) next.delete(semi); else next.add(semi);
-      return { activeDegrees: next, presetName: null };
+      return { activeDegrees: next };
     });
   }
 

@@ -223,6 +223,8 @@ export function openFbFullscreen(state, displayTitle) {
   renderLegend(fbFullscreenLegend, state);
   const vb = maskViewBox(state.mask);
   fbFullscreenSvg.setAttribute('viewBox', vb || `0 0 ${SVG.W} ${SVG.H}`);
+  // 拡大表示では紫枠は不要 (viewBox でクロップ済みのため)
+  setMaskOverlayVisible(fbFullscreenSvg, false);
   fbFullscreen.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }

@@ -69,11 +69,12 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gap = '16px';
 
   // ── ドラッグ&ドロップ並べ替え (Pointer Events) ───────────────────────
-  // タッチ: 400ms 長押し → ドラッグ開始。マウス: 5px 移動 → ドラッグ開始。
-  // setPointerCapture でブラウザのスクロール乗っ取りを防ぐ。
-  let draggingId  = null;
+  // .drag-handle に touch-action:none を設定しているため、ハンドルからの
+  // タッチはブラウザがスクロールを開始しない。ハンドル専用でドラッグ開始。
+  // タイマー不要: ハンドルを触ったらすぐに 5px 移動でドラッグ確定。
+  let draggingId   = null;
   let dropTargetEl = null;
-  let dragState   = null; // { card, pointerId, pointerType, startX, startY, active, timer }
+  let dragState    = null; // { card, pointerId, startX, startY, active }
 
   function clearDropTarget() {
     dropTargetEl?.classList.remove('drop-target');
@@ -83,8 +84,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   /** ポインター位置に基づいてスワップ先カードを探す (dragging カード除外) */
   function findDropTarget(x, y) {
     const els = [...container.querySelectorAll('.saved-card:not(.dragging)')];
-    let bestEl   = null;
-    let bestDist = Infinity;
+    let bestEl = null, bestDist = Infinity;
     for (const el of els) {
       const box = el.getBoundingClientRect();
       if (x < box.left || x > box.right || y < box.top || y > box.bottom) continue;
@@ -131,8 +131,6 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     draggingId = Number(dragState.card.dataset.id);
     dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
-    // ポインターキャプチャ: ブラウザがスクロールを奪うのを防ぐ
-    dragState.card.setPointerCapture(dragState.pointerId);
   }
 
   function endDrag(cancelled = false) {
@@ -151,72 +149,54 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (wasActive && savedId != null) commitOrder();
   }
 
+  // ドラッグハンドルでのみポインターダウンを受け付ける
   container.addEventListener('pointerdown', e => {
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
+    if (!e.target.closest('.drag-handle')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
 
     dragState = {
       card,
       pointerId: e.pointerId,
-      pointerType: e.pointerType,
       startX: e.clientX,
       startY: e.clientY,
       active: false,
-      timer: null,
     };
-
-    if (e.pointerType === 'touch') {
-      // タッチは即キャプチャ: ブラウザのスクロールより先にポインターを確保する
-      card.setPointerCapture(e.pointerId);
-      dragState.timer = setTimeout(startDrag, 400);
-    }
+    card.setPointerCapture(e.pointerId);
+    e.preventDefault();
   });
 
   container.addEventListener('pointermove', e => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
+    e.preventDefault();
 
-    if (dragState.active) {
-      e.preventDefault(); // スクロール抑制
-      // 画面端付近で自動スクロール
-      const edgeZone = 80;
-      const vy = e.clientY;
-      const vh = window.innerHeight;
-      if (vy < edgeZone)       window.scrollBy({ top: -8, behavior: 'instant' });
-      else if (vy > vh - edgeZone) window.scrollBy({ top: 8, behavior: 'instant' });
-      const candidate = findDropTarget(e.clientX, e.clientY);
-      if (candidate !== dropTargetEl) {
-        clearDropTarget();
-        dropTargetEl = candidate;
-        dropTargetEl?.classList.add('drop-target');
-      }
+    if (!dragState.active) {
+      const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
+      if (dist > 5) startDrag();
       return;
     }
 
-    const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
-    if (dragState.pointerType === 'touch') {
-      if (dist > 12) {
-        // 素早い移動 = スクロール意図: キャプチャ解放してタイマーキャンセル
-        clearTimeout(dragState.timer);
-        dragState.card.releasePointerCapture(dragState.pointerId);
-        dragState = null;
-      }
-      // キャプチャ中は e.preventDefault() 不要 (ブラウザスクロールはすでに無効)
-    } else if (dist > 5) {
-      startDrag();
+    // 画面端付近で自動スクロール
+    const edgeZone = 80, vy = e.clientY, vh = window.innerHeight;
+    if (vy < edgeZone)           window.scrollBy({ top: -8, behavior: 'instant' });
+    else if (vy > vh - edgeZone) window.scrollBy({ top:  8, behavior: 'instant' });
+
+    const candidate = findDropTarget(e.clientX, e.clientY);
+    if (candidate !== dropTargetEl) {
+      clearDropTarget();
+      dropTargetEl = candidate;
+      dropTargetEl?.classList.add('drop-target');
     }
   }, { passive: false });
 
   container.addEventListener('pointerup', e => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
-    clearTimeout(dragState.timer);
     endDrag();
   });
 
   container.addEventListener('pointercancel', e => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
-    clearTimeout(dragState.timer);
     endDrag(true);
   });
 

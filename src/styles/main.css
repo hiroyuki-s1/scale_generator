@@ -643,8 +643,10 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .drag-handle {
   margin-right: auto;            /* ハンドルは左、ボタンは右 */
   display: flex; align-items: center;
-  color: var(--text-3); cursor: grab; padding: 2px;
+  color: var(--text-3); cursor: grab; padding: 6px 8px;
   border-radius: 5px; transition: color .12s, background .12s;
+  touch-action: none;            /* ブラウザスクロールを無効化しドラッグを確保 */
+  -webkit-user-select: none; user-select: none;
 }
 .drag-handle:active { cursor: grabbing; }
 .drag-handle:hover { color: var(--text-2); background: var(--bg); }

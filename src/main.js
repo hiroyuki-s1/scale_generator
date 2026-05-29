@@ -26,9 +26,15 @@ import {
 } from './ui/fretboardSvg.js';
 import { renderLegend } from './ui/legend.js';
 
-/* global __COMMIT__ */
-const verEl = document.getElementById('buildVer');
-if (verEl) verEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+/* global __COMMIT__, __VERSION__ */
+const appVerEl = document.getElementById('appVer');
+if (appVerEl) {
+  appVerEl.textContent = typeof __VERSION__ !== 'undefined' ? `v${__VERSION__}` : '';
+}
+const buildVerEl = document.getElementById('buildVer');
+if (buildVerEl) {
+  buildVerEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+}
 
 // ── ダブルタップ拡大 / ピンチズームを確実に無効化 ─────────────────────
 // viewport meta の user-scalable=no と touch-action:manipulation は iOS Safari で
@@ -329,6 +335,9 @@ printModal.querySelector('[data-act="print"]').addEventListener('click',  () => 
   setTimeout(() => window.print(), 80);
 });
 printModal.addEventListener('click', e => { if (e.target === printModal) printModal.classList.remove('show'); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && printModal.classList.contains('show')) printModal.classList.remove('show');
+});
 
 document.getElementById('printBtn').addEventListener('click', () => {
   syncPrintDialog();
@@ -354,7 +363,11 @@ window.addEventListener('beforeprint', () => {
     if (!svg) return;
     const vb = maskViewBox(snap.mask);
     if (!vb) return;
-    printOriginalViewBox.set(svg, svg.getAttribute('viewBox'));
+    // 既に元の値を保存済み (afterprint 未発火で再度 beforeprint が来た場合) は
+    // 上書きしない。上書きするとマスク済み viewBox を「元の値」として保存してしまう。
+    if (!printOriginalViewBox.has(svg)) {
+      printOriginalViewBox.set(svg, svg.getAttribute('viewBox'));
+    }
     svg.setAttribute('viewBox', vb);
     setMaskOverlayVisible(svg, false);
   });

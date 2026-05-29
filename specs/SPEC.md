@@ -169,10 +169,7 @@ scale_generator/
 │   │   ├─ music.js              # pitchClass, degree変換
 │   │   ├─ fretboard.js          # computeFretNotes(state) / diffFretNotes
 │   │   ├─ title.js              # buildTitle(state) -> string
-│   │   ├─ i18n.js               # スケール名の英→カナ対訳
-│   │   ├─ chordScale.js         # コードクオリティ → 推奨スケール
-│   │   ├─ chordTones.js         # コードクオリティ → コードトーン
-│   │   └─ ireal.js              # iReal Pro 形式のパース
+│   │   └─ i18n.js               # スケール名の英→カナ対訳
 │   ├─ state/
 │   │   ├─ store.js              # pub/sub store (state, prev)
 │   │   ├─ persist.js            # localStorage 読み書き (debounce保存)
@@ -186,7 +183,6 @@ scale_generator/
 │   │   ├─ registerBtn.js        # 登録/更新ボタン
 │   │   ├─ savedTab.js           # 登録スケール一覧 (D&D並べ替え対応)
 │   │   ├─ colorModal.js         # 度数カラー設定
-│   │   ├─ irealTab.js           # iReal Pro 取り込みセクション
 │   │   ├─ layoutPicker.js       # 印刷レイアウト
 │   │   ├─ headerMenu.js         # ヘッダーメニュー
 │   │   ├─ fretboardSvg.js       # SVG描画 (base + diff、guitar/bass対応)
@@ -195,8 +191,8 @@ scale_generator/
 │       └─ printCss.js           # 動的@pageレイアウトCSS生成
 ├─ __tests__/
 │   ├─ domain/                   # music, fretboard, title, diff, presets,
-│   │                            #   chordScale, chordTones, ireal, allPatterns
-│   └─ state/                    # store, persist
+│   │                            #   allPatterns, positions
+│   └─ state/                    # store, persist, snapshot, savedList
 ├─ specs/SPEC.md                 # この仕様
 ├─ package.json
 ├─ vite.config.js

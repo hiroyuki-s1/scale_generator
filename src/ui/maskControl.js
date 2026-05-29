@@ -1,5 +1,7 @@
-const FRET_MIN = 0;
-const FRET_MAX = 22;
+import { FRET_START, FRET_END } from '../domain/constants.js';
+
+const FRET_MIN = FRET_START;
+const FRET_MAX = FRET_END;
 
 export function initMaskControl(container, store) {
   container.innerHTML = `

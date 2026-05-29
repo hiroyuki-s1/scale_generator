@@ -31,6 +31,7 @@ function confirmDelete(message) {
       okBtn.removeEventListener('click', onOk);
       cancelBtn.removeEventListener('click', onCancel);
       modal.removeEventListener('click', onOverlay);
+      document.removeEventListener('keydown', onKey);
       if (result && checkbox.checked) {
         localStorage.setItem(WARN_KEY, '1');
         updateRestoreBtn();
@@ -40,9 +41,11 @@ function confirmDelete(message) {
     const onOk      = () => finish(true);
     const onCancel  = () => finish(false);
     const onOverlay = e => { if (e.target === modal) finish(false); };
+    const onKey     = e => { if (e.key === 'Escape') finish(false); };
     okBtn.addEventListener('click', onOk);
     cancelBtn.addEventListener('click', onCancel);
     modal.addEventListener('click', onOverlay);
+    document.addEventListener('keydown', onKey);
   });
 }
 
@@ -203,8 +206,17 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     endDrag();
   }, { passive: true });
 
+  // 別の指の touchcancel でも、待機中の長押しタイマーが取り残されると
+  // 既に指が離れたカードに対して activateDrag が走るリスクがあるため、
+  // 識別子に関係なく pending タイマーは常にクリアする。
   container.addEventListener('touchcancel', () => {
-    if (!dragState || dragState.touchId === undefined) return;
+    if (!dragState) return;
+    if (dragState.pending && dragState.timer) {
+      clearTimeout(dragState.timer);
+      dragState = null;
+      return;
+    }
+    if (dragState.touchId === undefined) return;
     endDrag(true);
   }, { passive: true });
 

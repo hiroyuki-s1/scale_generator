@@ -15,6 +15,9 @@ export function initColorModal(store, openBtn) {
   closeBtn.addEventListener('click', close);
   resetBtn.addEventListener('click', reset);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('show')) close();
+  });
 
   function open()  { build(); modal.classList.add('show'); }
   function close() { modal.classList.remove('show'); }

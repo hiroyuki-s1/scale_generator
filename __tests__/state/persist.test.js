@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { snapshotForStorage, restoreFromStorage } from '../../src/state/persist.js';
+import { snapshotForStorage, restoreFromStorage, sanitizeStoredState } from '../../src/state/persist.js';
+import { DEFAULT_COLORS } from '../../src/domain/constants.js';
 
 // ── snapshotForStorage ────────────────────────────────────────────────────────
 
@@ -245,7 +246,7 @@ describe('snapshotForStorage → restoreFromStorage round-trip', () => {
           title: 'My Scale',
           rootIndex: 4,
           activeDegrees: new Set([0, 2, 4, 5, 7, 9, 11]),
-          presetName: 'major',
+          presetName: 'Ionian',
           mode: 'scale',
           mask: { enabled: true, min: 3, max: 9 },
           degreeColors: [],
@@ -266,3 +267,118 @@ describe('snapshotForStorage → restoreFromStorage round-trip', () => {
     expect(card.instrument).toBe('guitar');
   });
 });
+
+// ── sanitizeStoredState (バリデーション・clamp・マイグレーション) ──
+describe('sanitizeStoredState — robustness against bad input', () => {
+  it('completely empty input → fully defaulted state', () => {
+    const s = sanitizeStoredState({});
+    expect(s.edit.rootIndex).toBe(0);
+    expect(s.edit.activeDegrees).toBeInstanceOf(Set);
+    expect(s.edit.activeDegrees.size).toBe(0);
+    expect(s.edit.mode).toBe('scale');
+    expect(s.edit.instrument).toBeNull();
+    expect(s.edit.degreeColors).toHaveLength(DEFAULT_COLORS.length);
+    expect(s.saved).toEqual([]);
+    expect(s.layout).toEqual({ orientation: 'landscape', cols: 2, rows: 3 });
+    expect(s.activeTab).toBe('edit');
+    expect(s.nextId).toBe(1);
+  });
+
+  it('handles null/undefined input', () => {
+    expect(() => sanitizeStoredState(null)).not.toThrow();
+    expect(() => sanitizeStoredState(undefined)).not.toThrow();
+  });
+
+  it('migrates presetName: Major → Ionian, Natural Minor → Aeolian', () => {
+    const s = sanitizeStoredState({
+      edit: { presetName: 'Major' },
+      saved: [{ id: 1, title: 't', presetName: 'Natural Minor', instrument: 'guitar' }],
+    });
+    expect(s.edit.presetName).toBe('Ionian');
+    expect(s.saved[0].presetName).toBe('Aeolian');
+  });
+
+  it('clamps rootIndex into 0-11', () => {
+    expect(sanitizeStoredState({ edit: { rootIndex: 999 } }).edit.rootIndex).toBe(11);
+    expect(sanitizeStoredState({ edit: { rootIndex: -5 } }).edit.rootIndex).toBe(0);
+    expect(sanitizeStoredState({ edit: { rootIndex: 'abc' } }).edit.rootIndex).toBe(0);
+  });
+
+  it('drops out-of-range / duplicate degrees', () => {
+    const s = sanitizeStoredState({ edit: { activeDegrees: [0, 4, 7, 99, -1, 0, 'x'] } });
+    expect([...s.edit.activeDegrees].sort((a, b) => a - b)).toEqual([0, 4, 7]);
+  });
+
+  it('clamps mask range and swaps min/max when inverted', () => {
+    const s = sanitizeStoredState({ edit: { mask: { enabled: true, min: 100, max: -10 } } });
+    expect(s.edit.mask.min).toBe(0);
+    expect(s.edit.mask.max).toBe(22);
+    // Inverted (min > max) gets swapped
+    const s2 = sanitizeStoredState({ edit: { mask: { enabled: true, min: 15, max: 3 } } });
+    expect(s2.edit.mask.min).toBe(3);
+    expect(s2.edit.mask.max).toBe(15);
+  });
+
+  it('rejects invalid hex colors and falls back to defaults', () => {
+    const bad = Array.from({ length: 12 }, () => ({
+      solid: true, color: 'red; background: url(evil)', text: 'javascript:alert(1)',
+    }));
+    const s = sanitizeStoredState({ edit: { degreeColors: bad } });
+    s.edit.degreeColors.forEach((c, i) => {
+      expect(c.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+      expect(c.text).toMatch(/^#[0-9a-fA-F]{6}$/);
+      // falls back to per-index default
+      expect(c.color).toBe(DEFAULT_COLORS[i].color);
+    });
+  });
+
+  it('accepts valid hex colors as-is', () => {
+    const good = DEFAULT_COLORS.map(c => ({ ...c, color: '#abcdef' }));
+    const s = sanitizeStoredState({ edit: { degreeColors: good } });
+    expect(s.edit.degreeColors[0].color).toBe('#abcdef');
+  });
+
+  it('only accepts instrument of "guitar" or "bass"', () => {
+    expect(sanitizeStoredState({ edit: { instrument: 'guitar' } }).edit.instrument).toBe('guitar');
+    expect(sanitizeStoredState({ edit: { instrument: 'bass' } }).edit.instrument).toBe('bass');
+    expect(sanitizeStoredState({ edit: { instrument: 'piano' } }).edit.instrument).toBeNull();
+  });
+
+  it('saved snapshots default instrument to "guitar" when invalid', () => {
+    const s = sanitizeStoredState({
+      saved: [{ id: 1, title: 't', instrument: 'piano' }],
+    });
+    expect(s.saved[0].instrument).toBe('guitar');
+  });
+
+  it('drops saved entries without an integer id', () => {
+    const s = sanitizeStoredState({
+      saved: [
+        { id: 1, title: 'ok', instrument: 'guitar' },
+        { id: 'oops', title: 'bad', instrument: 'guitar' },
+        null,
+        { title: 'no id', instrument: 'guitar' },
+      ],
+    });
+    expect(s.saved).toHaveLength(1);
+    expect(s.saved[0].id).toBe(1);
+  });
+
+  it('layout: only landscape/portrait, cols/rows clamped to 1-6', () => {
+    const s = sanitizeStoredState({ layout: { orientation: 'sideways', cols: 99, rows: -3 } });
+    expect(s.layout.orientation).toBe('landscape');
+    expect(s.layout.cols).toBe(6);
+    expect(s.layout.rows).toBe(1);
+  });
+
+  it('activeTab only accepts "edit" or "saved"', () => {
+    expect(sanitizeStoredState({ activeTab: 'saved' }).activeTab).toBe('saved');
+    expect(sanitizeStoredState({ activeTab: 'foo' }).activeTab).toBe('edit');
+  });
+
+  it('mode only accepts "scale" or "chord"', () => {
+    expect(sanitizeStoredState({ edit: { mode: 'chord' } }).edit.mode).toBe('chord');
+    expect(sanitizeStoredState({ edit: { mode: 'something' } }).edit.mode).toBe('scale');
+  });
+});
+

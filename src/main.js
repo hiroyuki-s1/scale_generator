@@ -231,6 +231,9 @@ function closeFbFullscreen() {
   fbFullscreen.classList.add('hidden');
   fbFullscreenSvg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
   fsPrevState = null;
+  // 古いドットを消去: 次のオープン時に前回のドットが残らないようにする
+  const fsDotLayer = fbFullscreenSvg.querySelector('.dot-layer');
+  if (fsDotLayer) fsDotLayer.innerHTML = '';
   document.body.style.overflow = '';
 }
 

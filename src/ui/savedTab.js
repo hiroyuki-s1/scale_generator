@@ -68,11 +68,12 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.style.gridTemplateColumns = 'repeat(2, 1fr)';
   container.style.gap = '16px';
 
-  // ── ドラッグ&ドロップ並べ替え ──────────────────────────────────────────
-  // ドラッグ中にDOMを動かさず、ドロップ時にスワップする方式。
-  // ドラッグ先候補: ポインターがカードの内側にあるもの（最も中心が近い）。
+  // ── ドラッグ&ドロップ並べ替え (Pointer Events) ───────────────────────
+  // タッチ: 400ms 長押し → ドラッグ開始。マウス: 5px 移動 → ドラッグ開始。
+  // setPointerCapture でブラウザのスクロール乗っ取りを防ぐ。
   let draggingId  = null;
   let dropTargetEl = null;
+  let dragState   = null; // { card, pointerId, pointerType, startX, startY, active, timer }
 
   function clearDropTarget() {
     dropTargetEl?.classList.remove('drop-target');
@@ -86,7 +87,6 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     let bestDist = Infinity;
     for (const el of els) {
       const box = el.getBoundingClientRect();
-      // 1/4 overlap: ポインターがカード内にある場合のみ候補
       if (x < box.left || x > box.right || y < box.top || y > box.bottom) continue;
       const dist = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
       if (dist < bestDist) { bestDist = dist; bestEl = el; }
@@ -125,119 +125,83 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
-  // ── デスクトップ: HTML5 drag events ────────────────────────────────────
-  container.addEventListener('dragstart', e => {
-    const card = e.target.closest('.saved-card');
-    if (!card) return;
-    draggingId = Number(card.dataset.id);
-    card.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', card.dataset.id);
-  });
-
-  container.addEventListener('dragover', e => {
-    if (draggingId == null) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const candidate = findDropTarget(e.clientX, e.clientY);
-    if (candidate !== dropTargetEl) {
-      clearDropTarget();
-      dropTargetEl = candidate;
-      dropTargetEl?.classList.add('drop-target');
-    }
-  });
-
-  container.addEventListener('dragleave', e => {
-    if (!container.contains(e.relatedTarget)) clearDropTarget();
-  });
-
-  // drop は必須の preventDefault のみ (swap は dragend で行う)
-  container.addEventListener('drop', e => { e.preventDefault(); });
-
-  container.addEventListener('dragend', () => {
-    const dragging = container.querySelector('.saved-card.dragging');
-    // dropTargetEl があれば swap (モバイルで drop が発火しない場合も対応)
-    if (dragging && dropTargetEl && dropTargetEl !== dragging) {
-      swapCards(dragging, dropTargetEl);
-      animateSwap(dragging, dropTargetEl);
-    }
-    dragging?.classList.remove('dragging');
-    clearDropTarget();
-    if (draggingId != null) { draggingId = null; commitOrder(); }
-  });
-
-  // ── スマホ: タッチドラッグ (1秒長押しで開始) ──────────────────────────
-  let touchCard  = null;
-  let touchTimer = null;
-  let touchDragging = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
-
-  // ドラッグ中だけ追加する passive:false リスナー (スクロール抑制)
-  function onTouchMoveDrag(e) {
-    e.preventDefault();
-    const t = e.touches[0];
-    const candidate = findDropTarget(t.clientX, t.clientY);
-    if (candidate !== dropTargetEl) {
-      clearDropTarget();
-      dropTargetEl = candidate;
-      dropTargetEl?.classList.add('drop-target');
-    }
-  }
-
-  function startTouchDrag(card) {
-    touchDragging = true;
-    draggingId = Number(card.dataset.id);
-    card.classList.add('dragging');
+  function startDrag() {
+    if (!dragState || dragState.active) return;
+    dragState.active = true;
+    draggingId = Number(dragState.card.dataset.id);
+    dragState.card.classList.add('dragging');
     navigator.vibrate?.(40);
-    container.addEventListener('touchmove', onTouchMoveDrag, { passive: false });
+    // ポインターキャプチャ: ブラウザがスクロールを奪うのを防ぐ
+    try { dragState.card.setPointerCapture(dragState.pointerId); } catch (_) {}
   }
 
-  function endTouchDrag() {
-    container.removeEventListener('touchmove', onTouchMoveDrag);
-    if (touchCard) touchCard.classList.remove('dragging');
-    if (touchDragging && dropTargetEl && touchCard && dropTargetEl !== touchCard) {
-      swapCards(touchCard, dropTargetEl);
-      animateSwap(touchCard, dropTargetEl);
+  function endDrag(cancelled = false) {
+    if (!dragState) return;
+    const { card, active } = dragState;
+    card.classList.remove('dragging');
+    if (active && !cancelled && dropTargetEl && dropTargetEl !== card) {
+      swapCards(card, dropTargetEl);
+      animateSwap(card, dropTargetEl);
     }
     clearDropTarget();
-    touchDragging = false;
-    if (draggingId != null) { draggingId = null; commitOrder(); }
-    touchCard = null;
+    const wasActive = active;
+    const savedId = draggingId;
+    dragState = null;
+    draggingId = null;
+    if (wasActive && savedId != null) commitOrder();
   }
 
-  container.addEventListener('touchstart', e => {
-    // ボタン類はタッチドラッグ対象外
+  container.addEventListener('pointerdown', e => {
+    if (dragState) return;
     if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
-    touchCard = card;
-    const t = e.touches[0];
-    touchStartX = t.clientX; touchStartY = t.clientY;
-    touchTimer = setTimeout(() => startTouchDrag(card), 400);
-  }, { passive: true });
 
-  // スクロール判定用 passive touchmove (ドラッグ前のみ)
-  container.addEventListener('touchmove', e => {
-    if (touchDragging || !touchTimer) return;
-    const t = e.touches[0];
-    if (Math.hypot(t.clientX - touchStartX, t.clientY - touchStartY) > 8) {
-      clearTimeout(touchTimer); touchTimer = null; touchCard = null;
-    }
-  }, { passive: true });
-
-  container.addEventListener('touchend', () => {
-    clearTimeout(touchTimer); touchTimer = null;
-    if (touchDragging) endTouchDrag();
-    else touchCard = null;
+    dragState = {
+      card,
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      startX: e.clientX,
+      startY: e.clientY,
+      active: false,
+      timer: e.pointerType === 'touch' ? setTimeout(startDrag, 400) : null,
+    };
   });
 
-  container.addEventListener('touchcancel', () => {
-    clearTimeout(touchTimer); touchTimer = null;
-    container.removeEventListener('touchmove', onTouchMoveDrag);
-    touchCard?.classList.remove('dragging');
-    clearDropTarget();
-    touchDragging = false; draggingId = null; touchCard = null;
+  container.addEventListener('pointermove', e => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+
+    if (dragState.active) {
+      e.preventDefault(); // スクロール抑制
+      const candidate = findDropTarget(e.clientX, e.clientY);
+      if (candidate !== dropTargetEl) {
+        clearDropTarget();
+        dropTargetEl = candidate;
+        dropTargetEl?.classList.add('drop-target');
+      }
+      return;
+    }
+
+    const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
+    if (dragState.pointerType !== 'touch') {
+      if (dist > 5) startDrag();
+    } else if (dist > 8) {
+      // スクロール判定: タイマーキャンセル
+      clearTimeout(dragState.timer);
+      dragState = null;
+    }
+  }, { passive: false });
+
+  container.addEventListener('pointerup', e => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    clearTimeout(dragState.timer);
+    endDrag();
+  });
+
+  container.addEventListener('pointercancel', e => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    clearTimeout(dragState.timer);
+    endDrag(true);
   });
 
   function render() {
@@ -338,7 +302,6 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
   const card = document.createElement('div');
   card.className = 'saved-card';
   card.dataset.id = snap.id;
-  card.draggable = true;
 
   // ── ヘッダー (ドラッグハンドル / 編集 / 削除ボタン) ──
   const hdr = document.createElement('div');

@@ -1196,11 +1196,10 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .fb-fullscreen-close { width: 48px; height: 48px; font-size: 20px; }
   .fb-fullscreen-title { font-size: 18px; }
 
-  /* ── Color modal: larger swatches for thumb touch ── */
+  /* ── Color modal: larger swatches, 3×2 grid for thumb touch ── */
   .color-chip { width: 48px; height: 48px; }
-  .color-swatch-custom { width: 48px; height: 48px; }
-  .color-chips { gap: 6px; }
-  .color-palette-row { gap: 8px; }
+  .color-chips { display: grid; grid-template-columns: repeat(3, 48px); gap: 10px; }
+  .color-palette-row { gap: 10px; align-items: start; }
   .color-mode-btn { padding: 8px 14px; font-size: 13px; min-height: 44px; }
 }
 

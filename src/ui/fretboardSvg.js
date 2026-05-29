@@ -37,7 +37,7 @@ export function drawFretboardBase(svgEl) {
   svgEl.appendChild(el('rect', {
     x: SVG.ML + 0.75, y: SVG.MT + 0.75,
     width: SVG.FW - 1.5, height: SVG.FBH - 1.5,
-    fill: 'rgba(240,228,200,.65)',
+    fill: 'rgba(255,255,255,.85)',
   }));
 
   // Inlay dots (3,5,7,9,12,15,17,19,21)

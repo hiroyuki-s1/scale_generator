@@ -247,6 +247,7 @@ const fbFullscreenSvg    = document.getElementById('fbFullscreenSvg');
 const fbFullscreenTitle  = document.getElementById('fbFullscreenTitle');
 const fbFullscreenLegend = document.getElementById('fbFullscreenLegend');
 const fbFullscreenClose  = document.getElementById('fbFullscreenClose');
+fbFullscreenClose.addEventListener('click', e => { e.stopPropagation(); closeFbFullscreen(); });
 let fsPrevState      = null;
 let fsPrevInstrument = null;
 

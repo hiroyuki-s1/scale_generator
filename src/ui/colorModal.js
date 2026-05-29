@@ -95,7 +95,6 @@ export function initColorModal(store, openBtn) {
             prow.querySelectorAll('.color-chip').forEach((c, ci) => {
               c.classList.toggle('active', PALETTE[ci] === hex);
             });
-            customInp.value = hex;
           });
           chips.appendChild(chip);
         });

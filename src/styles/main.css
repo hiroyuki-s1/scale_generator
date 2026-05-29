@@ -294,36 +294,37 @@ body {
 .scale-name-item:hover { background: #28283a; }
 .scale-name-item.active { background: #35354e; color: #a0a0ff; font-weight: 700; }
 
-/* ── マスクモーダル ── */
-.mask-toggle-btn {
-  display: block; width: 100%; padding: 14px;
-  background: #26263a; border: 2px solid #3c3c58; border-radius: 10px;
-  color: #a8a4a0; font-size: 15px; font-weight: 700; font-family: inherit;
-  cursor: pointer; transition: all .15s; margin-bottom: 16px; text-align: center;
+/* ── マスクインラインパネル ── */
+.mask-panel { margin-top: 10px; }
+.mask-track-wrap {
+  position: relative; height: 6px; border-radius: 3px;
+  background: var(--border); margin-bottom: 14px;
 }
-.mask-toggle-btn:hover { background: #32324a; border-color: #6060a0; }
-.mask-toggle-btn.on { background: #35354e; border-color: #8080c8; color: #a0a0ff; }
-.mask-modal-range { display: flex; align-items: center; justify-content: center; gap: 20px; }
-.mask-modal-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.mask-modal-lbl {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1px; color: #7070a0;
+.mask-track-fill {
+  position: absolute; top: 0; height: 100%; border-radius: 3px;
+  background: var(--purple); transition: left .1s, width .1s;
 }
-.mask-modal-stepper { display: flex; align-items: center; gap: 10px; }
-.mask-modal-step {
-  width: 52px; height: 52px; border-radius: 10px;
-  background: #26263a; border: 2px solid #3c3c58; color: #e8e4dc;
-  font-size: 24px; cursor: pointer; font-family: inherit;
+.mask-stepper-row { display: flex; align-items: center; gap: 6px; }
+.mask-stepper-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mask-stepper-lbl {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-3);
+}
+.mask-stepper-ctrl { display: flex; align-items: center; gap: 8px; }
+.mask-step-lg {
+  width: 48px; height: 48px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 22px; cursor: pointer; font-family: inherit;
   display: flex; align-items: center; justify-content: center;
   transition: background .1s, border-color .1s;
 }
-.mask-modal-step:hover:not(:disabled) { background: #32324a; border-color: #6060a0; }
-.mask-modal-step:disabled { opacity: .3; cursor: default; }
-.mask-modal-val {
-  font-size: 26px; font-weight: 800; color: #e8e4dc;
-  min-width: 38px; text-align: center; font-family: 'Courier New', monospace;
+.mask-step-lg:hover:not(:disabled) { background: #e8e4dc; border-color: #bfb8ae; }
+.mask-step-lg:disabled { opacity: .3; cursor: default; }
+.mask-val-lg {
+  font-size: 22px; font-weight: 800; min-width: 34px;
+  text-align: center; font-family: 'Courier New', monospace; color: var(--purple);
 }
-.mask-modal-sep { font-size: 20px; color: #5050a0; font-weight: 700; }
+.mask-stepper-sep { font-size: 16px; color: var(--text-3); margin-top: 20px; flex-shrink: 0; }
 /* ── エディターモードバナー (ヘッダー中央) ── */
 @keyframes mode-pop {
   0%   { transform: scale(0.7); opacity: 0; }

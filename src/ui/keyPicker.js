@@ -15,10 +15,6 @@ export function initKeyPicker(store) {
     btn.dataset.idx = i;
     btn.textContent = NOTES[i];
     btn.addEventListener('click', () => {
-      const { edit } = store.get();
-      if (edit.presetName === null && edit.activeDegrees.size > 0) {
-        if (!confirm('カスタム設定した度数が失われます。\nキーを変更しますか？')) { closeModal(); return; }
-      }
       store.updateEdit({ rootIndex: i });
       closeModal();
     });

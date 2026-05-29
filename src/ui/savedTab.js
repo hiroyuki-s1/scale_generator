@@ -1,6 +1,6 @@
 import { SVG } from '../domain/constants.js';
 import { localizeTitle } from '../domain/i18n.js';
-import { savedListChanged } from '../state/savedList.js';
+import { savedListChanged, colorOnlyUpdate } from '../state/savedList.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
 
@@ -121,16 +121,6 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     marker.remove();
   }
 
-  /** スワップ直後に両カードを緑フラッシュ */
-  function animateSwap(a, b) {
-    [a, b].forEach(card => {
-      card.classList.remove('swap-flash');
-      void card.offsetWidth;
-      card.classList.add('swap-flash');
-      card.addEventListener('animationend', () => card.classList.remove('swap-flash'), { once: true });
-    });
-  }
-
   /** ドラッグ確定 (300ms 長押し後 or マウス5px移動後に呼ぶ) */
   function activateDrag() {
     if (!dragState || !dragState.pending) return;
@@ -152,7 +142,6 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     const wasActive = !pending;
     if (wasActive && !cancelled && dropTargetEl && dropTargetEl !== card) {
       swapCards(card, dropTargetEl);
-      animateSwap(card, dropTargetEl);
     }
     clearDropTarget();
     const savedId = draggingId;
@@ -354,8 +343,23 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
 
   render();
   store.subscribe(s => {
-    // 追加/削除/並べ替え/内容更新（色変更・スケール更新）のいずれかで再描画
     if (!savedListChanged(lastRendered, s.saved)) return;
+    // 色だけ変わった場合: カードを作り直さず、SVG とレジェンドだけその場で
+    // 塗り直す（fadeUp 等のアニメ無し、ジッターも回避）
+    if (colorOnlyUpdate(lastRendered, s.saved)) {
+      const prevById = new Map(lastRendered.map(p => [p.id, p]));
+      s.saved.forEach(snap => {
+        const card = container.querySelector(`.saved-card[data-id="${snap.id}"]`);
+        if (!card) return;
+        const svg = card.querySelector('svg.fb');
+        const prev = prevById.get(snap.id);
+        if (svg && prev) applyFretboardDiff(svg, snap, prev); // → repaintDotColors
+        const leg = card.querySelector('.legend');
+        if (leg) renderLegend(leg, snap);
+      });
+      lastRendered = [...s.saved];
+      return;
+    }
     render();
     applyEditingHighlight(currentEditingId);
     if (currentNewId != null) highlightNewCard(currentNewId);

@@ -31,7 +31,7 @@ body {
 }
 @media (min-width: 900px) {
   html { background: #d8d3cc; }
-  body { max-width: 1100px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.13); }
+  body { max-width: 1320px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.13); }
 }
 
 /* HEADER */
@@ -413,7 +413,7 @@ body {
 
 .editor-fretboard {
   flex: 1; display: flex; flex-direction: column;
-  min-width: 0; min-height: 0; padding: 10px 14px 12px; gap: 6px;
+  min-width: 0; min-height: 0; padding: 10px 6px 12px; gap: 6px;
 }
 .editor-fretboard svg.fb { min-width: 0 !important; width: 100%; height: auto; }
 
@@ -678,7 +678,7 @@ body {
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
 .fb-wrap {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px 16px 8px;
+  border-radius: var(--radius); padding: 12px 8px 8px;
   box-shadow: var(--shadow-sm); overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 .fb-wrap::-webkit-scrollbar { height: 4px; }
@@ -723,14 +723,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   outline-offset: 2px;
   background: rgba(245,158,11,.06);
 }
-
-/* スワップ完了フラッシュ */
-@keyframes swap-flash {
-  0%   { outline: 3px solid #22c55e; box-shadow: 0 0 0 2px #22c55e40; }
-  55%  { outline: 3px solid #22c55e; box-shadow: 0 0 18px 6px #22c55e50; }
-  100% { outline: 2px solid transparent; box-shadow: none; }
-}
-.saved-card.swap-flash { animation: swap-flash 0.5s ease-out both; }
 
 /* テキスト選択・長押しコンテキストメニュー無効 (スマホ) */
 #savedGrid {

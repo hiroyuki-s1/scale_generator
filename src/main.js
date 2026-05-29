@@ -14,7 +14,6 @@ import { initMaskControl }      from './ui/maskControl.js';
 import { initRegisterBtn }      from './ui/registerBtn.js';
 import { initSavedTab }         from './ui/savedTab.js';
 import { initColorModal }       from './ui/colorModal.js';
-import { initIrealSection }     from './ui/irealTab.js';
 import { initLayoutPicker }     from './ui/layoutPicker.js';
 import { initHeaderMenu }       from './ui/headerMenu.js';
 import { initPrintCss }         from './print/printCss.js';
@@ -30,6 +29,20 @@ import { renderLegend } from './ui/legend.js';
 /* global __COMMIT__ */
 const verEl = document.getElementById('buildVer');
 if (verEl) verEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+
+// ── ダブルタップ拡大 / ピンチズームを確実に無効化 ─────────────────────
+// viewport meta の user-scalable=no と touch-action:manipulation は iOS Safari で
+// 完全には効かない。明示的に handler を入れる。
+let __lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - __lastTouchEnd <= 350) {
+    e.preventDefault();
+  }
+  __lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
 
 function defaultState() {
   return {
@@ -188,7 +201,6 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   },
 });
 initColorModal(store, document.getElementById('colorBtn'));
-initIrealSection(store);
 initLayoutPicker(store);
 initHeaderMenu(store);
 initPrintCss(store);

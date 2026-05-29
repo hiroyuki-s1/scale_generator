@@ -9,6 +9,7 @@ export function cloneEditAsSnapshot(edit) {
     mode: edit.mode,
     mask: { ...edit.mask },
     degreeColors: cloneColors(edit.degreeColors),
+    instrument: edit.instrument || 'guitar',
   };
 }
 

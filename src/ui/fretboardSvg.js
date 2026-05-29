@@ -1,9 +1,16 @@
-import { DEGREES, TUNING, STRING_LABELS, SVG, DEFAULT_COLORS } from '../domain/constants.js';
+import {
+  DEGREES, SVG, DEFAULT_COLORS,
+  TUNING_GUITAR, TUNING_BASS,
+  STRING_LABELS_GUITAR, STRING_LABELS_BASS,
+} from '../domain/constants.js';
 import { diffFretNotes, noteKey } from '../domain/fretboard.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const fx = f => SVG.ML + (f - SVG.F0) * SVG.FW + SVG.FW / 2;
-const sy = s => SVG.MT + s * SVG.SH;
+
+/** instrument に応じた弦ピッチを返す */
+const getSH = (instrument) => instrument === 'bass' ? SVG.SH_BASS : SVG.SH;
+const makeSy = (sh) => (s) => SVG.MT + s * sh;
 
 function el(tag, attrs, txt) {
   const e = document.createElementNS(NS, tag);
@@ -15,8 +22,15 @@ function el(tag, attrs, txt) {
 /**
  * Draw the static parts of the fretboard (background, frets, strings, inlays).
  * Idempotent — clears the svg and rebuilds the base. Call once per svg lifecycle.
+ * @param {SVGElement} svgEl
+ * @param {'guitar'|'bass'|null} [instrument='guitar']
  */
-export function drawFretboardBase(svgEl) {
+export function drawFretboardBase(svgEl, instrument = 'guitar') {
+  const tuning     = instrument === 'bass' ? TUNING_BASS : TUNING_GUITAR;
+  const strLabels  = instrument === 'bass' ? STRING_LABELS_BASS : STRING_LABELS_GUITAR;
+  const sh         = getSH(instrument);
+  const sy         = makeSy(sh);
+
   const uid = svgEl.id || ('fb' + Math.random().toString(36).slice(2));
   svgEl.innerHTML = '';
   svgEl.appendChild(el('rect', { x: 0, y: 0, width: SVG.W, height: SVG.H, fill: '#fff' }));
@@ -75,7 +89,7 @@ export function drawFretboardBase(svgEl) {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
       x: fx(f), y: posY, 'text-anchor': 'middle',
-      fill: '#8a8079', 'font-size': '22', 'font-family': 'monospace', 'font-weight': 'bold',
+      fill: '#8a8079', 'font-size': '18', 'font-family': 'monospace', 'font-weight': 'bold',
     }, String(f)));
   });
   // Inlay dots below numbers
@@ -90,17 +104,24 @@ export function drawFretboardBase(svgEl) {
     }));
   });
 
-  const sc = ['#b8b2a8', '#b0aaa0', '#a8a298', '#a09890', '#988f85', '#90877c'];
-  for (let s = 0; s < TUNING.length; s++) {
+  // Strings — guitar: 6 wound strings, bass: 4 thicker strings
+  const guitarColors = ['#b8b2a8', '#b0aaa0', '#a8a298', '#a09890', '#988f85', '#90877c'];
+  const bassColors   = ['#a8a090', '#988878', '#887060', '#786050'];
+  const sc = instrument === 'bass' ? bassColors : guitarColors;
+
+  for (let s = 0; s < tuning.length; s++) {
     const y = sy(s);
+    const sw = instrument === 'bass'
+      ? (1.4 + s * 0.7).toFixed(2)
+      : (0.8 + s * 0.42).toFixed(2);
     svgEl.appendChild(el('line', {
       x1: nutX, y1: y, x2: SVG.ML + SVG.FBW, y2: y,
-      stroke: sc[s], 'stroke-width': (0.8 + s * 0.42).toFixed(2),
+      stroke: sc[s], 'stroke-width': sw,
     }));
     svgEl.appendChild(el('text', {
       x: SVG.ML - 5, y: y + 4, 'text-anchor': 'end',
       fill: '#c5bfb5', 'font-size': '9', 'font-family': 'monospace',
-    }, STRING_LABELS[s]));
+    }, strLabels[s]));
   }
 
   // Dot layer is always the last child so dots always render above mask overlays
@@ -114,6 +135,8 @@ export function drawFretboardBase(svgEl) {
  * Pass prevScale=null on first render to animate everything in.
  */
 export function applyFretboardDiff(svgEl, nextScale, prevScale) {
+  const instrument = nextScale.instrument || 'guitar';
+  const sh = getSH(instrument);
   const colors = nextScale.degreeColors || DEFAULT_COLORS;
   const { added, removed } = diffFretNotes(prevScale, nextScale);
 
@@ -126,7 +149,7 @@ export function applyFretboardDiff(svgEl, nextScale, prevScale) {
       node.addEventListener('animationend', () => node.remove(), { once: true });
     });
   });
-  added.forEach(n => appendDot(svgEl, n, colors));
+  added.forEach(n => appendDot(svgEl, n, colors, sh));
 
   if (prevScale && prevScale.degreeColors !== colors) {
     repaintDotColors(svgEl, colors);
@@ -158,14 +181,15 @@ function repaintDotColors(svgEl, colors) {
   }
 }
 
-function appendDot(svgEl, n, colors) {
+function appendDot(svgEl, n, colors, sh) {
   const { string: s, fret: f, degree: deg } = n;
-  const cx = fx(f), cy = sy(s);
+  const cx = fx(f), cy = SVG.MT + s * sh;
   const { name } = DEGREES[deg];
   const isRoot = deg === 0;
   const dc = colors[deg];
   const dotFill = dc.solid ? dc.color : '#ffffff';
-  const fs = name.length >= 4 ? '8.5' : name.length === 1 ? '15' : '12';
+  // 1.3x increase: 8.5→11, 12→16, 15→20
+  const fs = name.length >= 4 ? '11' : name.length === 1 ? '20' : '16';
   const delay = `${(f - SVG.F0) * 22}ms`;
   const pos = noteKey(n);
   // Set transform-origin explicitly in SVG user-space coordinates so that

@@ -101,8 +101,14 @@ export function findPresetEverywhere(name) {
   return null;
 }
 
-export const TUNING = [64, 59, 55, 50, 45, 40];
-export const STRING_LABELS = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
+export const TUNING_GUITAR = [64, 59, 55, 50, 45, 40];
+export const TUNING_BASS   = [43, 38, 33, 28];           // G2 D2 A2 E2
+
+export const TUNING = TUNING_GUITAR; // backward compat
+
+export const STRING_LABELS_GUITAR = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
+export const STRING_LABELS_BASS   = ['G2', 'D2', 'A2', 'E2'];
+export const STRING_LABELS = STRING_LABELS_GUITAR; // backward compat
 
 export const FRET_START = 0;
 export const FRET_END = 22;
@@ -146,4 +152,5 @@ export const SVG = {
 SVG.FBW = SVG.W - SVG.ML - SVG.MR;
 SVG.FBH = SVG.H - SVG.MT - SVG.MB;
 SVG.FW  = SVG.FBW / (SVG.F1 - SVG.F0 + 1);
-SVG.SH  = SVG.FBH / 5;
+SVG.SH      = SVG.FBH / 5;  // guitar: 6 strings, 5 gaps
+SVG.SH_BASS = SVG.FBH / 3;  // bass:   4 strings, 3 gaps

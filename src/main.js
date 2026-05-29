@@ -7,17 +7,18 @@ import { createStore } from './state/store.js';
 import { attachPersist, restoreFromStorage } from './state/persist.js';
 import { cloneColors } from './state/snapshot.js';
 
-import { initKeyPicker }    from './ui/keyPicker.js';
-import { initScalePicker }  from './ui/scalePicker.js';
-import { initDegreePicker } from './ui/degreePicker.js';
-import { initMaskControl }  from './ui/maskControl.js';
-import { initRegisterBtn }  from './ui/registerBtn.js';
-import { initSavedTab }     from './ui/savedTab.js';
-import { initColorModal }   from './ui/colorModal.js';
-import { initIrealSection } from './ui/irealTab.js';
-import { initLayoutPicker } from './ui/layoutPicker.js';
-import { initHeaderMenu }   from './ui/headerMenu.js';
-import { initPrintCss }     from './print/printCss.js';
+import { initKeyPicker }        from './ui/keyPicker.js';
+import { initScalePicker }      from './ui/scalePicker.js';
+import { initDegreePicker }     from './ui/degreePicker.js';
+import { initMaskControl }      from './ui/maskControl.js';
+import { initRegisterBtn }      from './ui/registerBtn.js';
+import { initSavedTab }         from './ui/savedTab.js';
+import { initColorModal }       from './ui/colorModal.js';
+import { initIrealSection }     from './ui/irealTab.js';
+import { initLayoutPicker }     from './ui/layoutPicker.js';
+import { initHeaderMenu }       from './ui/headerMenu.js';
+import { initPrintCss }         from './print/printCss.js';
+import { initInstrumentPicker } from './ui/instrumentPicker.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -39,6 +40,7 @@ function defaultState() {
       mode: 'scale',
       mask: { enabled: false, min: 1, max: 22 },
       degreeColors: cloneColors(DEFAULT_COLORS),
+      instrument: null,      // null = 未選択, 'guitar' | 'bass'
     },
     saved: [],
     layout: { orientation: 'landscape', cols: 2, rows: 3 },
@@ -51,14 +53,30 @@ const store = createStore(restoreFromStorage() || defaultState());
 attachPersist(store);
 
 // ── 指板 ──────────────────────────────────────────────────────────────
-const fretboardEl = document.getElementById('fretboard');
-drawFretboardBase(fretboardEl);
-applyFretboardDiff(fretboardEl, store.get().edit, null);
+const fretboardEl   = document.getElementById('fretboard');
+const editFbWrapEl  = document.getElementById('editFbWrap');
+let lastFbInstrument = null;
 
-store.subscribe((s, p) => {
+function syncEditorFretboard(s, p) {
+  const instrument = s.edit.instrument;
+
+  // 楽器未選択: 指板を隠す
+  editFbWrapEl.style.display = instrument ? '' : 'none';
+  if (!instrument) return;
+
+  if (instrument !== lastFbInstrument) {
+    // 楽器変更 → base を再描画してドットをすべて追加
+    drawFretboardBase(fretboardEl, instrument);
+    applyFretboardDiff(fretboardEl, s.edit, null);
+    lastFbInstrument = instrument;
+    return;
+  }
   if (p && s.edit === p.edit) return;
   applyFretboardDiff(fretboardEl, s.edit, p?.edit);
-});
+}
+
+syncEditorFretboard({ edit: store.get().edit }, null);
+store.subscribe(syncEditorFretboard);
 
 // ── スケール名入力 ────────────────────────────────────────────────────
 const titleInputEl = document.getElementById('fbTitleInput');
@@ -127,6 +145,7 @@ function loadSnapToEditor(snap) {
     mode: snap.mode,
     mask: { ...snap.mask },
     degreeColors: snap.degreeColors,
+    instrument: snap.instrument || 'guitar',
   });
   titleInputEl.value = snap.title;
   userEditedTitle = true;
@@ -161,6 +180,11 @@ initIrealSection(store);
 initLayoutPicker(store);
 initHeaderMenu(store);
 initPrintCss(store);
+initInstrumentPicker(
+  document.getElementById('instrumentBtn'),
+  document.getElementById('instrumentModal'),
+  store,
+);
 
 // ── タブナビゲーション ─────────────────────────────────────────────────
 const tabNav      = document.getElementById('tabNav');
@@ -212,18 +236,22 @@ const fbFullscreenSvg    = document.getElementById('fbFullscreenSvg');
 const fbFullscreenTitle  = document.getElementById('fbFullscreenTitle');
 const fbFullscreenLegend = document.getElementById('fbFullscreenLegend');
 const fbFullscreenClose  = document.getElementById('fbFullscreenClose');
-let fsPrevState = null;
-
-drawFretboardBase(fbFullscreenSvg);
+let fsPrevState      = null;
+let fsPrevInstrument = null;
 
 export function openFbFullscreen(state, displayTitle) {
+  const instrument = state.instrument || 'guitar';
+  if (instrument !== fsPrevInstrument) {
+    drawFretboardBase(fbFullscreenSvg, instrument);
+    fsPrevInstrument = instrument;
+    fsPrevState = null; // full redraw
+  }
   fbFullscreenTitle.textContent = displayTitle || buildTitle(state);
   applyFretboardDiff(fbFullscreenSvg, state, fsPrevState);
   fsPrevState = state;
   renderLegend(fbFullscreenLegend, state);
   const vb = maskViewBox(state.mask);
   fbFullscreenSvg.setAttribute('viewBox', vb || `0 0 ${SVG.W} ${SVG.H}`);
-  // 拡大表示では紫枠は不要 (viewBox でクロップ済みのため)
   setMaskOverlayVisible(fbFullscreenSvg, false);
   fbFullscreen.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -233,7 +261,7 @@ function closeFbFullscreen() {
   fbFullscreen.classList.add('hidden');
   fbFullscreenSvg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
   fsPrevState = null;
-  // 古いドットを消去: 次のオープン時に前回のドットが残らないようにする
+  fsPrevInstrument = null;
   const fsDotLayer = fbFullscreenSvg.querySelector('.dot-layer');
   if (fsDotLayer) fsDotLayer.innerHTML = '';
   document.body.style.overflow = '';
@@ -251,10 +279,17 @@ document.getElementById('editFbWrap').addEventListener('click', () => {
 
 // 編集状態変化時に全画面も更新
 store.subscribe((s, p) => {
-  if (!fbFullscreen.classList.contains('hidden') && p && s.edit !== p.edit) {
-    applyFretboardDiff(fbFullscreenSvg, s.edit, p?.edit);
-    renderLegend(fbFullscreenLegend, s.edit);
+  if (fbFullscreen.classList.contains('hidden')) return;
+  if (!p || s.edit === p.edit) return;
+  const instrument = s.edit.instrument || 'guitar';
+  if (instrument !== fsPrevInstrument) {
+    drawFretboardBase(fbFullscreenSvg, instrument);
+    fsPrevInstrument = instrument;
+    applyFretboardDiff(fbFullscreenSvg, s.edit, null);
+  } else {
+    applyFretboardDiff(fbFullscreenSvg, s.edit, p.edit);
   }
+  renderLegend(fbFullscreenLegend, s.edit);
 });
 
 // ── 印刷ボタン: ダイアログを出す ──────────────────────────────────────

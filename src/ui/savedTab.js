@@ -440,7 +440,7 @@ function renderCard(snap, store, openFullscreen, onEditMode) {
   leg.className = 'legend';
   card.appendChild(leg);
 
-  drawFretboardBase(svg);
+  drawFretboardBase(svg, snap.instrument || 'guitar');
 
   // Title overlay: large elegant text spanning the fretboard width
   const cx = SVG.ML + SVG.FBW / 2;

@@ -10,6 +10,7 @@ const editForJson = e => ({
   mode: e.mode || 'scale',
   mask: { ...e.mask },
   degreeColors: cloneColors(e.degreeColors),
+  instrument: e.instrument || null,
 });
 
 export function snapshotForStorage(state) {
@@ -32,11 +33,13 @@ export function restoreFromStorage() {
         ...data.edit,
         activeDegrees: new Set(data.edit.activeDegrees),
         mode: data.edit.mode || 'scale',
+        instrument: data.edit.instrument || null,
       },
       saved: data.saved.map(s => ({
         ...s,
         activeDegrees: new Set(s.activeDegrees),
         mode: s.mode || 'scale',
+        instrument: s.instrument || 'guitar',
       })),
       layout: data.layout,
       activeTab: data.activeTab || 'edit',

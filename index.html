@@ -83,6 +83,12 @@
     <!-- コンパクトサイドバー: キー + スケール/コード -->
     <aside class="editor-sidebar">
 
+      <!-- 楽器選択 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">楽器</div>
+        <button class="instr-btn" id="instrumentBtn"></button>
+      </div>
+
       <!-- キー -->
       <div class="ctrl-group">
         <div class="ctrl-label">キー</div>
@@ -246,6 +252,45 @@
     <div class="modal-actions">
       <button class="btn-reset-colors" data-act="reset">デフォルトに戻す</button>
       <button class="modal-confirm" data-act="close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 楽器選択モーダル ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="instrumentModal">
+  <div class="instr-modal-box">
+    <div class="modal-title">楽器を選択</div>
+    <div class="instr-choice-row">
+      <button class="instr-choice-btn" data-instrument="guitar">
+        <div class="instr-choice-icon">
+          <svg viewBox="0 0 36 90" fill="currentColor" aria-hidden="true">
+            <rect x="13" y="0" width="10" height="7" rx="3"/>
+            <rect x="15.5" y="5" width="5" height="24" rx="1"/>
+            <ellipse cx="18" cy="36" rx="12" ry="10"/>
+            <ellipse cx="18" cy="56" rx="14" ry="15"/>
+            <circle cx="18" cy="56" r="5.5" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <circle cx="11" cy="2" r="1.8"/><circle cx="11" cy="7" r="1.8"/><circle cx="11" cy="12" r="1.8"/>
+            <circle cx="25" cy="2" r="1.8"/><circle cx="25" cy="7" r="1.8"/><circle cx="25" cy="12" r="1.8"/>
+          </svg>
+        </div>
+        <div class="instr-choice-label">Guitar</div>
+        <div class="instr-choice-sub">6弦</div>
+      </button>
+      <button class="instr-choice-btn" data-instrument="bass">
+        <div class="instr-choice-icon">
+          <svg viewBox="0 0 36 100" fill="currentColor" aria-hidden="true">
+            <rect x="13" y="0" width="10" height="7" rx="3"/>
+            <rect x="15.5" y="5" width="5" height="34" rx="1"/>
+            <ellipse cx="18" cy="48" rx="12" ry="10"/>
+            <ellipse cx="18" cy="68" rx="14" ry="16"/>
+            <ellipse cx="18" cy="70" rx="5" ry="5.5" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <circle cx="11" cy="2" r="1.8"/><circle cx="11" cy="8" r="1.8"/>
+            <circle cx="25" cy="2" r="1.8"/><circle cx="25" cy="8" r="1.8"/>
+          </svg>
+        </div>
+        <div class="instr-choice-label">Bass</div>
+        <div class="instr-choice-sub">4弦</div>
+      </button>
     </div>
   </div>
 </div>

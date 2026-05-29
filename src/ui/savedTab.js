@@ -151,17 +151,17 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (!container.contains(e.relatedTarget)) clearDropTarget();
   });
 
-  container.addEventListener('drop', e => {
-    e.preventDefault();
+  // drop は必須の preventDefault のみ (swap は dragend で行う)
+  container.addEventListener('drop', e => { e.preventDefault(); });
+
+  container.addEventListener('dragend', () => {
     const dragging = container.querySelector('.saved-card.dragging');
+    // dropTargetEl があれば swap (モバイルで drop が発火しない場合も対応)
     if (dragging && dropTargetEl && dropTargetEl !== dragging) {
       swapCards(dragging, dropTargetEl);
       animateSwap(dragging, dropTargetEl);
     }
-  });
-
-  container.addEventListener('dragend', () => {
-    container.querySelector('.saved-card.dragging')?.classList.remove('dragging');
+    dragging?.classList.remove('dragging');
     clearDropTarget();
     if (draggingId != null) { draggingId = null; commitOrder(); }
   });
@@ -214,7 +214,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     touchCard = card;
     const t = e.touches[0];
     touchStartX = t.clientX; touchStartY = t.clientY;
-    touchTimer = setTimeout(() => startTouchDrag(card), 1000);
+    touchTimer = setTimeout(() => startTouchDrag(card), 400);
   }, { passive: true });
 
   // スクロール判定用 passive touchmove (ドラッグ前のみ)

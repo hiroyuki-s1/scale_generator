@@ -303,7 +303,7 @@ body {
   transition: opacity .15s, color .15s;
 }
 .author-link:hover { opacity: 1; color: var(--text); }
-.author-link-icon { width: 13px; height: 13px; flex-shrink: 0; }
+.author-link-icon { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* 編集モード中は登録ボタンをオレンジに */
 .editor--edit-mode .btn-register { background: var(--accent); }

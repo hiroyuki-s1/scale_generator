@@ -70,7 +70,7 @@ export function drawFretboardBase(svgEl) {
   }
 
   // Fret position numbers (0,3,5,7,9,12,15,17,19,21) — below fretboard
-  const posY = SVG.MT + SVG.FBH + 22;
+  const posY = SVG.MT + SVG.FBH + 32;
   [0, 3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
@@ -81,12 +81,12 @@ export function drawFretboardBase(svgEl) {
   // Inlay dots below numbers
   [3, 5, 7, 9].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
-    svgEl.appendChild(el('circle', { cx: fx(f), cy: SVG.MT + SVG.FBH + 36, r: 3, fill: '#d0cbc3' }));
+    svgEl.appendChild(el('circle', { cx: fx(f), cy: SVG.MT + SVG.FBH + 46, r: 3, fill: '#d0cbc3' }));
   });
   [-6, 6].forEach(dx => {
     if (12 < SVG.F0 || 12 > SVG.F1) return;
     svgEl.appendChild(el('circle', {
-      cx: fx(12) + dx, cy: SVG.MT + SVG.FBH + 36, r: 3, fill: '#d0cbc3',
+      cx: fx(12) + dx, cy: SVG.MT + SVG.FBH + 46, r: 3, fill: '#d0cbc3',
     }));
   });
 

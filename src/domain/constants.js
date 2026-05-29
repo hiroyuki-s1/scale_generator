@@ -138,8 +138,8 @@ export const LAYOUT_PRESETS = [
 ];
 
 export const SVG = {
-  W: 960, H: 230,
-  ML: 54, MT: 20, MR: 10, MB: 42,
+  W: 960, H: 246,
+  ML: 54, MT: 20, MR: 10, MB: 58,
   F0: FRET_START, F1: FRET_END,
   CR: 10,   // ドット半径: フレット数増加に合わせ少し小さく
 };

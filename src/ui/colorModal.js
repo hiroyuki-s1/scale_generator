@@ -1,5 +1,5 @@
 import { DEGREES, DEFAULT_COLORS } from '../domain/constants.js';
-import { cloneColors } from '../state/snapshot.js';
+import { cloneColors, propagateColors } from '../state/snapshot.js';
 
 const PALETTE = [
   '#d92b2b', '#f0b429', '#27ae60', '#2980b9', '#ffffff', '#1c1c1c',
@@ -19,16 +19,17 @@ export function initColorModal(store, openBtn) {
   function open()  { build(); modal.classList.add('show'); }
   function close() { modal.classList.remove('show'); }
 
+  // 度数カラーは一括設定 → 編集中＋登録済みスケールすべてに反映
   function reset() {
-    store.updateEdit({ degreeColors: cloneColors(DEFAULT_COLORS) });
+    store.set(state => propagateColors(state, cloneColors(DEFAULT_COLORS)));
     build();
   }
 
   function setColor(i, patch) {
-    store.updateEdit(edit => {
-      const next = cloneColors(edit.degreeColors);
+    store.set(state => {
+      const next = cloneColors(state.edit.degreeColors);
       next[i] = { ...next[i], ...patch };
-      return { degreeColors: next };
+      return propagateColors(state, next);
     });
   }
 

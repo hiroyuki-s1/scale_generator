@@ -1,5 +1,6 @@
 import { SVG } from '../domain/constants.js';
 import { localizeTitle } from '../domain/i18n.js';
+import { savedListChanged } from '../state/savedList.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
 
@@ -52,7 +53,8 @@ function updateRestoreBtn() {
 
 export function initSavedTab(container, store, openFullscreen, onEditMode = null) {
   const emptyEl = document.getElementById('savedEmpty');
-  let lastIdsKey = '';
+  // 直前に描画した saved 配列（位置ごとの参照で再描画要否を判定）
+  let lastRendered = [];
 
   // 再有効化ボタン
   updateRestoreBtn();
@@ -105,7 +107,8 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     if (orderedIds.join(',') === cur.map(s => s.id).join(',')) return;
     const byId = new Map(cur.map(s => [s.id, s]));
     const reordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
-    lastIdsKey = orderedIds.join(',');
+    // DOM はすでに並べ替え済み → 再描画をスキップさせるため lastRendered を先に更新
+    lastRendered = reordered;
     store.set(state => ({ ...state, saved: reordered }));
   }
 
@@ -271,7 +274,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     const { saved } = store.get();
     container.innerHTML = '';
     if (emptyEl) emptyEl.style.display = saved.length === 0 ? '' : 'none';
-    lastIdsKey = saved.map(s => s.id).join(',');
+    lastRendered = [...saved];
     saved.forEach(snap => {
       try {
         container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId));
@@ -351,8 +354,8 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
 
   render();
   store.subscribe(s => {
-    const idsKey = s.saved.map(c => c.id).join(',');
-    if (idsKey === lastIdsKey) return;
+    // 追加/削除/並べ替え/内容更新（色変更・スケール更新）のいずれかで再描画
+    if (!savedListChanged(lastRendered, s.saved)) return;
     render();
     applyEditingHighlight(currentEditingId);
     if (currentNewId != null) highlightNewCard(currentNewId);

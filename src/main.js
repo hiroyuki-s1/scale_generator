@@ -149,13 +149,14 @@ function clearEditMode() {
 }
 
 function loadSnapToEditor(snap) {
+  // degreeColors は読み込まない: 度数カラーはアプリ全体共通の設定で、
+  // スケールごとには持たない（現在のグローバル色を維持）。
   store.updateEdit({
     rootIndex: snap.rootIndex,
     activeDegrees: new Set(snap.activeDegrees),
     presetName: snap.presetName,
     mode: snap.mode,
     mask: { ...snap.mask },
-    degreeColors: snap.degreeColors,
     instrument: snap.instrument || 'guitar',
   });
   titleInputEl.value = snap.title;
@@ -235,6 +236,10 @@ store.subscribe((s, p) => {
 
 // ── 一括削除ボタン ─────────────────────────────────────────────────────
 document.getElementById('deleteAllBtn').addEventListener('click', () => {
+  if (editingId != null) {
+    alert('編集中は全削除できません。\n編集を終了してから実行してください。');
+    return;
+  }
   const { saved } = store.get();
   if (saved.length === 0) return;
   if (!confirm(`登録済みのスケール ${saved.length} 件をすべて削除します。\nこの操作は元に戻せません。よろしいですか？`)) return;

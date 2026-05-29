@@ -73,10 +73,13 @@ export function initInstrumentPicker(btnEl, modalEl, store) {
     choiceBtn.addEventListener('click', () => {
       const chosen = choiceBtn.dataset.instrument;
       const { edit } = store.get();
-      if (chosen !== edit.instrument && edit.presetName === null && edit.activeDegrees.size > 0) {
-        if (!confirm('カスタム設定した度数が失われます。\n楽器を変更しますか？')) return;
+      // 同じ楽器なら何もしない
+      if (chosen === edit.instrument) { modalEl.classList.remove('show'); return; }
+      // 楽器が入れ替わるとスケールは初期化される。設定済みなら確認。
+      if (edit.activeDegrees.size > 0) {
+        if (!confirm('楽器を変更するとスケールがリセットされます。\nよろしいですか？')) return;
       }
-      store.updateEdit({ instrument: chosen });
+      store.updateEdit({ instrument: chosen, activeDegrees: new Set(), presetName: null });
       modalEl.classList.remove('show');
     });
   });

@@ -63,14 +63,29 @@ body {
 .app-ver {
   font-size: 11px; font-weight: 700; color: #18170f;
   font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  flex-shrink: 0; letter-spacing: .3px; margin-right: 6px;
+  flex-shrink: 0; letter-spacing: .3px; margin-right: 4px;
+}
+/* アルファ版ピル — オレンジで目立たせる */
+.alpha-pill {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 1.6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-right: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
 }
 .build-ver {
   font-size: 9px; font-weight: 500; color: var(--text-3);
   font-family: 'Courier New', monospace; flex-shrink: 0; opacity: .7;
   letter-spacing: .3px;
 }
-/* 狭幅ではコミットハッシュは隠す (アプリバージョンは常時表示) */
+/* 狭幅ではコミットハッシュは隠す (アプリバージョンと ALPHA ピルは常時表示) */
 @media (max-width: 767px) { .build-ver { display: none; } }
 
 .hdr-group {
@@ -399,7 +414,10 @@ body {
 .editor-footer {
   padding: 10px 14px 16px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 .author-link {
   display: inline-flex;
@@ -413,6 +431,92 @@ body {
 }
 .author-link:hover { opacity: 1; color: var(--text); }
 .author-link-icon { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; }
+
+/* ── 初回起動時アルファ版告知 ────────────────────────────────── */
+.alpha-notice {
+  position: fixed;
+  z-index: 250;
+  left: 50%; bottom: 16px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 24px));
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.10);
+  animation: alphaNoticeIn .35s cubic-bezier(.22,1,.36,1) both;
+}
+.alpha-notice.hidden { display: none; }
+.alpha-notice-inner {
+  display: flex; gap: 14px;
+  padding: 18px 18px 16px;
+}
+.alpha-notice-icon { font-size: 32px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.alpha-notice-body { flex: 1; min-width: 0; }
+.alpha-notice-title {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: .2px;
+}
+.alpha-notice-text {
+  font-size: 13px; line-height: 1.65; color: var(--text-2);
+  margin-bottom: 10px;
+}
+.alpha-notice-text strong { color: var(--accent); font-weight: 800; }
+.alpha-notice-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 12px; flex-wrap: wrap;
+}
+.alpha-notice-feedback {
+  display: inline-flex; align-items: center;
+  padding: 8px 14px;
+  background: var(--accent); color: #fff;
+  border-radius: 8px; text-decoration: none;
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  transition: opacity .12s;
+}
+.alpha-notice-feedback:hover { opacity: .88; }
+.alpha-notice-close {
+  padding: 8px 14px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  transition: background .12s;
+}
+.alpha-notice-close:hover { background: var(--bg); color: var(--text); }
+@keyframes alphaNoticeIn {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+@media (max-width: 600px) {
+  .alpha-notice { bottom: 8px; }
+  .alpha-notice-inner { padding: 14px 14px 12px; gap: 10px; }
+  .alpha-notice-icon { font-size: 26px; }
+  .alpha-notice-title { font-size: 14px; }
+  .alpha-notice-text { font-size: 12.5px; }
+}
+@media print { .alpha-notice { display: none !important; } }
+
+/* フィードバック / バグ報告リンク (フォームへ) */
+.feedback-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 12px; font-weight: 700;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background .12s, color .12s;
+}
+.feedback-link:hover { background: var(--accent); color: #fff; }
+.feedback-link-icon { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .editor-footer { justify-content: center; }
+  .feedback-link { font-size: 13px; padding: 9px 14px; }
+}
 
 /* 編集モード中は登録ボタンをオレンジに */
 .editor--edit-mode .btn-register { background: var(--accent); }

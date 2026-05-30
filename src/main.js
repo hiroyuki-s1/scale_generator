@@ -36,6 +36,26 @@ if (buildVerEl) {
   buildVerEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
 }
 
+// ── 初回起動時のアルファ版告知 ─────────────────────────────────────────
+// 「了解しました」で恒久的に非表示。localStorage で一度きりに抑制。
+// バージョン番号を保存するので、アルファ→ベータなど大きく区切るときに
+// キーを上げれば再告知できる。
+const ALPHA_NOTICE_KEY = 'sg.alphaNoticeDismissed.v1';
+const alphaNoticeEl = document.getElementById('alphaNotice');
+if (alphaNoticeEl) {
+  const alreadyDismissed = (() => {
+    try { return localStorage.getItem(ALPHA_NOTICE_KEY) === '1'; }
+    catch { return false; }
+  })();
+  if (!alreadyDismissed) {
+    alphaNoticeEl.classList.remove('hidden');
+  }
+  document.getElementById('alphaNoticeClose')?.addEventListener('click', () => {
+    alphaNoticeEl.classList.add('hidden');
+    try { localStorage.setItem(ALPHA_NOTICE_KEY, '1'); } catch { /* noop */ }
+  });
+}
+
 // ── ダブルタップ拡大 / ピンチズームを確実に無効化 ─────────────────────
 // viewport meta の user-scalable=no と touch-action:manipulation は iOS Safari で
 // 完全には効かない。明示的に handler を入れる。

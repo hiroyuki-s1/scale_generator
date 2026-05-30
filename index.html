@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>神スケールトレーナー</title>
+  <title>[α] 神スケールトレーナー</title>
   <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png">
   <meta name="theme-color" content="#1e1e2e">
@@ -25,6 +25,7 @@
   </div>
   <div class="header-spacer"></div>
   <span class="app-ver" id="appVer"></span>
+  <span class="alpha-pill" aria-label="アルファ版">ALPHA</span>
   <span class="build-ver" id="buildVer"></span>
 
   <div class="layout-picker" id="layoutPicker">
@@ -147,6 +148,12 @@
   </div><!-- /editor -->
 
   <footer class="editor-footer">
+    <a class="feedback-link" href="https://form.run/@yahoo-PGvf3JVZhPNCd0X4zuSo" target="_blank" rel="noopener noreferrer">
+      <svg class="feedback-link-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
+      </svg>
+      ご意見・バグ報告はこちら
+    </a>
     <a class="author-link" href="https://x.com/FXsimone" target="_blank" rel="noopener noreferrer">
       <svg class="author-link-icon" viewBox="0 0 24 24" aria-label="X (Twitter)" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="24" height="24" rx="5" fill="#000"/>
@@ -310,6 +317,31 @@
   </div>
 </div>
 
+
+<!-- ── 初回起動時のアルファ版告知 ───────────────────────────────── -->
+<div class="alpha-notice hidden" id="alphaNotice" role="dialog" aria-modal="false" aria-labelledby="alphaNoticeTitle">
+  <div class="alpha-notice-inner">
+    <div class="alpha-notice-icon" aria-hidden="true">🚧</div>
+    <div class="alpha-notice-body">
+      <div class="alpha-notice-title" id="alphaNoticeTitle">アルファ版のお知らせ</div>
+      <p class="alpha-notice-text">
+        いつもありがとうございます。本アプリは現在 <strong>アルファ版</strong> として公開しています。
+        今後の機能追加・仕様変更や予期せぬ不具合により、登録済みのスケールが
+        失われる可能性がある点をあらかじめご了承ください。
+      </p>
+      <p class="alpha-notice-text">
+        ご感想・バグ報告・ご要望は、画面下のフィードバックフォームより
+        お気軽にお寄せいただけますと幸いです。
+      </p>
+      <div class="alpha-notice-actions">
+        <a class="alpha-notice-feedback" href="https://form.run/@yahoo-PGvf3JVZhPNCd0X4zuSo" target="_blank" rel="noopener noreferrer">
+          フィードバックを送る
+        </a>
+        <button class="alpha-notice-close" id="alphaNoticeClose">了解しました</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="/src/main.js"></script>
 </body>

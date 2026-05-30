@@ -406,8 +406,18 @@ window.addEventListener('afterprint', () => {
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) {
-    localStorage.clear();
-    location.reload();
+  if (!confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) return;
+  // アルファ版告知の "了解しました" フラグはリセットで消さない
+  // (ユーザーが何度も告知を見させられないようにするため)。
+  // 他のキーは将来増える可能性があるので、保持したいものを退避して
+  // clear → 復元、という方式にしておく。
+  const KEEP_KEYS = [ALPHA_NOTICE_KEY];
+  const backup = {};
+  for (const k of KEEP_KEYS) {
+    const v = localStorage.getItem(k);
+    if (v !== null) backup[k] = v;
   }
+  localStorage.clear();
+  for (const [k, v] of Object.entries(backup)) localStorage.setItem(k, v);
+  location.reload();
 });

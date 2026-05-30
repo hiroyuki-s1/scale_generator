@@ -432,25 +432,37 @@ body {
 .author-link:hover { opacity: 1; color: var(--text); }
 .author-link-icon { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; }
 
-/* ── 初回起動時アルファ版告知 ────────────────────────────────── */
+/* ── 初回起動時アルファ版告知 (画面中央表示) ──────────────────── */
 .alpha-notice {
   position: fixed;
   z-index: 250;
-  left: 50%; bottom: 16px;
-  transform: translateX(-50%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: var(--surface);
   border: 2px solid var(--accent);
   border-radius: 14px;
-  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.10);
+  box-shadow: 0 12px 36px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.12);
   animation: alphaNoticeIn .35s cubic-bezier(.22,1,.36,1) both;
 }
 .alpha-notice.hidden { display: none; }
 .alpha-notice-inner {
   display: flex; gap: 14px;
-  padding: 18px 18px 16px;
+  padding: 20px 20px 18px;
 }
-.alpha-notice-icon { font-size: 32px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.alpha-notice-icon {
+  width: 56px; height: 56px; flex-shrink: 0;
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.10);
+}
+.alpha-notice-icon img {
+  width: 100%; height: 100%; display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 .alpha-notice-body { flex: 1; min-width: 0; }
 .alpha-notice-title {
   font-size: 15px; font-weight: 700; color: var(--text);
@@ -484,13 +496,12 @@ body {
 }
 .alpha-notice-close:hover { background: var(--bg); color: var(--text); }
 @keyframes alphaNoticeIn {
-  from { transform: translate(-50%, 20px); opacity: 0; }
-  to   { transform: translate(-50%, 0);     opacity: 1; }
+  from { transform: translate(-50%, calc(-50% + 16px)); opacity: 0; }
+  to   { transform: translate(-50%, -50%);              opacity: 1; }
 }
 @media (max-width: 600px) {
-  .alpha-notice { bottom: 8px; }
-  .alpha-notice-inner { padding: 14px 14px 12px; gap: 10px; }
-  .alpha-notice-icon { font-size: 26px; }
+  .alpha-notice-inner { padding: 16px 16px 14px; gap: 12px; }
+  .alpha-notice-icon { width: 48px; height: 48px; border-radius: 10px; }
   .alpha-notice-title { font-size: 14px; }
   .alpha-notice-text { font-size: 12.5px; }
 }

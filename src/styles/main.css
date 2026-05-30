@@ -568,6 +568,10 @@ body {
 .saved-empty-title { font-size: 14px; font-weight: 600; color: var(--text-2); }
 .saved-empty-hint { font-size: 12px; }
 #savedGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
+/* 画面表示用の登録スケール一覧グリッド (常に2列) — 印刷用とは別管理。
+   インライン style にせず CSS で持つことで、@media print のレイアウト指定が
+   詳細度で勝てるようにする。 */
+#savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 #savedGrid.screen-grid svg.fb { min-width: 0 !important; }
 #savedGrid.screen-grid .fb-title { font-size: 15px; }
 #savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; }

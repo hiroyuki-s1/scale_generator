@@ -1,27 +1,39 @@
-export function initPrintCss(store) {
-  const orientEl = document.getElementById('print-orient');
-  const layoutEl = document.getElementById('print-layout');
+/**
+ * 印刷用 CSS を動的生成する。
+ *
+ * - 用紙の向き (`<style id="print-orient">`)
+ * - 登録スケールグリッドのレイアウトとセルごとのフォントサイズ
+ *   (`<style id="print-layout">`)
+ *
+ * 画面用の `#savedGrid.screen-grid` ルールが詳細度 (1,1,0) で当たるため、
+ * 印刷用ルールの grid-template-columns / gap / fb-wrap の padding は
+ * `!important` を付けて確実に勝たせる。
+ */
 
-  function update() {
-    const { orientation, cols, rows } = store.get().layout;
-    orientEl.textContent = `@media print { @page { size: A4 ${orientation}; margin: 10mm 12mm; } }`;
+const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
 
-    const isLand = orientation === 'landscape';
-    const pageH = isLand ? 190 : 277;
-    const gapMm = 3;
-    const cellH = (pageH - gapMm * (rows - 1)) / rows;
+/**
+ * @param {{orientation:'landscape'|'portrait', cols:number, rows:number}} layout
+ * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
+ */
+export function buildPrintCss({ orientation, cols, rows }) {
+  const orient = `@media print { @page { size: A4 ${orientation}; margin: 10mm 12mm; } }`;
 
-    const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
-    const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
-    const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
-    const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
+  const isLand = orientation === 'landscape';
+  const pageH  = isLand ? 190 : 277;
+  const gapMm  = 3;
+  const cellH  = (pageH - gapMm * (rows - 1)) / rows;
 
-    layoutEl.textContent = `
+  const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
+  const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
+  const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
+
+  const layout = `
 @media print {
   #savedGrid {
     display: grid;
-    grid-template-columns: repeat(${cols}, 1fr);
-    gap: ${gapMm}mm;
+    grid-template-columns: repeat(${cols}, 1fr) !important;
+    gap: ${gapMm}mm !important;
     align-items: start;
   }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
@@ -31,7 +43,7 @@ export function initPrintCss(store) {
     line-height: 1.2;
   }
   .fb-wrap, .saved-card .fb-wrap {
-    padding: 1.5mm 1.5mm 1mm;
+    padding: 1.5mm 1.5mm 1mm !important;
     overflow: visible;
     border: 1px solid #ddd !important;
     border-radius: 2px !important;
@@ -42,6 +54,18 @@ export function initPrintCss(store) {
   .legend-chip { font-size: ${legPt}pt !important; padding: 1px 5px 1px 3px !important; }
   .legend-dot  { width: ${legDot}px !important; height: ${legDot}px !important; font-size: 5px !important; }
 }`;
+
+  return { orient, layout };
+}
+
+export function initPrintCss(store) {
+  const orientEl = document.getElementById('print-orient');
+  const layoutEl = document.getElementById('print-layout');
+
+  function update() {
+    const css = buildPrintCss(store.get().layout);
+    orientEl.textContent = css.orient;
+    layoutEl.textContent = css.layout;
   }
 
   update();

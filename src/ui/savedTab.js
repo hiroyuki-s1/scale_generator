@@ -69,9 +69,10 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     });
   }
 
+  // 画面用のグリッド設定は CSS (`#savedGrid.screen-grid`) に集約。
+  // インラインスタイルにすると印刷用 `@media print` の grid-template-columns が
+  // 詳細度で常に負け、印刷時にレイアウトピッカーの選択が反映されないため。
   container.classList.add('screen-grid');
-  container.style.gridTemplateColumns = 'repeat(2, 1fr)';
-  container.style.gap = '16px';
 
   // ── ドラッグ&ドロップ並べ替え ──────────────────────────────────────
   // タッチ: touchmove の preventDefault でスクロール停止(ポインターイベントより確実)。

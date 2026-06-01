@@ -1,6 +1,6 @@
 import './styles/main.css';
 
-import { DEFAULT_COLORS, SVG } from './domain/constants.js';
+import { DEFAULT_COLORS, SVG, FRET_START, FRET_END } from './domain/constants.js';
 import { buildTitle } from './domain/title.js';
 import { localizeTitle } from './domain/i18n.js';
 import { createStore } from './state/store.js';
@@ -77,7 +77,7 @@ function defaultState() {
       activeDegrees: new Set(),
       presetName: null,
       mode: 'scale',
-      mask: { enabled: false, min: 1, max: 22 },
+      mask: { enabled: false, min: FRET_START, max: FRET_END },
       degreeColors: cloneColors(DEFAULT_COLORS),
       instrument: null,      // null = 未選択, 'guitar' | 'bass'
     },

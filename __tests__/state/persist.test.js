@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { snapshotForStorage, restoreFromStorage, sanitizeStoredState } from '../../src/state/persist.js';
-import { DEFAULT_COLORS } from '../../src/domain/constants.js';
+import { DEFAULT_COLORS, FRET_END } from '../../src/domain/constants.js';
 
 // ── snapshotForStorage ────────────────────────────────────────────────────────
 
@@ -312,7 +312,7 @@ describe('sanitizeStoredState — robustness against bad input', () => {
   it('clamps mask range and swaps min/max when inverted', () => {
     const s = sanitizeStoredState({ edit: { mask: { enabled: true, min: 100, max: -10 } } });
     expect(s.edit.mask.min).toBe(0);
-    expect(s.edit.mask.max).toBe(22);
+    expect(s.edit.mask.max).toBe(FRET_END);
     // Inverted (min > max) gets swapped
     const s2 = sanitizeStoredState({ edit: { mask: { enabled: true, min: 15, max: 3 } } });
     expect(s2.edit.mask.min).toBe(3);

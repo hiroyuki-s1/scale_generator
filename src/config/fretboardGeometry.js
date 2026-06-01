@@ -31,17 +31,17 @@
 //
 // 表示するフレット範囲 (両端含む)。0=ナット側(開放弦), 22=最大フレット。
 export const FRET_START = 0;
-export const FRET_END   = 22;
+export const FRET_END   = 21;
 
 // 1フレット分の幅 (横方向)。大きくすると指板が横に伸び SVG全体幅も自動拡張。
 // 現行 38.96 ≈ FBW(896) / 23フレット の歴史的値。
-export const FRET_WIDTH = 38.96;
+export const FRET_WIDTH = 65;
 
 // 指板枠の高さ (縦方向)。大きくすると弦間隔も自動で広がる。
-export const FRETBOARD_HEIGHT = 168;
+export const FRETBOARD_HEIGHT = 178;
 
 // ドット (音名表示円) の半径。FRET_WIDTH の 1/4 程度が見やすい目安。
-export const DOT_RADIUS = 10;
+export const DOT_RADIUS = 13;
 
 // 指板枠の上下内側余白 (最上弦・最下弦と枠線の距離)。
 export const STRING_PADDING = 12;

@@ -17,7 +17,12 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
  * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
  */
 export function buildPrintCss({ orientation, cols, rows }) {
-  const orient = `@media print { @page { size: A4 ${orientation}; margin: 10mm 12mm; } }`;
+  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくい。
+  // 明示的な mm 寸法 (210×297 / 297×210) で書くほうがブラウザ実装の幅広い差を吸収できる。
+  // ただし最終的な向きは OS の印刷ダイアログ側でも上書き可能なので、モバイルでは
+  // ユーザーに「OS ダイアログでも向きを揃える」よう案内している (印刷モーダル内)。
+  const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
+  const orient = `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277;

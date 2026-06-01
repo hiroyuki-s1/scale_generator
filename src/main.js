@@ -347,8 +347,12 @@ store.subscribe((s, p) => {
 const printModal = document.getElementById('printModal');
 printModal.querySelector('[data-act="cancel"]').addEventListener('click', () => printModal.classList.remove('show'));
 printModal.querySelector('[data-act="print"]').addEventListener('click',  () => {
+  // window.print() はユーザー入力ハンドラと同期的に呼び出さないと、Chrome/Edge/
+  // Safari が "自動印刷" と判定してブロックする (「このwebサイトから自動的に
+  // 印刷することは禁止されています」)。setTimeout で囲わない。
+  // モーダルは @media print で非表示になるので、見た目に印刷プレビューには出ない。
   printModal.classList.remove('show');
-  setTimeout(() => window.print(), 80);
+  window.print();
 });
 printModal.addEventListener('click', e => { if (e.target === printModal) printModal.classList.remove('show'); });
 document.addEventListener('keydown', e => {

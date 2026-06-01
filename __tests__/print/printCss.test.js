@@ -4,15 +4,23 @@ import { buildPrintCss } from '../../src/print/printCss.js';
 const DEFAULT = { orientation: 'landscape', cols: 2, rows: 3 };
 
 describe('buildPrintCss — orientation', () => {
-  it('landscape sets A4 landscape @page', () => {
+  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくいので、
+  // 明示的な mm 寸法 (297×210 / 210×297) で出力する設計に変更済み。
+  it('landscape sets explicit landscape mm dimensions (297×210)', () => {
     const { orient } = buildPrintCss(DEFAULT);
-    expect(orient).toContain('size: A4 landscape');
-    expect(orient).not.toContain('portrait');
+    expect(orient).toContain('size: 297mm 210mm');
   });
-  it('portrait sets A4 portrait @page', () => {
+  it('portrait sets explicit portrait mm dimensions (210×297)', () => {
     const { orient } = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
-    expect(orient).toContain('size: A4 portrait');
-    expect(orient).not.toContain('landscape');
+    expect(orient).toContain('size: 210mm 297mm');
+  });
+  it('orient string always contains @page and 10mm 12mm margin', () => {
+    const land = buildPrintCss(DEFAULT);
+    const port = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
+    expect(land.orient).toContain('@page');
+    expect(land.orient).toContain('margin: 10mm 12mm');
+    expect(port.orient).toContain('@page');
+    expect(port.orient).toContain('margin: 10mm 12mm');
   });
 });
 

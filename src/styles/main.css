@@ -791,6 +791,18 @@ body {
 .print-orient-btn:hover { background: var(--bg); }
 .print-orient-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
+/* スマホでだけ表示される印刷向き注意書き */
+.print-mobile-hint {
+  display: none;
+  font-size: 11px; line-height: 1.4; color: var(--text-2);
+  background: #fef6e7; border: 1px solid #f0d896;
+  border-radius: 6px; padding: 8px 10px;
+  margin: 4px 0 8px;
+}
+@media (max-width: 767px) {
+  .print-mobile-hint { display: block; }
+}
+
 /* ── 登録済み: 編集ボタン ────────────────────────────────────── */
 .btn-edit-saved {
   display: flex; align-items: center; gap: 4px;

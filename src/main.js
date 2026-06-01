@@ -346,12 +346,13 @@ store.subscribe((s, p) => {
 // ── 印刷ボタン: ダイアログを出す ──────────────────────────────────────
 const printModal = document.getElementById('printModal');
 printModal.querySelector('[data-act="cancel"]').addEventListener('click', () => printModal.classList.remove('show'));
-printModal.querySelector('[data-act="print"]').addEventListener('click',  () => {
-  // window.print() はユーザー入力ハンドラと同期的に呼び出さないと、Chrome/Edge/
-  // Safari が "自動印刷" と判定してブロックする (「このwebサイトから自動的に
-  // 印刷することは禁止されています」)。setTimeout で囲わない。
-  // モーダルは @media print で非表示になるので、見た目に印刷プレビューには出ない。
-  printModal.classList.remove('show');
+printModal.querySelector('[data-act="print"]').addEventListener('click', () => {
+  // iOS WebKit / Chrome の "transient user activation" を確実に保持するため、
+  // window.print() は他の DOM 操作と混ぜず、click ハンドラ内で単独に呼ぶ。
+  // setTimeout や classList の事前操作を挟むと、モバイルで以下のメッセージが出る:
+  //   「このWebサイトから自動的に印刷することは禁止されています」
+  // モーダルは @media print で非表示なので印刷プレビューには出ない。閉じる
+  // 操作は印刷ダイアログが消えた後 (afterprint) に行う。
   window.print();
 });
 printModal.addEventListener('click', e => { if (e.target === printModal) printModal.classList.remove('show'); });
@@ -400,6 +401,10 @@ window.addEventListener('beforeprint', () => {
   });
 });
 window.addEventListener('afterprint', () => {
+  // 印刷ダイアログが閉じたタイミングで印刷モーダルも閉じる。
+  // click ハンドラ内で閉じると iOS で user-activation を消費して
+  // window.print() が "自動印刷" 扱いになるため、ここに移動している。
+  printModal.classList.remove('show');
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
     if (!svg) return;

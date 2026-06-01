@@ -801,6 +801,8 @@ body {
 }
 @media (max-width: 767px) {
   .print-mobile-hint { display: block; }
+  /* スマホでは「向き」UI を隠し、常に縦で印刷 → 横にしたい場合は OS の印刷シートで切替 */
+  .print-orient-label, .print-orient-row { display: none; }
 }
 
 /* ── 登録済み: 編集ボタン ────────────────────────────────────── */

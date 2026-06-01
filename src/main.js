@@ -360,6 +360,13 @@ document.addEventListener('keydown', e => {
 });
 
 document.getElementById('printBtn').addEventListener('click', () => {
+  // スマホは「向き」UI を非表示にしているため、常に縦で印刷する。
+  // 横向き印刷は OS の印刷シート (iOS AirPrint / Android Print) で切り替える。
+  // 767px 閾値は main.css のモバイルブレークポイントと一致させている。
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
+  if (isMobile && store.get().layout.orientation !== 'portrait') {
+    store.set(s => ({ ...s, layout: { ...s.layout, orientation: 'portrait' } }));
+  }
   syncPrintDialog();
   printModal.classList.add('show');
 });

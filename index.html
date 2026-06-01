@@ -101,9 +101,12 @@
     <aside class="editor-sidebar">
 
       <!-- 楽器選択 -->
-      <div class="ctrl-group">
+      <div class="ctrl-group instr-ctrl-group">
         <div class="ctrl-label">楽器</div>
         <button class="instr-btn" id="instrumentBtn"></button>
+        <div class="instr-hint" id="instrHint">
+          <span class="instr-hint-text">👆 ここを押してね！</span>
+        </div>
       </div>
 
       <!-- キー -->
@@ -133,12 +136,6 @@
           <span id="registerBtnLabel">登録</span>
         </button>
         <input class="fb-title-input" id="fbTitleInput" placeholder="スケール名を入力..." autocomplete="off" spellcheck="false">
-      </div>
-
-      <!-- 楽器未選択ヒント -->
-      <div class="instr-hint" id="instrHint">
-        <div class="instr-hint-arrow">← </div>
-        <div class="instr-hint-text">最初に楽器を選んでね！</div>
       </div>
 
       <!-- 指板 -->

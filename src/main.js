@@ -104,17 +104,7 @@ function syncEditorFretboard(s, p) {
   // 楽器未選択: 指板を隠してヒント表示
   const noInstr = !instrument;
   editFbWrapEl.style.display = noInstr ? 'none' : '';
-  if (instrHintEl) {
-    if (noInstr) {
-      instrHintEl.classList.remove('hidden');
-      // フェードインを再トリガー
-      instrHintEl.style.animation = 'none';
-      void instrHintEl.offsetWidth;
-      instrHintEl.style.animation = '';
-    } else {
-      instrHintEl.classList.add('hidden');
-    }
-  }
+  instrHintEl?.classList.toggle('hidden', !noInstr);
   if (noInstr) return;
 
   if (instrument !== lastFbInstrument) {

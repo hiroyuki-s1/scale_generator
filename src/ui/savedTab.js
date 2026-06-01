@@ -387,6 +387,10 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
 }
 
 function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
+  const snapId = snap.id;
+  // colorOnlyUpdate パスはカードを再生成しないため、クリック時に常に最新 snap を参照する
+  const liveSnap = () => store.get().saved.find(s => s.id === snapId) ?? snap;
+
   const card = document.createElement('div');
   card.className = 'saved-card';
   card.dataset.id = snap.id;
@@ -412,7 +416,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   editBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/>
   </svg>編集`;
-  editBtn.addEventListener('click', () => onEditMode?.(snap));
+  editBtn.addEventListener('click', () => onEditMode?.(liveSnap()));
 
   const del = document.createElement('button');
   del.className = 'btn-delete';
@@ -455,9 +459,11 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   wrap.appendChild(svg);
   card.appendChild(wrap);
 
-  // 全画面クリック
+  // 全画面クリック — liveSnap() で最新の degreeColors を取得（色変更後に古い色が出るバグ対策）
   wrap.addEventListener('click', () => {
-    if (openFullscreen) openFullscreen(snap, snap.title);
+    if (!openFullscreen) return;
+    const cur = liveSnap();
+    openFullscreen(cur, cur.title);
   });
 
   const leg = document.createElement('div');

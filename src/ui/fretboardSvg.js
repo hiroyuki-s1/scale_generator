@@ -33,6 +33,9 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
 
   const uid = svgEl.id || ('fb' + Math.random().toString(36).slice(2));
   svgEl.innerHTML = '';
+  // viewBox を毎描画でジオメトリ設定 (config/fretboardGeometry.js) から再生成。
+  // HTML 側に静的値を残すと FRET_WIDTH 等を変えたとき不整合が出るため。
+  svgEl.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
   svgEl.appendChild(el('rect', { x: 0, y: 0, width: SVG.W, height: SVG.H, fill: '#fff' }));
 
   // Guitar: warm maple tone / Bass: darker rosewood tone

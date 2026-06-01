@@ -107,8 +107,9 @@ export const TUNING_BASS   = [43, 38, 33, 28];           // G2 D2 A1 E1
 export const STRING_LABELS_GUITAR = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
 export const STRING_LABELS_BASS   = ['G2', 'D2', 'A1', 'E1'];
 
-export const FRET_START = 0;
-export const FRET_END = 22;
+// 指板ジオメトリ (フレット数 / SVG寸法) は開発者ノブとして
+// `src/config/fretboardGeometry.js` に切り出し、ここでは互換 re-export のみ行う。
+export { FRET_START, FRET_END, SVG } from '../config/fretboardGeometry.js';
 
 export const WHITE_KEYS = [
   { note: 'C', idx: 0 }, { note: 'D', idx: 2 }, { note: 'E', idx: 4 },
@@ -140,15 +141,4 @@ export const LAYOUT_PRESETS = [
   [2, 3], [2, 4], [3, 3], [3, 4], [3, 5],
 ];
 
-export const SVG = {
-  W: 960, H: 246,
-  ML: 54, MT: 20, MR: 10, MB: 58,
-  F0: FRET_START, F1: FRET_END,
-  CR: 10,   // ドット半径: フレット数増加に合わせ少し小さく
-};
-SVG.FBW = SVG.W - SVG.ML - SVG.MR;
-SVG.FBH = SVG.H - SVG.MT - SVG.MB;
-SVG.FW  = SVG.FBW / (SVG.F1 - SVG.F0 + 1);
-SVG.SP      = 12;            // 弦の上下余白 (px)
-SVG.SH      = (SVG.FBH - 2 * SVG.SP) / 5;  // guitar: 6 strings, 5 gaps
-SVG.SH_BASS = (SVG.FBH - 2 * SVG.SP) / 3;  // bass:   4 strings, 3 gaps
+// (SVG ジオメトリは config/fretboardGeometry.js に移動済み — 上部の re-export 参照)

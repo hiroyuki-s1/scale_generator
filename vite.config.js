@@ -12,8 +12,11 @@ const commitHash = (() => {
   catch { return 'unknown'; }
 })();
 
+// GitHub Actions では /scale_generator/、Vercel では /
+const base = process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/';
+
 export default defineConfig({
-  base: '/scale_generator/',
+  base,
   build: {
     outDir: 'dist',
     sourcemap: false,

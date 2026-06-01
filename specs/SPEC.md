@@ -83,7 +83,7 @@ optgroup付き `<select>` で全グループ・全プリセットを選択する
 | Advanced  | Altered        | 0, 1, 3, 4, 6, 8, 10            |
 | Advanced  | Locrian #2     | 0, 2, 3, 5, 6, 8, 10            |
 | Advanced  | Harmonic Min   | 0, 2, 3, 5, 7, 8, 11            |
-| Advanced  | Diminished     | 0, 1, 3, 4, 6, 7, 9, 10         |
+| Advanced  | Diminished     | 0, 2, 3, 5, 6, 8, 9, 11         |
 
 チャーチモードは慣用名ではなくモード名で表記する（Ionian であって Major ではない）。
 

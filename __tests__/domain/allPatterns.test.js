@@ -91,9 +91,9 @@ describe('known note counts (C root, no mask)', () => {
   it('Major Penta (5 degrees) has < 80 notes', () => {
     expect(computeFretNotes(state([0, 2, 4, 7, 9])).length).toBeLessThan(80);
   });
-  it('Diminished (8 degrees) has >= Major Penta note count', () => {
+  it('Diminished (8 degrees, Whole-Half) has > Major Penta note count', () => {
     const penta = computeFretNotes(state([0, 2, 4, 7, 9])).length;
-    const dim   = computeFretNotes(state([0, 1, 3, 4, 6, 7, 9, 10])).length;
+    const dim   = computeFretNotes(state([0, 2, 3, 5, 6, 8, 9, 11])).length;
     expect(dim).toBeGreaterThan(penta);
   });
   it('maj triad (3 degrees) has fewer notes than maj7 (4 degrees)', () => {

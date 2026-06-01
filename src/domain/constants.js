@@ -43,7 +43,7 @@ export const SCALE_GROUPS = [
       { name: 'Altered',      degrees: [0, 1, 3, 4, 6, 8, 10] },
       { name: 'Locrian #2',   degrees: [0, 2, 3, 5, 6, 8, 10] },
       { name: 'Harmonic Min', degrees: [0, 2, 3, 5, 7, 8, 11] },
-      { name: 'Diminished',   degrees: [0, 1, 3, 4, 6, 7, 9, 10] },
+      { name: 'Diminished',   degrees: [0, 2, 3, 5, 6, 8, 9, 11] },
     ],
   },
 ];

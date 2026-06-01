@@ -366,28 +366,12 @@ document.addEventListener('keydown', e => {
 });
 
 document.getElementById('printBtn').addEventListener('click', () => {
+  // スマホは「向き」UI を隠して常に縦印刷とする。
+  // (横向き印刷は OS の印刷シートで切り替える運用)
   const isMobile = window.matchMedia('(max-width: 767px)').matches;
-
-  if (isMobile) {
-    // ▼ モバイルではモーダルをスキップして直接 window.print() を呼ぶ。
-    //
-    // 経緯: 印刷モーダル経由のフロー (ヘッダー印刷タップ → モーダル表示 →
-    // モーダル内 印刷タップ → window.print()) は iOS Safari / Chrome で
-    // 2回目の印刷時に「このWebサイトから自動的に印刷することは禁止されて
-    // います」を出す。afterprint が iOS で発火しないことが多く、モーダルが
-    // stale な状態で残り、次の print() が "自動印刷" と判定されてしまう。
-    //
-    // モバイルではそもそも「向き」UI は隠して常に縦印刷、「レイアウト」も
-    // 直前の設定 (= store) をそのまま使う方針なので、モーダルで聞くべき
-    // 情報がない。タップ → 直 print() で十分。
-    if (store.get().layout.orientation !== 'portrait') {
-      store.set(s => ({ ...s, layout: { ...s.layout, orientation: 'portrait' } }));
-    }
-    window.print();
-    return;
+  if (isMobile && store.get().layout.orientation !== 'portrait') {
+    store.set(s => ({ ...s, layout: { ...s.layout, orientation: 'portrait' } }));
   }
-
-  // デスクトップ: 向き/レイアウト選択のためモーダル経由
   syncPrintDialog();
   printModal.classList.add('show');
 });

@@ -805,6 +805,21 @@ body {
   .print-orient-label, .print-orient-row { display: none; }
 }
 
+/* ブラウザの「自動印刷ブロック」警告に関する注意書き */
+.print-browser-notice {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 11px; line-height: 1.5; color: var(--text-2);
+  background: #eef4ff; border: 1px solid #c8d8f0;
+  border-radius: 6px; padding: 9px 11px;
+  margin: 8px 0 4px;
+}
+.print-browser-notice-icon {
+  font-size: 14px; flex-shrink: 0; line-height: 1.2;
+}
+.print-browser-notice strong {
+  color: var(--text); font-weight: 700;
+}
+
 /* ── 登録済み: 編集ボタン ────────────────────────────────────── */
 .btn-edit-saved {
   display: flex; align-items: center; gap: 4px;

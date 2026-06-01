@@ -10,11 +10,11 @@ export const SCALE_NAME_JA = {
   'Mixolydian':    'ミクソリディアン',
   'Aeolian':       'エオリアン',
   'Locrian':       'ロクリアン',
-  'Lydian Dom':    'リディアン・ドム',
+  'Lydian Dom':    'リディアンドミナント',
   'Altered':       'オルタード',
   'Locrian #2':    'ロクリアン♯2',
   'Harmonic Min':  'ハーモニックマイナー',
-  'Diminished':    'ディミニッシュド',
+  'Diminished':    'ディミニッシュ',
 };
 
 // Sort by length descending to avoid partial matches (e.g. "Locrian" before "Locrian #2")

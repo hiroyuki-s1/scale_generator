@@ -804,23 +804,34 @@ body {
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
 /* ── 楽器未選択ヒント (ボタン下に表示) ── */
 @keyframes hint-fade-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-6px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes hint-pulse-border {
-  0%, 100% { border-color: var(--accent); }
-  50%       { border-color: #f0a07a; }
+@keyframes hint-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192,81,31,.6); background: var(--accent-dim); }
+  50%       { box-shadow: 0 0 14px 4px rgba(192,81,31,.25); background: #ffe4d6; }
+}
+@keyframes hint-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
 }
 .instr-hint {
   margin-top: 6px;
-  padding: 7px 10px;
-  background: var(--accent-dim); border: 1.5px solid var(--accent);
-  border-radius: 7px; text-align: center;
-  animation: hint-fade-in .35s ease both, hint-pulse-border 1.4s ease-in-out .4s infinite;
+  padding: 8px 12px;
+  background: var(--accent-dim); border: 2px solid var(--accent);
+  border-radius: 8px; text-align: center;
+  animation: hint-fade-in .3s ease both, hint-glow 1.2s ease-in-out .3s infinite;
 }
 .instr-hint.hidden { display: none; }
 .instr-hint-text {
-  font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: .02em;
+  font-size: 12px; font-weight: 800; color: var(--accent); letter-spacing: .02em;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.instr-hint-text::before {
+  content: '▲';
+  font-size: 10px;
+  display: inline-block;
+  animation: hint-arrow-bounce .7s ease-in-out infinite;
 }
 
 .fb-wrap {

@@ -1,18 +1,24 @@
-# スケールジェネレータ (Scale Generator)
+# 神スケールトレーナー (Kami Scale Trainer)
 
-ギター指板上にスケールを可視化・印刷するWebアプリ。
+ギター/ベース指板上にスケールを可視化・印刷するWebアプリ。
 
-https://hiroyuki-s1.github.io/scale_generator/
+**🚀 https://kami-scale-trainer.vercel.app/** (本番 / Vercel)
+
+ミラー: https://hiroyuki-s1.github.io/scale_generator/ (GitHub Pages)
 
 Jazz tension表記（R, b9, 9, m3, M3, 11, #11, P5, b13, 13, m7, M7）で度数を表示。
-キー・スケール/コードトーンを選択して指板にプロットし、A4印刷できる。
+キー × スケール/コードを指板にプロット → 複数登録 → A4印刷。
 
 ## Stack
 
-- Vanilla HTML5 + ES2022 modules（フレームワークなし）
+- Vanilla HTML5 + ES2022 modules（フレームワークなし、依存ゼロ）
 - Vite（ビルド / dev server）
 - Vitest（ユニットテスト）
-- GitHub Pages 自動デプロイ（`.github/workflows/deploy.yml`）
+- 自動デプロイ:
+  - Vercel（`main` push で本番更新）
+  - GitHub Pages（`.github/workflows/deploy.yml`）
+
+base path は環境変数で自動切替（[vite.config.js](vite.config.js)）。
 
 ## Development
 

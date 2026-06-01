@@ -802,29 +802,25 @@ body {
 .btn-edit-saved:hover { background: var(--accent); color: #fff; }
 .saved-fb-wrap { cursor: pointer; }
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
-/* ── 楽器未選択ヒント (ボタン上オーバーレイ) ── */
+/* ── 楽器未選択ヒント (ボタン下に表示) ── */
 @keyframes hint-fade-in {
-  from { opacity: 0; transform: scale(.92); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes hint-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(192,81,31,.5); }
-  50%       { box-shadow: 0 0 0 8px rgba(192,81,31,0); }
+@keyframes hint-pulse-border {
+  0%, 100% { border-color: var(--accent); }
+  50%       { border-color: #f0a07a; }
 }
-.instr-ctrl-group { position: relative; }
 .instr-hint {
-  position: absolute; inset: 0; z-index: 3;
-  pointer-events: none;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(192,81,31,.12);
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  animation: hint-fade-in .35s ease both, hint-pulse 1.6s ease-in-out 0.4s infinite;
+  margin-top: 6px;
+  padding: 7px 10px;
+  background: var(--accent-dim); border: 1.5px solid var(--accent);
+  border-radius: 7px; text-align: center;
+  animation: hint-fade-in .35s ease both, hint-pulse-border 1.4s ease-in-out .4s infinite;
 }
 .instr-hint.hidden { display: none; }
 .instr-hint-text {
-  font-size: 12px; font-weight: 800; color: var(--accent);
-  letter-spacing: .02em; pointer-events: none;
+  font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: .02em;
 }
 
 .fb-wrap {

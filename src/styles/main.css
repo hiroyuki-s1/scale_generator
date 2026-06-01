@@ -802,6 +802,33 @@ body {
 .btn-edit-saved:hover { background: var(--accent); color: #fff; }
 .saved-fb-wrap { cursor: pointer; }
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
+/* ── 楽器未選択ヒント ── */
+@keyframes hint-bounce {
+  0%, 100% { transform: translateX(0); }
+  30%       { transform: translateX(-10px); }
+  60%       { transform: translateX(-5px); }
+}
+@keyframes hint-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.instr-hint {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 20px; margin-bottom: 10px;
+  background: var(--accent-dim); border: 1.5px solid #f0c4ac;
+  border-radius: var(--radius);
+  animation: hint-fade-in .4s ease both;
+}
+.instr-hint.hidden { display: none; }
+.instr-hint-arrow {
+  font-size: 22px; color: var(--accent);
+  animation: hint-bounce 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.instr-hint-text {
+  font-size: 15px; font-weight: 700; color: var(--accent);
+}
+
 .fb-wrap {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 12px 8px 8px;

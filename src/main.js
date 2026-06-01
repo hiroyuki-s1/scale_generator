@@ -94,15 +94,28 @@ attachPersist(store);
 // ── 指板 ──────────────────────────────────────────────────────────────
 const fretboardEl   = document.getElementById('fretboard');
 const editFbWrapEl  = document.getElementById('editFbWrap');
+const instrHintEl   = document.getElementById('instrHint');
 const LAST_INSTR_KEY = 'sg.lastInstrument';
 let lastFbInstrument = null; // セッション内で描画済み楽器を追跡
 
 function syncEditorFretboard(s, p) {
   const instrument = s.edit.instrument;
 
-  // 楽器未選択: 指板を隠す
-  editFbWrapEl.style.display = instrument ? '' : 'none';
-  if (!instrument) return;
+  // 楽器未選択: 指板を隠してヒント表示
+  const noInstr = !instrument;
+  editFbWrapEl.style.display = noInstr ? 'none' : '';
+  if (instrHintEl) {
+    if (noInstr) {
+      instrHintEl.classList.remove('hidden');
+      // フェードインを再トリガー
+      instrHintEl.style.animation = 'none';
+      void instrHintEl.offsetWidth;
+      instrHintEl.style.animation = '';
+    } else {
+      instrHintEl.classList.add('hidden');
+    }
+  }
+  if (noInstr) return;
 
   if (instrument !== lastFbInstrument) {
     // 楽器変更 → base を再描画してドットをすべて追加

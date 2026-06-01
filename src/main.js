@@ -347,13 +347,18 @@ store.subscribe((s, p) => {
 const printModal = document.getElementById('printModal');
 printModal.querySelector('[data-act="cancel"]').addEventListener('click', () => printModal.classList.remove('show'));
 printModal.querySelector('[data-act="print"]').addEventListener('click', () => {
-  // iOS WebKit / Chrome の "transient user activation" を確実に保持するため、
-  // window.print() は他の DOM 操作と混ぜず、click ハンドラ内で単独に呼ぶ。
-  // setTimeout や classList の事前操作を挟むと、モバイルで以下のメッセージが出る:
-  //   「このWebサイトから自動的に印刷することは禁止されています」
-  // モーダルは @media print で非表示なので印刷プレビューには出ない。閉じる
-  // 操作は印刷ダイアログが消えた後 (afterprint) に行う。
+  // ▼ 順序が重要 — print() を最初に呼ぶ。
+  // (1) iOS WebKit / Chrome の "transient user activation" は window.print() を
+  //     呼んだ瞬間に消費される。print() の前に classList.remove や setTimeout を
+  //     挟むと activation を先に奪われ、印刷が「自動印刷」と判定されてブロック
+  //     される (「このWebサイトから自動的に印刷することは禁止されています」)。
+  // (2) print() の後ろなら DOM 操作は自由。activation はすでに消費済みなので
+  //     影響しない。
+  // (3) iOS では afterprint が発火しないことがあるので、ここで閉じておかないと
+  //     モーダルが開きっぱなしになり、2回目の「印刷」タップで挙動が崩れる
+  //     (=今回のバグ)。afterprint も保険として残してある。
   window.print();
+  printModal.classList.remove('show');
 });
 printModal.addEventListener('click', e => { if (e.target === printModal) printModal.classList.remove('show'); });
 document.addEventListener('keydown', e => {

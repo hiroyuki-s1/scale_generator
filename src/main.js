@@ -56,18 +56,11 @@ if (alphaNoticeEl) {
   });
 }
 
-// ── ダブルタップ拡大 / ピンチズームを確実に無効化 ─────────────────────
-// viewport meta の user-scalable=no と touch-action:manipulation は iOS Safari で
-// 完全には効かない。明示的に handler を入れる。
-let __lastTouchEnd = 0;
-document.addEventListener('touchend', (e) => {
-  const now = Date.now();
-  if (now - __lastTouchEnd <= 350) {
-    e.preventDefault();
-  }
-  __lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener('gesturestart', e => e.preventDefault());
+// ── ダブルタップ拡大は無効化 (ピンチイン/アウトは許可) ─────────────────
+// 双タップズーム抑止は CSS の `touch-action: manipulation` (全要素適用済) に任せる。
+// ピンチを残すため viewport meta から maximum-scale / user-scalable=no を撤去し、
+// gesturestart の preventDefault も外している。PCのダブルクリック (テキスト選択化
+// などの副作用) だけはここで防ぐ。
 document.addEventListener('dblclick', e => e.preventDefault());
 
 function defaultState() {

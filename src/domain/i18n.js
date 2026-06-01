@@ -40,14 +40,17 @@ export const SCALE_NAME_JA = {
 // Sort by length descending to avoid partial matches (e.g. "Locrian" before "Locrian #2")
 const _SORTED = Object.entries(SCALE_NAME_JA).sort((a, b) => b[0].length - a[0].length);
 
+// タイトル・トリガーボタン等では表示しないプリセット名（メジャートライアドは"C"のみでよい）
+export const TITLE_HIDDEN_NAMES = new Set(['maj']);
+
 /**
  * タイトル文字列中の英語スケール名をカタカナに置換する。
- * 例: "A Minor Penta" → "A マイナーペンタ"
+ * 'maj' はタイトル上では空文字扱い → "C maj" → "C"
  */
 export function localizeTitle(title) {
   let result = title;
   for (const [en, ja] of _SORTED) {
-    result = result.replace(en, ja);
+    result = result.replace(en, TITLE_HIDDEN_NAMES.has(en) ? '' : ja);
   }
-  return result;
+  return result.trim();
 }

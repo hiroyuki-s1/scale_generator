@@ -1,5 +1,5 @@
 import { SCALE_GROUPS, CHORD_GROUPS, findPresetEverywhere } from '../domain/constants.js';
-import { SCALE_NAME_JA } from '../domain/i18n.js';
+import { SCALE_NAME_JA, TITLE_HIDDEN_NAMES } from '../domain/i18n.js';
 
 const GROUPS = [
   { label: 'ペンタトニック', presets: SCALE_GROUPS[0].presets, mode: 'scale' },
@@ -94,7 +94,8 @@ export function initScalePicker(store) {
     for (const g of GROUPS) {
       const found = g.presets.find(p => p.name === presetName);
       if (found) {
-        btnText.textContent = `${g.label} / ${SCALE_NAME_JA[found.name] || found.name} ▾`;
+        const disp = TITLE_HIDDEN_NAMES.has(found.name) ? '' : (SCALE_NAME_JA[found.name] || found.name);
+        btnText.textContent = disp ? `${g.label} / ${disp} ▾` : `${g.label} ▾`;
         return;
       }
     }

@@ -631,7 +631,7 @@ body {
 .tab-nav {
   display: flex; align-items: stretch;
   border-bottom: 2px solid var(--border);
-  background: var(--bg-2); flex-shrink: 0;
+  background: var(--bg); flex-shrink: 0;
   position: sticky; top: 52px; z-index: 90;
 }
 .tab-btn {

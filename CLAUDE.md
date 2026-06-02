@@ -130,16 +130,19 @@ main.js → orchestrates all
 - One concern per file
 
 ## Build / Deploy
+
+> ⚠️ **本番デプロイは手動。push ＝ 本番反映ではない。** クライアント提供環境のため、
+> 本番公開は人間が Cloudflare ダッシュボードで手動デプロイした時だけ起きる。
+> push 後に「本番反映済み」と報告しないこと。手順とAI向け注意は
+> **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** に集約（必ず参照）。
+
 - **base path は環境変数で自動切替** ([vite.config.js](vite.config.js)):
-  GitHub Actions では `/scale_generator/`、それ以外 (Vercel) は `/`
+  GitHub Actions (Pages ミラー) では `/scale_generator/`、本番 (Cloudflare) は `/`
 - ビルド時に `__COMMIT__` (git short hash) / `__VERSION__` (package.json) を define 注入
-- **Cloudflare Pages**: `main` push で本番自動更新。ビルド設定:
-  - Build command: `npm run build`
-  - Output directory: `dist`
-  - Node version: `.node-version` ファイルで 20 を指定 (環境変数 `NODE_VERSION=20` でも可)
-  - `GITHUB_ACTIONS` 環境変数は設定不要 (未設定 → `base: '/'` が自動適用)
-- GitHub Pages: `.github/workflows/deploy.yml` で `lint → test → build → deploy`
-  (test ジョブが通らないと deploy されない)
+- **Cloudflare Pages** (本番): プロジェクト `kami-scale-trainer`。デプロイ手順は
+  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) 参照。Build: `npm run build` / Output: `dist` /
+  Node: `.node-version` (=20) / `GITHUB_ACTIONS` 未設定で `base:'/'`
+- GitHub Pages (ミラー): `.github/workflows/deploy.yml` で `lint → test → build → deploy` (自動)
 
 ## Commands
 ```bash

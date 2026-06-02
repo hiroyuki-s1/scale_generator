@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kami-scale-trainer.org/sitemap.xml

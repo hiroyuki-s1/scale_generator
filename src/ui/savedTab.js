@@ -1,5 +1,12 @@
 import { SVG } from '../domain/constants.js';
 import { localizeTitle } from '../domain/i18n.js';
+import {
+  CARD_TITLE_SVG_FONT_SIZE_PC,
+  CARD_TITLE_SVG_FONT_SIZE_MOBILE,
+  CARD_TITLE_SVG_LETTER_SPACING,
+  CARD_TITLE_BG_HEIGHT,
+  MOBILE_ZOOM_BREAKPOINT,
+} from '../config.js';
 import { savedListChanged, colorOnlyUpdate } from '../state/savedList.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
@@ -522,7 +529,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   bgRect.setAttribute('x', String(SVG.ML));
   bgRect.setAttribute('y', String(cy - 46));
   bgRect.setAttribute('width', String(SVG.FBW));
-  bgRect.setAttribute('height', '92');
+  bgRect.setAttribute('height', String(CARD_TITLE_BG_HEIGHT));
   bgRect.setAttribute('fill', 'rgba(252,238,205,0.78)');
   bgRect.setAttribute('filter', `url(#${bgFiltId})`);
   overlayGroup.appendChild(bgRect);
@@ -533,9 +540,11 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   titleOverlay.setAttribute('text-anchor', 'middle');
   titleOverlay.setAttribute('dominant-baseline', 'middle');
   titleOverlay.setAttribute('fill', 'rgba(28,12,2,0.88)');
-  titleOverlay.setAttribute('font-size', '58');
+  const titleFontSize = window.innerWidth <= MOBILE_ZOOM_BREAKPOINT
+    ? CARD_TITLE_SVG_FONT_SIZE_MOBILE : CARD_TITLE_SVG_FONT_SIZE_PC;
+  titleOverlay.setAttribute('font-size', String(titleFontSize));
   titleOverlay.setAttribute('font-weight', '600');
-  titleOverlay.setAttribute('letter-spacing', '5');
+  titleOverlay.setAttribute('letter-spacing', String(CARD_TITLE_SVG_LETTER_SPACING));
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('filter', `url(#${filterId})`);
   titleOverlay.textContent = toKatakana(localizeTitle(snap.title));

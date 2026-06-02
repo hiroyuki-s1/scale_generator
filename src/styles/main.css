@@ -17,6 +17,10 @@
   --shadow-sm:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
   --shadow-md:   0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
   --radius:      10px;
+
+  /* ── 登録スケール カード タイトル文字サイズ（src/config.js の CSS 側対応値） ── */
+  --card-title-size:        15px;   /* 通常時 */
+  --card-title-size-mobile: 17px;   /* モバイル時 (@media max-width: 767px) */
 }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -688,7 +692,7 @@ body {
    詳細度で勝てるようにする。 */
 #savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 #savedGrid.screen-grid svg.fb { min-width: 0 !important; }
-#savedGrid.screen-grid .fb-title { font-size: 15px; }
+#savedGrid.screen-grid .fb-title { font-size: var(--card-title-size); }
 #savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; }
 
 .fb-header {
@@ -871,6 +875,36 @@ body {
 .fb-wrap::-webkit-scrollbar { height: 4px; }
 .fb-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
+
+/* ── モバイル横スクロール インジケーター ─────────────────────────────────
+   マスク範囲内のポジションがビューポート外に出たとき、端にグラデーションを
+   表示して「まだ外側にあるよ」を伝える。
+   拡大率 (幅) は src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH で調整。 */
+.fb-scroll-outer { position: relative; }
+.fb-scroll-ind {
+  display: none;           /* デスクトップでは非表示 */
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 52px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.fb-scroll-ind--left {
+  left: 0;
+  background: linear-gradient(to right, rgba(74,222,128,.26), transparent);
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.fb-scroll-ind--right {
+  right: 0;
+  background: linear-gradient(to left, rgba(74,222,128,.26), transparent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.fb-scroll-ind.visible { opacity: 1; }
+
+/* モバイル指板ズーム切替ボタン */
+.fb-zoom-btn { display: none; }
 
 /* MASK SECTION (below fretboard) */
 .mask-section {
@@ -1263,7 +1297,19 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
   /* ── 指板エリア ── */
   .editor-fretboard { padding: 8px 8px 12px; gap: 4px; }
-  .editor-fretboard svg.fb { min-width: 0 !important; width: 100% !important; height: auto; }
+  /* width は JS で制御 (src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH) */
+  .editor-fretboard svg.fb { min-width: 0 !important; height: auto; }
+  .fb-scroll-ind { display: block; }
+  .fb-zoom-btn {
+    display: flex; align-items: center;
+    padding: 10px 16px; flex-shrink: 0; min-height: 44px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text-2);
+    font-size: 14px; font-weight: 700; font-family: inherit;
+    cursor: pointer; white-space: nowrap; transition: all .12s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .fb-zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
   #savedGrid svg.fb { min-width: 0 !important; width: 100% !important; }
   .fb-title-input { font-size: 16px; }
   .deg-picker-btn { min-height: 44px; font-size: 14px; padding: 10px 16px; }
@@ -1291,7 +1337,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tab-panel.hidden { display: none; }
   .saved-section { flex: none; height: auto; overflow: visible; padding: 12px 12px 20px; }
   #savedGrid { gap: 14px; }
-  .fb-title { font-size: 17px; }
+  .fb-title { font-size: var(--card-title-size-mobile); }
   .tab-btn { padding: 8px 14px; font-size: 12px; }
 
   /* ── Fullscreen modal ── */

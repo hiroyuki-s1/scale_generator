@@ -4,6 +4,7 @@ import {
   STRING_LABELS_GUITAR, STRING_LABELS_BASS,
 } from '../domain/constants.js';
 import { diffFretNotes, noteKey } from '../domain/fretboard.js';
+import { DOT_FONT_SIZE_1, DOT_FONT_SIZE_2, DOT_FONT_SIZE_3 } from '../config.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const fx = f => SVG.ML + (f - SVG.F0) * SVG.FW + SVG.FW / 2;
@@ -184,7 +185,7 @@ function appendDot(svgEl, n, colors, sh) {
   const isRoot = deg === 0;
   const dc = colors[deg];
   const dotFill = dc.solid ? dc.color : '#ffffff';
-  const fs = name.length >= 3 ? '9' : name.length === 2 ? '12' : '16';
+  const fs = name.length >= 3 ? String(DOT_FONT_SIZE_3) : name.length === 2 ? String(DOT_FONT_SIZE_2) : String(DOT_FONT_SIZE_1);
   const delay = `${(f - SVG.F0) * 22}ms`;
   const pos = noteKey(n);
   // Set transform-origin explicitly in SVG user-space coordinates so that

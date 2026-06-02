@@ -11,7 +11,7 @@
     gtag('config', 'G-LTSKK2FYDH');
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>[α] 神スケールトレーナー</title>
+  <title>神スケールトレーナー</title>
   <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png">
   <meta name="theme-color" content="#1e1e2e">
@@ -139,13 +139,18 @@
       </div>
 
       <!-- 指板 -->
-      <div class="fb-wrap" id="editFbWrap">
-        <svg class="fb" id="fretboard" viewBox="0 0 960 246" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="fb-scroll-outer">
+        <div class="fb-scroll-ind fb-scroll-ind--left"  id="fbScrollLeft"></div>
+        <div class="fb-scroll-ind fb-scroll-ind--right" id="fbScrollRight"></div>
+        <div class="fb-wrap" id="editFbWrap">
+          <svg class="fb" id="fretboard" viewBox="0 0 960 246" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
       </div>
 
-      <!-- 度数行: [度数ボタン] + [度数チップ] -->
+      <!-- 度数行: [スケール設定] [拡大/全体] [度数チップ] -->
       <div class="deg-display-row">
         <button class="deg-picker-btn" id="degPickerBtn">スケール設定  設定数：0</button>
+        <button class="fb-zoom-btn" id="fbZoomBtn" aria-label="指板ズーム切替">全体</button>
         <div class="legend" id="legend"></div>
       </div>
 
@@ -363,6 +368,6 @@
   </div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="/main.js"></script>
 </body>
 </html>

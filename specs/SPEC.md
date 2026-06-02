@@ -39,7 +39,7 @@
 Jazz tension 表記、12個固定:
 
 ```
-R(0), b9(1), 9(2), m3(3), M3(4), 11(5), #11(6), P5(7), b13(8), 13(9), m7(10), M7(11)
+R(0), b9(1), 9(2), m3(3), M3(4), 11(5), #11(6), 5(7), b13(8), 13(9), m7(10), M7(11)
 ```
 
 R（ルート）は常時ON・トグル不可。
@@ -117,7 +117,7 @@ optgroup付き `<select>` で全グループ・全プリセットを選択する
 ```
 
 - **R**: solid=true,  color=`#d92b2b`, text=`#ffffff`
-- **m3, M3, P5, m7, M7**: solid=false, color=`#d92b2b`, text=`#d92b2b`
+- **m3, M3, 5, m7, M7**: solid=false, color=`#d92b2b`, text=`#d92b2b`
 - **その他**: solid=false, color=`#1c1c1c`, text=`#1c1c1c`
 
 ユーザー編集可・リセット可。
@@ -310,7 +310,7 @@ export function createStore(initialState) {
   - マスク範囲（min=5, max=7）でフィルタされる
 - `title.test.js`
   - プリセット: `'A Minor Penta'`
-  - カスタム: `'A — カスタム (R, m3, P5)'`
+  - カスタム: `'A — カスタム (R, m3, 5)'`
 
 カバレッジ目標: domain 層 90%以上。
 

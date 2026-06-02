@@ -16,9 +16,12 @@ const commitHash = (() => {
 const base = process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/';
 
 export default defineConfig({
+  root: join(__dirname, 'src'),
+  publicDir: join(__dirname, 'public'),
   base,
   build: {
-    outDir: 'dist',
+    outDir: join(__dirname, 'dist'),
+    emptyOutDir: true,
     sourcemap: false,
   },
   define: {

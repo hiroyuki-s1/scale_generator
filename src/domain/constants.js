@@ -1,19 +1,9 @@
+import { DEGREE_NAMES } from '../config.js';
+
 export const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-export const DEGREES = [
-  { name: 'R',   semi: 0  },
-  { name: 'b9',  semi: 1  },
-  { name: '9',   semi: 2  },
-  { name: 'm3',  semi: 3  },
-  { name: 'M3',  semi: 4  },
-  { name: '11',  semi: 5  },
-  { name: '#11', semi: 6  },
-  { name: 'P5',  semi: 7  },
-  { name: 'b13', semi: 8  },
-  { name: '13',  semi: 9  },
-  { name: 'm7',  semi: 10 },
-  { name: 'M7',  semi: 11 },
-];
+// 度数ラベルは src/config.js → DEGREE_NAMES で一括管理
+export const DEGREES = DEGREE_NAMES.map((name, semi) => ({ name, semi }));
 
 export const SCALE_GROUPS = [
   {

@@ -1,6 +1,7 @@
 import './styles/main.css';
 
 import { DEFAULT_COLORS, SVG, FRET_START, FRET_END } from './domain/constants.js';
+import { MOBILE_EDITOR_FRETBOARD_WIDTH, MOBILE_ZOOM_BREAKPOINT } from './config.js';
 import { buildTitle } from './domain/title.js';
 import { localizeTitle } from './domain/i18n.js';
 import { createStore } from './state/store.js';
@@ -121,8 +122,137 @@ function syncEditorFretboard(s, p) {
   applyFretboardDiff(fretboardEl, s.edit, p?.edit);
 }
 
+// スクロールインジケーター・ズームボタン要素
+const fbScrollLeft  = document.getElementById('fbScrollLeft');
+const fbScrollRight = document.getElementById('fbScrollRight');
+const fbZoomBtn     = document.getElementById('fbZoomBtn');
+
+// true = 拡大表示 (横スクロール可), false = 全体表示 (画面幅にフィット)
+// 初期値 true: 起動時は拡大モード。ボタン "全体" で全体表示に切替。
+let mobileZoomed = true;
+
+// 拡大モードの指板高さ (px) — 全体/拡大どちらのモードでも高さはここに固定する。
+// 幅を変えると高さもアスペクト比で変わってしまうため、拡大時の高さを計算して常に使う。
+const MOBILE_FB_HEIGHT = Math.round(MOBILE_EDITOR_FRETBOARD_WIDTH / SVG.W * SVG.H);
+
+function hideMobileScrollIndicators() {
+  fbScrollLeft?.classList.remove('visible');
+  fbScrollRight?.classList.remove('visible');
+}
+
+/**
+ * スクロール位置とマスク範囲を照合してインジケーターを更新する。
+ * マスク範囲内のポジションがすべてビューポートに収まっていればエフェクトなし。
+ * 片方だけはみ出ていれば、はみ出ている側だけエフェクトを表示する。
+ */
+function updateScrollIndicators() {
+  if (!mobileZoomed || window.innerWidth > MOBILE_ZOOM_BREAKPOINT) {
+    hideMobileScrollIndicators();
+    return;
+  }
+  const { scrollLeft, clientWidth } = editFbWrapEl;
+  const scale = MOBILE_EDITOR_FRETBOARD_WIDTH / SVG.W;
+  const { mask, activeDegrees } = store.get().edit;
+
+  if (activeDegrees.size === 0) {
+    hideMobileScrollIndicators();
+    return;
+  }
+
+  let leftX, rightX;
+  if (mask.enabled) {
+    // マスク範囲の左端・右端 (CSS px)
+    leftX  = (SVG.ML + mask.min * SVG.FW) * scale;
+    rightX = (SVG.ML + (mask.max + 1) * SVG.FW) * scale;
+  } else {
+    // 全フレット範囲
+    leftX  = SVG.ML * scale;
+    rightX = (SVG.ML + SVG.FBW) * scale;
+  }
+
+  fbScrollLeft?.classList.toggle('visible',  leftX  < scrollLeft);
+  fbScrollRight?.classList.toggle('visible', rightX > scrollLeft + clientWidth);
+}
+
+/** マスク範囲の中央へ自動スクロールする。マスク変化時のみ呼ぶ。 */
+function scrollToMaskCenter(edit) {
+  const scale = MOBILE_EDITOR_FRETBOARD_WIDTH / SVG.W;
+  const midFret = (edit.mask.min + edit.mask.max) / 2;
+  const midX_css = (SVG.ML + midFret * SVG.FW + SVG.FW / 2) * scale;
+  editFbWrapEl.scrollLeft = Math.max(0, midX_css - editFbWrapEl.clientWidth / 2);
+}
+
+/**
+ * 拡大 ↔ 全体 の 2 段階表示を切替える。
+ * 拡大率は src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH で調整。
+ */
+function toggleMobileZoom() {
+  mobileZoomed = !mobileZoomed;
+  if (fbZoomBtn) fbZoomBtn.textContent = mobileZoomed ? '全体' : '拡大';
+  // 高さはどちらのモードでも拡大時の基準値で固定する
+  fretboardEl.style.height = `${MOBILE_FB_HEIGHT}px`;
+  const edit = store.get().edit;
+  if (mobileZoomed) {
+    fretboardEl.style.width = `${MOBILE_EDITOR_FRETBOARD_WIDTH}px`;
+    if (edit.mask.enabled) requestAnimationFrame(() => scrollToMaskCenter(edit));
+    requestAnimationFrame(updateScrollIndicators);
+  } else {
+    fretboardEl.style.width = '';
+    editFbWrapEl.scrollLeft = 0;
+    hideMobileScrollIndicators();
+  }
+}
+
+if (fbZoomBtn) fbZoomBtn.addEventListener('click', toggleMobileZoom);
+
+/**
+ * store/resize 変化時の指板幅同期。マスク変化時のみ自動スクロール。
+ * 幅の数値は src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH で調整。
+ */
+function syncEditorFretboardZoom(edit, prevEdit) {
+  const isMobile = window.innerWidth <= MOBILE_ZOOM_BREAKPOINT;
+  if (!isMobile) {
+    fretboardEl.style.width  = '';
+    fretboardEl.style.height = '';
+    hideMobileScrollIndicators();
+    return;
+  }
+  // 高さはモードによらず拡大時基準値で固定 (src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH)
+  fretboardEl.style.height = `${MOBILE_FB_HEIGHT}px`;
+
+  if (!mobileZoomed) {
+    fretboardEl.style.width = '';
+    requestAnimationFrame(updateScrollIndicators);
+    return;
+  }
+  fretboardEl.style.width = `${MOBILE_EDITOR_FRETBOARD_WIDTH}px`;
+
+  const maskChanged = !prevEdit
+    || prevEdit.mask.enabled !== edit.mask.enabled
+    || prevEdit.mask.min !== edit.mask.min
+    || prevEdit.mask.max !== edit.mask.max;
+  if (maskChanged && edit.mask.enabled) {
+    requestAnimationFrame(() => scrollToMaskCenter(edit));
+  }
+
+  requestAnimationFrame(updateScrollIndicators);
+}
+
 syncEditorFretboard({ edit: store.get().edit }, null);
-store.subscribe(syncEditorFretboard);
+if (lastFbInstrument) syncEditorFretboardZoom(store.get().edit, null);
+
+store.subscribe((s, p) => {
+  syncEditorFretboard(s, p);
+  if (lastFbInstrument) syncEditorFretboardZoom(s.edit, p?.edit);
+});
+// リサイズ・回転時: 幅を再適用するが自動スクロールはしない (同一 edit を prev に渡す)
+window.addEventListener('resize', () => {
+  if (!lastFbInstrument) return;
+  const edit = store.get().edit;
+  syncEditorFretboardZoom(edit, edit);
+});
+// スクロール時にインジケーター更新
+editFbWrapEl.addEventListener('scroll', updateScrollIndicators, { passive: true });
 
 // ── スケール名入力 ────────────────────────────────────────────────────
 const titleInputEl = document.getElementById('fbTitleInput');

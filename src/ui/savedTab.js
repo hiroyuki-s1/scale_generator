@@ -13,10 +13,6 @@ import { renderLegend } from './legend.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
-/** ひらがな → カタカナ変換 (U+3041–U+3096 → +0x60) */
-function toKatakana(str) {
-  return str.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
-}
 
 const WARN_KEY = 'deleteWarnDisabled';
 
@@ -304,7 +300,8 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
       c.querySelector('.edit-badge')?.remove();
       if (match) {
         const badge = document.createElement('div');
-        badge.className = 'edit-badge';
+        // screen-only: 印刷時に必ず非表示にするマーカー (CSS @media print)
+        badge.className = 'edit-badge screen-only';
         badge.textContent = 'EDIT!';
         c.appendChild(badge);
       }
@@ -346,7 +343,8 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
         spawnParticles(c);
         c.querySelector('.new-badge, .update-badge')?.remove();
         const badge = document.createElement('div');
-        badge.className = isUpdate ? 'update-badge' : 'new-badge';
+        // screen-only: 印刷時に必ず非表示にするマーカー (CSS @media print)
+        badge.className = (isUpdate ? 'update-badge' : 'new-badge') + ' screen-only';
         badge.textContent = isUpdate ? 'UPDATE!' : 'NEW!';
         c.appendChild(badge);
       }
@@ -451,7 +449,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   // ── 印刷専用タイトル (画面では非表示、印刷時のみ指板の上に印字) ──
   const printTitle = document.createElement('div');
   printTitle.className = 'saved-print-title';
-  printTitle.textContent = toKatakana(localizeTitle(snap.title));
+  printTitle.textContent = localizeTitle(snap.title);
   card.appendChild(printTitle);
 
   // ── 指板 (クリックで全画面) ──
@@ -547,7 +545,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   titleOverlay.setAttribute('letter-spacing', String(CARD_TITLE_SVG_LETTER_SPACING));
   titleOverlay.setAttribute('font-family', 'Space Grotesk, Inter, system-ui, sans-serif');
   titleOverlay.setAttribute('filter', `url(#${filterId})`);
-  titleOverlay.textContent = toKatakana(localizeTitle(snap.title));
+  titleOverlay.textContent = localizeTitle(snap.title);
   overlayGroup.appendChild(titleOverlay);
 
   svg.appendChild(overlayGroup);  // frontmost — above all dots

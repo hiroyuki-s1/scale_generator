@@ -1156,10 +1156,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .saved-section-hdr { display: none !important; }
   svg.fb { min-width: 0 !important; }
 
-  /* 印刷時: 編集/削除ボタン・バッジ・指板上のオーバーレイ名は隠す */
+  /* 印刷時: 編集/削除ボタン・バッジ・指板上のオーバーレイ名は隠す。
+     ── 再発防止: 新しい画面専用バッジを追加するときは class="screen-only" を
+        必ず付ける。それだけで自動的に印刷時に隠れる。下のバッジクラス列挙は
+        既存コードとの互換を保つための明示リスト。新規追加時の正攻法は
+        .screen-only 一択にすること（バッジ class を増やすたびにここを編集
+        するのは漏れの温床）。 */
   .saved-card-header { display: none !important; }
   .title-overlay { display: none !important; }
-  .new-badge, .edit-badge { display: none !important; }
+  .screen-only,
+  .new-badge,
+  .update-badge,
+  .edit-badge,
   .particle-burst { display: none !important; }
   /* 新規追加/編集中カードの緑枠・オレンジ枠も印刷しない */
   .saved-card.newly-added, .saved-card.editing-target {

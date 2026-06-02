@@ -64,6 +64,17 @@ if (alphaNoticeEl) {
 // などの副作用) だけはここで防ぐ。
 document.addEventListener('dblclick', e => e.preventDefault());
 
+// ── Service Worker 登録 (PWA / オフライン対応) ─────────────────────────
+// base path は環境変数で切替わるため import.meta.env.BASE_URL を前置する
+// (Cloudflare = '/', GitHub Pages = '/scale_generator/')。
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
 function defaultState() {
   return {
     edit: {

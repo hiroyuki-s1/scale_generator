@@ -18,7 +18,9 @@
   --shadow-md:   0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
   --radius:      10px;
 
-  /* ── 登録スケール カード タイトル文字サイズ（src/config.js の CSS 側対応値） ── */
+  /* ── 登録スケール カード タイトル文字サイズ（カード下のテキスト見出し） ──
+     ※ ここが唯一の定義場所。JS (config.js) には対応する定数は持たない。
+        SVGオーバーレイ側のサイズは config.js の CARD_TITLE_SVG_FONT_SIZE_* 参照。 */
   --card-title-size:        15px;   /* 通常時 */
   --card-title-size-mobile: 17px;   /* モバイル時 (@media max-width: 767px) */
 }

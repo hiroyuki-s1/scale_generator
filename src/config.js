@@ -20,11 +20,10 @@ export const CARD_TITLE_SVG_LETTER_SPACING = 5;
 /** SVGオーバーレイ背景帯の高さ（SVG座標単位） */
 export const CARD_TITLE_BG_HEIGHT = 92;
 
-/** カード下に表示するテキストタイトルのフォントサイズ（CSS値、例: '15px'） */
-export const CARD_TITLE_CSS_SIZE = '15px';
-
-/** モバイル時のカードタイトルフォントサイズ（CSS値） */
-export const CARD_TITLE_CSS_SIZE_MOBILE = '17px';
+// カード下に表示するテキストタイトルの CSS フォントサイズは、JS からは使わず
+// CSS 変数で管理している（src/styles/main.css の :root）:
+//   --card-title-size         (通常時)
+//   --card-title-size-mobile  (@media max-width:767px)
 
 // ─────────────────────────────────────────────
 // モバイル エディター 指板ズーム

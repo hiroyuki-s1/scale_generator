@@ -12,7 +12,7 @@ const commitHash = (() => {
   catch { return 'unknown'; }
 })();
 
-// GitHub Actions では /scale_generator/、Vercel では /
+// GitHub Actions (Pages ミラー) では /scale_generator/、本番 (Cloudflare Pages) では /
 const base = process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/';
 
 export default defineConfig({

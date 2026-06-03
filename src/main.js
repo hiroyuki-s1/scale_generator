@@ -63,7 +63,12 @@ if (alphaNoticeEl) {
 // ピンチを残すため viewport meta から maximum-scale / user-scalable=no を撤去し、
 // gesturestart の preventDefault も外している。PCのダブルクリック (テキスト選択化
 // などの副作用) だけはここで防ぐ。
-document.addEventListener('dblclick', e => e.preventDefault());
+// PC のテキスト入力ではダブルクリックで単語選択を使えるよう対象を絞る
+document.addEventListener('dblclick', e => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  e.preventDefault();
+});
 
 // ── Service Worker 登録 (PWA / オフライン対応) ─────────────────────────
 // base path は環境変数で切替わるため import.meta.env.BASE_URL を前置する
@@ -118,8 +123,10 @@ function syncEditorFretboard(s, p) {
     drawFretboardBase(fretboardEl, instrument);
     applyFretboardDiff(fretboardEl, s.edit, null);
 
-    // 前回保存した楽器と異なる場合だけ glow burst（F5後の同楽器は除く）
-    const prevSaved = localStorage.getItem(LAST_INSTR_KEY);
+    // 前回保存した楽器と異なる場合だけ glow burst (F5後の同楽器は除く)
+    // iOS Safari Private mode は localStorage アクセスで例外を投げる場合があるので try で保護
+    let prevSaved = null;
+    try { prevSaved = localStorage.getItem(LAST_INSTR_KEY); } catch { /* iOS private: skip glow */ }
     if (prevSaved !== null && prevSaved !== instrument) {
       editFbWrapEl.classList.remove('fb-instrument-pop');
       void editFbWrapEl.offsetWidth;
@@ -127,7 +134,7 @@ function syncEditorFretboard(s, p) {
       editFbWrapEl.addEventListener('animationend', () => editFbWrapEl.classList.remove('fb-instrument-pop'), { once: true });
     }
     lastFbInstrument = instrument;
-    localStorage.setItem(LAST_INSTR_KEY, instrument);
+    try { localStorage.setItem(LAST_INSTR_KEY, instrument); } catch { /* iOS private: skip */ }
     return;
   }
   if (p && s.edit === p.edit) return;

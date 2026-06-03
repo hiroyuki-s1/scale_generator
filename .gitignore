@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# e2e generated reports
+e2e-results/
+
 # Scratch / test files in project root
 *.irealb
 *.jpg

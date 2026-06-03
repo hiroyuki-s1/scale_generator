@@ -30,7 +30,10 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  /* iOS Safari / Android Chrome のアドレスバー伸縮で 100vh が画面外に
+     なる問題を 100dvh で回避 (未対応ブラウザは 100vh フォールバック) */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -446,6 +449,7 @@ body {
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 24px));
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   background: var(--surface);
   border: 2px solid var(--accent);

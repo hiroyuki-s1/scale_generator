@@ -33,19 +33,24 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
   const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
 
-  const cardsPerPage = cols * rows;
   const cellHmm = cellH.toFixed(1);
 
   const layout = `
 @media print {
+  /* #savedGrid はラッパーのみ。グリッドは .print-page-group が担う */
   #savedGrid {
-    display: grid;
-    grid-template-columns: repeat(${cols}, 1fr) !important;
-    grid-auto-rows: ${cellHmm}mm !important;
-    gap: ${gapMm}mm !important;
-    align-items: start;
+    display: block !important;
+    gap: 0 !important;
   }
-  #savedGrid .saved-card:nth-child(${cardsPerPage}n) { break-after: page; }
+  /* beforeprint で JS が cols×rows 枚ずつこの div にまとめる */
+  .print-page-group {
+    display: grid !important;
+    grid-template-columns: repeat(${cols}, 1fr) !important;
+    grid-template-rows: repeat(${rows}, ${cellHmm}mm) !important;
+    gap: ${gapMm}mm !important;
+    break-after: page !important;
+    page-break-after: always !important;
+  }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }
   .fb-title, .saved-title-input {

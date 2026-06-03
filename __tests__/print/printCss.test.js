@@ -41,9 +41,11 @@ describe('buildPrintCss — layout cols/gap (the actual bug)', () => {
     const { layout } = buildPrintCss(DEFAULT);
     expect(layout).toContain('gap: 3mm !important');
   });
-  it('always sets display: grid (no !important needed)', () => {
+  it('#savedGrid is block container; grid layout is in .print-page-group', () => {
     const { layout } = buildPrintCss(DEFAULT);
-    expect(layout).toMatch(/#savedGrid\s*\{[^}]*display:\s*grid/);
+    // #savedGrid はラッパーのみ — display:block で grid は .print-page-group が担う
+    expect(layout).toMatch(/#savedGrid\s*\{[^}]*display:\s*block/);
+    expect(layout).toMatch(/\.print-page-group[^{]*\{[\s\S]*?display:\s*grid/);
   });
 });
 

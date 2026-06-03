@@ -169,8 +169,8 @@ describe('D: モバイル CSS と印刷 CSS の競合チェック', () => {
 // ── E. 印刷時に #panelSaved が確実に表示される ────────────────────────────
 
 describe('E: 印刷時の #panelSaved 表示保証', () => {
-  it('static CSS: #panelSaved に display: flex !important', () => {
-    expect(PRINT_CSS_STATIC).toMatch(/#panelSaved[^{]*\{[^}]*display:\s*flex\s*!important/);
+  it('static CSS: #panelSaved に display: block !important (flex は iOS Safari で page-break 非対応)', () => {
+    expect(PRINT_CSS_STATIC).toMatch(/#panelSaved[^{]*\{[^}]*display:\s*block\s*!important/);
   });
 
   it('static CSS: #panelEditor に display: none !important', () => {

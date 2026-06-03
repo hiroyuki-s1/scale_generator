@@ -1150,7 +1150,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tab-nav { display: none !important; }
   .name-list-bar { display: none !important; }
   #panelEditor { display: none !important; }
-  #panelSaved { display: flex !important; }
+  /* flex は iOS Safari で page-break-after が動作しないため block にする */
+  #panelSaved { display: block !important; }
   .app-body { overflow: visible !important; height: auto !important; display: block !important; }
   .saved-section { display: block !important; padding: 0 !important; overflow: visible !important; }
   .saved-section-hdr { display: none !important; }

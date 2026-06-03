@@ -6,13 +6,12 @@
  *
  * 検証項目:
  *   1. @page size が orientation に応じた mm 寸法になる
- *   2. .print-page-group に正しい grid-template-columns が生成される
- *   3. .print-page-group に正しい grid-template-rows (cellH) が生成される
- *   4. cellH が 0 より大きい正の値であること
- *   5. break-after:page と page-break-after:always が両方存在すること
- *   6. titlePt / legPt が clamp 範囲内 [5.5–10] / [5–8] に収まること
- *   7. #savedGrid は display:block (グリッドではなくラッパー)
- *   8. display:none でカードを隠す記述が存在しないこと (過去バグの再発防止)
+ *   2. .print-page-inner に grid-template-columns / rows: repeat(n, 1fr) が生成される
+ *   3. .print-page-group が height:100vh (1ページ枠) + overflow:hidden
+ *   4. 改ページは隣接兄弟 page-break-before のみ (page-break-after は不使用)
+ *   5. titlePt が clamp 範囲内 [5.5–10] に収まること
+ *   6. #savedGrid は display:block (グリッドではなくラッパー)
+ *   7. display:none でカードを隠す記述が存在しないこと (過去バグの再発防止)
  */
 import { describe, it, expect } from 'vitest';
 import { buildPrintCss } from '../../src/print/printCss.js';
@@ -96,14 +95,6 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         const pt = parseFloat(m[1]);
         expect(pt).toBeGreaterThanOrEqual(5.5);
         expect(pt).toBeLessThanOrEqual(10);
-      });
-
-      it(`[${label}] legPt が clamp 範囲 [5, 8] 内`, () => {
-        const m = layout.match(/\.legend-chip[^{]*\{[^}]*font-size:\s*([\d.]+)pt/);
-        expect(m).not.toBeNull();
-        const pt = parseFloat(m[1]);
-        expect(pt).toBeGreaterThanOrEqual(5);
-        expect(pt).toBeLessThanOrEqual(8);
       });
 
       // ── 構造的整合性 ─────────────────────────────────────────────────

@@ -33,8 +33,6 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const cellH  = (pageH - gapMm * (rows - 1)) / rows;
 
   const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
-  const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
-  const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
 
   const layout = `
 @media print {
@@ -93,9 +91,8 @@ export function buildPrintCss({ orientation, cols, rows }) {
     box-shadow: none !important;
   }
   svg.fb { min-width: 0 !important; width: 100% !important; height: auto !important; display: block !important; }
-  .legend { margin-top: 1mm; gap: 3px; }
-  .legend-chip { font-size: ${legPt}pt !important; padding: 1px 5px 1px 3px !important; }
-  .legend-dot  { width: ${legDot}px !important; height: ${legDot}px !important; font-size: 5px !important; }
+  /* .legend は main.css の @media print で display:none !important のため
+     印刷では非表示。ここで凡例のサイズ指定はしない (dead code を避ける)。 */
 }`;
 
   return { orient, layout };

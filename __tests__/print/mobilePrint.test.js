@@ -1,21 +1,27 @@
 /**
  * スマホ印刷テスト — 再発防止スイート
  *
- * 背景・改ページ戦略の変遷:
- *   × CSS Grid の break-after:page           → iOS Safari で動作しない
- *   × .print-page-break + page-break-before → break要素自体が1P消費して空白ページ
- *   ○ .print-page-group (block div) に page-break-after:always
- *      .print-page-inner (grid) をネスト     → 全ブラウザで確実に動作
+ * 背景・改ページ戦略の変遷 (なぜ今の実装かの記録):
+ *   × CSS Grid の break-after:page              → iOS Safari で動作しない
+ *   × 空の .print-page-break + page-break-before → break要素が1P消費して空白
+ *   × .print-page-group に page-break-after:always → Safari は最終ページ後に
+ *                                                    余分な空白ページを作る
+ *   × .print-page-group に mm 固定 height        → iOS の @page margin 解釈差で溢れる
+ *   ○ .print-page-group に height:100vh (1ページ枠) + overflow:hidden +
+ *      break-inside:avoid。.print-page-inner を grid 1fr で均等分割。
+ *      改ページは隣接兄弟 .print-page-group + .print-page-group の
+ *      page-break-before のみ (page-break-after は不使用) → 全 OS で空白ページなし
  *
  * スマホ印刷時は @media (max-width: 767px) も同時に適用されるため、
  * モバイル CSS と印刷 CSS の競合もチェックする。
  *
  * 検証項目:
- *   A. .print-page-group が static CSS (@media print) で block + page-break-after:always
- *   B. .print-page-group が dynamic CSS (printCss.js) でも同様
- *   C. .print-page-group:last-child が page-break をリセット (末尾空白ページ防止)
+ *   A. .print-page-group が block + overflow:hidden, page-break-after 不使用,
+ *      隣接兄弟に page-break-before:always (static CSS)
+ *   B. dynamic CSS でも同様 + .print-page-inner が grid 1fr
+ *   C. ページ枠 height:100vh + grid-template-rows 1fr 均等分割
  *   D. モバイル CSS が印刷クラスを上書きしない
- *   E. 印刷時に #panelSaved が確実に表示される
+ *   E. 印刷時に #panelSaved が block 表示される
  *   F. 全モバイル CSS に印刷専用クラスが混入していない
  */
 import { describe, it, expect } from 'vitest';

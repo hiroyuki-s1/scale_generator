@@ -45,26 +45,51 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(orient).toContain(expected);
       });
 
-      // ── グリッド構造 (.print-page-inner) ──────────────────────────
-      it(`[${label}] .print-page-inner: grid-template-columns = repeat(${cols}, 1fr)`, () => {
+      // ── グリッド構造 (.print-page-inner) — minmax(0, 1fr) ──────────
+      // 過去 `1fr` だけだと Safari で子要素 min-content に押されて
+      // 行が広がり 2P 目空白になる事故があった。minmax(0, 1fr) で固定。
+      it(`[${label}] .print-page-inner: grid-template-columns = repeat(${cols}, minmax(0, 1fr))`, () => {
         expect(innerBlock).toMatch(
-          new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*1fr\\)`)
+          new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*minmax\\(0,\\s*1fr\\)\\)`)
         );
       });
 
-      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, 1fr) で均等分割`, () => {
+      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, minmax(0, 1fr)) で均等分割`, () => {
         expect(innerBlock).toMatch(
-          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*1fr\\)`)
+          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
         );
-      });
-
-      // ── 空白ページ防止: ページ枠は 100vh (iOS Safari 余白に追従) ────────
-      it(`[${label}] .print-page-group が height:100vh (1ページ枠)`, () => {
-        expect(pgBlock).toMatch(/height:\s*100vh/);
       });
 
       it(`[${label}] .print-page-inner が height:100% (枠いっぱいに広がる)`, () => {
         expect(innerBlock).toMatch(/height:\s*100%/);
+      });
+
+      // ── orientation 別の mm 寸法 (iOS Safari vh 不定性対策) ──
+      // 向きに依存する寸法は landscape/portrait 両方を出力し、実紙の向きに
+      // 応じて適用される。base block の .print-page-group には height を
+      // 出さない (置くと両 orientation block より早い順序で勝つ可能性)。
+      it(`[${label}] .print-page-group の base block には height を持たせない`, () => {
+        expect(pgBlock).not.toMatch(/height:\s*[0-9]/);
+        expect(pgBlock).not.toMatch(/height:\s*100vh/);
+      });
+
+      it(`[${label}] @media print and (orientation: landscape) で .print-page-group height = calc(210mm - 1px)`, () => {
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
+        );
+      });
+
+      it(`[${label}] @media print and (orientation: portrait) で .print-page-group height = calc(297mm - 1px)`, () => {
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
+        );
+      });
+
+      it(`[${label}] orientation 引数に関わらず、両方の (orientation: ...) block が必ず出力される`, () => {
+        // モバイルでは @page size:auto なので OS シートで向きが切り替わる。
+        // CSS はどちらの向きにも対応できるよう両方を含む必要がある。
+        expect(layout).toMatch(/@media print and \(orientation:\s*landscape\)/);
+        expect(layout).toMatch(/@media print and \(orientation:\s*portrait\)/);
       });
 
       // ── 改ページ (隣接兄弟 page-break-before — Safari 空白ページバグ回避) ──
@@ -93,27 +118,37 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         );
       });
 
-      // ── 指板はみ出し防止: svg.fb に max-height vh (マスク縦長対策) ──────
-      it(`[${label}] svg.fb に max-height:(88/rows)vh が生成される (縦長指板はみ出し防止)`, () => {
-        const expected = (88 / rows).toFixed(2);
-        expect(layout).toMatch(
-          new RegExp(`svg\\.fb\\s*\\{[^}]*max-height:\\s*${expected.replace('.', '\\.')}vh`)
-        );
-      });
-
-      it(`[${label}] svg.fb は height:auto + display:block (1.0.0 で動作した形)`, () => {
+      // ── 指板はみ出し防止: svg.fb に max-height mm (orientation 別) ──────
+      it(`[${label}] svg.fb base block は height:auto + display:block (max-height は orientation block 側)`, () => {
         const svgBlock = layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
         expect(svgBlock).toMatch(/height:\s*auto/);
         expect(svgBlock).toMatch(/display:\s*block/);
+        // base block には max-height vh を残してはいけない (orientation 不定)
+        expect(svgBlock).not.toMatch(/max-height:\s*[\d.]+vh/);
       });
 
-      // ── フォントサイズ clamp ─────────────────────────────────────────
-      it(`[${label}] titlePt が clamp 範囲 [5.5, 10] 内`, () => {
-        const m = layout.match(/\.fb-title[^{]*\{[^}]*font-size:\s*([\d.]+)pt/);
-        expect(m).not.toBeNull();
-        const pt = parseFloat(m[1]);
-        expect(pt).toBeGreaterThanOrEqual(5.5);
-        expect(pt).toBeLessThanOrEqual(10);
+      it(`[${label}] @media print and (orientation: landscape) で svg.fb に max-height mm が生成`, () => {
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/
+        );
+      });
+
+      it(`[${label}] @media print and (orientation: portrait) で svg.fb に max-height mm が生成`, () => {
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/
+        );
+      });
+
+      // ── フォントサイズ clamp (orientation 別に出力される) ─────────────
+      it(`[${label}] orientation 別の titlePt が両方 clamp 範囲 [5.5, 10] 内`, () => {
+        // landscape / portrait それぞれの block 内の font-size を取得
+        const ms = [...layout.matchAll(/\.fb-title[^{]*\{[^}]*font-size:\s*([\d.]+)pt/g)];
+        expect(ms.length).toBeGreaterThanOrEqual(2);
+        for (const m of ms) {
+          const pt = parseFloat(m[1]);
+          expect(pt).toBeGreaterThanOrEqual(5.5);
+          expect(pt).toBeLessThanOrEqual(10);
+        }
       });
 
       // ── 構造的整合性 ─────────────────────────────────────────────────

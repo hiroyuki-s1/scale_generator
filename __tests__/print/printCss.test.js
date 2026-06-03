@@ -44,17 +44,17 @@ describe('buildPrintCss — orientation', () => {
 });
 
 describe('buildPrintCss — layout cols/gap (the actual bug)', () => {
-  it('cols=1 → repeat(1, 1fr) with !important', () => {
+  it('cols=1 → repeat(1, minmax(0, 1fr)) with !important', () => {
     const { layout } = buildPrintCss({ ...DEFAULT, cols: 1 });
-    expect(layout).toContain('grid-template-columns: repeat(1, 1fr) !important');
+    expect(layout).toContain('grid-template-columns: repeat(1, minmax(0, 1fr)) !important');
   });
-  it('cols=2 → repeat(2, 1fr) with !important', () => {
+  it('cols=2 → repeat(2, minmax(0, 1fr)) with !important', () => {
     const { layout } = buildPrintCss({ ...DEFAULT, cols: 2 });
-    expect(layout).toContain('grid-template-columns: repeat(2, 1fr) !important');
+    expect(layout).toContain('grid-template-columns: repeat(2, minmax(0, 1fr)) !important');
   });
-  it('cols=3 → repeat(3, 1fr) with !important', () => {
+  it('cols=3 → repeat(3, minmax(0, 1fr)) with !important', () => {
     const { layout } = buildPrintCss({ ...DEFAULT, cols: 3 });
-    expect(layout).toContain('grid-template-columns: repeat(3, 1fr) !important');
+    expect(layout).toContain('grid-template-columns: repeat(3, minmax(0, 1fr)) !important');
   });
   it('gap always 3mm with !important', () => {
     const { layout } = buildPrintCss(DEFAULT);
@@ -78,24 +78,40 @@ describe('buildPrintCss — fb-wrap padding override (secondary bug)', () => {
 });
 
 describe('buildPrintCss — derived font sizes (cellH)', () => {
-  it('rows=1 portrait: titlePt clamped to 10 (cell uses full page height)', () => {
+  // 計算式 (新): cellH = (pageHmm - 2*padV - gapMm*(rows-1)) / rows
+  //   pageHmm = landscape:210 / portrait:297, padV=8mm, gapMm=3mm
+  //   titlePt = clamp(5.5, 10, cellH / 9)
+  // orientation 別の block 両方に title font-size が出力される
+  it('rows=1 portrait block: titlePt が clamp 上限 10.0pt', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
-    expect(layout).toMatch(/font-size:\s*10\.0pt\s*!important/);
+    // portrait cellH = (297-16-0)/1 = 281 → titlePt = clamp(5.5,10,281/9=31.2) = 10.0
+    expect(layout).toMatch(
+      /@media print and \(orientation:\s*portrait\)[\s\S]*?font-size:\s*10\.0pt/
+    );
   });
-  it('rows=5 portrait: titlePt computed and below clamp ceiling', () => {
-    // cellH = (277 - 3*4)/5 = 53.0; titlePt = 53.0/9 = 5.888 → 5.9 (フォント計算は SAFETY 無し)
+  it('rows=5 portrait block: cellH=53.8 → titlePt 6.0', () => {
+    // 新: cellH = (297 - 16 - 12)/5 = 53.8; titlePt = 53.8/9 = 5.977 → 6.0
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toContain('font-size: 5.9pt !important');
+    expect(layout).toMatch(
+      /@media print and \(orientation:\s*portrait\)[\s\S]*?font-size:\s*6\.0pt/
+    );
   });
-  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-6)/3/9) = 6.81 → 6.8', () => {
-    // cellH = (190 - 3*2)/3 = 184/3 = 61.33; titlePt = 61.33/9 = 6.81 → 6.8
+  it('landscape block rows=3: cellH=62.67 → titlePt 7.0', () => {
+    // 新: cellH = (210 - 16 - 6)/3 = 188/3 = 62.67; titlePt = 62.67/9 = 6.96 → 7.0
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toContain('font-size: 6.8pt !important');
+    expect(layout).toMatch(
+      /@media print and \(orientation:\s*landscape\)[\s\S]*?font-size:\s*7\.0pt/
+    );
   });
-  it('landscape vs portrait at same rows produces different titlePt', () => {
-    const land = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    const port = buildPrintCss({ orientation: 'portrait',  cols: 2, rows: 3 });
-    expect(land.layout).not.toBe(port.layout);
+  it('landscape block vs portrait block at same rows: titlePt が異なる', () => {
+    const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
+    const landMatch = layout.match(
+      /@media print and \(orientation:\s*landscape\)[\s\S]*?font-size:\s*([\d.]+)pt/
+    );
+    const portMatch = layout.match(
+      /@media print and \(orientation:\s*portrait\)[\s\S]*?font-size:\s*([\d.]+)pt/
+    );
+    expect(landMatch?.[1]).not.toBe(portMatch?.[1]);
   });
 });
 

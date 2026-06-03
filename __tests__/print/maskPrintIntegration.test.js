@@ -116,21 +116,39 @@ describe('calcMaskViewBox — 幾何学的正確性', () => {
 
 // ── layout × orientation の cellH 検証 ──────────────────────────────────
 
-describe('buildPrintCss — ページ枠 100vh + grid 1fr (iOS Safari 空白ページ対策)', () => {
-  // iOS Safari 空白ページバグの決定版対策:
-  //   各 .print-page-group を height:100vh の「1ページ枠」にし、中を
-  //   grid 1fr で均等分割する。mm 固定やページぴったりの行高を使わないため、
-  //   iOS が @page margin を無視して余白を変えても vh がページに追従し、
-  //   オーバーフロー/空白ページが起きない。
+describe('buildPrintCss — ページ枠 mm + grid minmax(0, 1fr) (iOS Safari 空白ページ対策)', () => {
+  // iOS Safari 空白ページバグの最新対策 (v1.0.0 以降):
+  //   - height:100vh → orientation media query 内で mm 指定に変更
+  //     iOS Safari は print mode で vh をビューポート基準で解決する不定性が
+  //     あり、横用紙(210mm)で 100vh が portrait viewport を返してはみ出す。
+  //   - grid 1fr → minmax(0, 1fr)
+  //     1fr は実装上 minmax(auto, 1fr) として子要素の min-content に押されて
+  //     行が広がる Safari バグの典型原因。minmax(0, 1fr) で強制均等分割。
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {
-      it(`${orientation} ${cols}×${rows}: .print-page-group が height:100vh`, () => {
+      it(`${orientation} ${cols}×${rows}: .print-page-group base block には height を持たせない`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
-        expect(layout).toMatch(/\.print-page-group\s*\{[^}]*height:\s*100vh/);
+        const pgBlock = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(pgBlock).not.toMatch(/height:\s*100vh/);
+        expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
-      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を 1fr 均等分割`, () => {
+      it(`${orientation} ${cols}×${rows}: landscape block で height = calc(210mm - 1px)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
-        expect(layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*1fr\\)`));
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
+        );
+      });
+      it(`${orientation} ${cols}×${rows}: portrait block で height = calc(297mm - 1px)`, () => {
+        const { layout } = buildPrintCss({ orientation, cols, rows });
+        expect(layout).toMatch(
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
+        );
+      });
+      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {
+        const { layout } = buildPrintCss({ orientation, cols, rows });
+        expect(layout).toMatch(
+          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
+        );
       });
     }
   }

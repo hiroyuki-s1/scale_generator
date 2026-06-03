@@ -134,19 +134,40 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
   }
 });
 
-// ── C. ページ枠 100vh + grid 1fr 均等分割 (iOS Safari 空白ページ対策) ───────
+// ── C. orientation 別 mm 寸法 + grid minmax(0, 1fr) (iOS Safari 横印刷 2P空白対策) ───
+// v1.0.0 以前は .print-page-group に height:100vh を一律に当てていたが、
+// iOS Safari は print + landscape で vh をビューポート基準に解決する
+// 不定性があり、グループが用紙からはみ出して2P目空白になる事故が頻発した。
+// 現在は orientation media query 内で mm 単位で出すことで根本回避している。
 
-describe('C: ページ枠 height:100vh + grid 1fr', () => {
+describe('C: orientation 別 mm 寸法 + grid minmax(0, 1fr)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`dynamic [${cols}×${rows}]: .print-page-group に height:100vh が生成される`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-group base block には height を持たせない`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
       const pgBlock = css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-      expect(pgBlock).toMatch(/height:\s*100vh/);
+      expect(pgBlock).not.toMatch(/height:\s*100vh/);
+      expect(pgBlock).not.toMatch(/height:\s*[\d]+mm/);
     });
 
-    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を 1fr 均等分割`, () => {
+    it(`dynamic [${cols}×${rows}]: orientation:landscape で height = calc(210mm - 1px)`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
-      expect(css).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*1fr\\)`));
+      expect(css).toMatch(
+        /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
+      );
+    });
+
+    it(`dynamic [${cols}×${rows}]: orientation:portrait で height = calc(297mm - 1px)`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+      expect(css).toMatch(
+        /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
+      );
+    });
+
+    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+      expect(css).toMatch(
+        new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
+      );
     });
   }
 });

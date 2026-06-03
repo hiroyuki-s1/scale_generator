@@ -36,6 +36,8 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
     for (const orientation of ORIENTATIONS) {
       const label = `${orientation} ${cols}×${rows}`;
       const { orient, layout } = buildPrintCss({ orientation, cols, rows });
+      // モバイル CSS は orientation 両方を出すので、両ブロック必須テストはこちらで検証する
+      const mobileOut = buildPrintCss({ orientation, cols, rows, isMobile: true });
       const pgBlock    = extractPageGroupBlock(layout);  // .print-page-group (block)
       const innerBlock = extractPageInnerBlock(layout);  // .print-page-inner (grid)
 
@@ -73,23 +75,33 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(pgBlock).not.toMatch(/height:\s*100vh/);
       });
 
-      it(`[${label}] @media print and (orientation: landscape) で .print-page-group height = calc(210mm - 1px)`, () => {
+      const pageMm = orientation === 'landscape' ? 210 : 297;
+      it(`[${label}] PC: 単一 @media print に .print-page-group height = calc(${pageMm}mm - 1px) (orientation 引数固定)`, () => {
         expect(layout).toMatch(
+          new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*calc\\(${pageMm}mm\\s*-\\s*1px\\)`)
+        );
+      });
+
+      it(`[${label}] mobile: @media print and (orientation: landscape) で height = calc(210mm - 1px)`, () => {
+        expect(mobileOut.layout).toMatch(
           /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
         );
       });
 
-      it(`[${label}] @media print and (orientation: portrait) で .print-page-group height = calc(297mm - 1px)`, () => {
-        expect(layout).toMatch(
+      it(`[${label}] mobile: @media print and (orientation: portrait) で height = calc(297mm - 1px)`, () => {
+        expect(mobileOut.layout).toMatch(
           /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
         );
       });
 
-      it(`[${label}] orientation 引数に関わらず、両方の (orientation: ...) block が必ず出力される`, () => {
-        // モバイルでは @page size:auto なので OS シートで向きが切り替わる。
-        // CSS はどちらの向きにも対応できるよう両方を含む必要がある。
-        expect(layout).toMatch(/@media print and \(orientation:\s*landscape\)/);
-        expect(layout).toMatch(/@media print and \(orientation:\s*portrait\)/);
+      it(`[${label}] mobile: 両方の (orientation: ...) block が出力される (OS シートで切替するため)`, () => {
+        expect(mobileOut.layout).toMatch(/@media print and \(orientation:\s*landscape\)/);
+        expect(mobileOut.layout).toMatch(/@media print and \(orientation:\s*portrait\)/);
+      });
+
+      it(`[${label}] PC: 反対 orientation の mm 値が混入しない (viewport-vs-@page 食い違い防止)`, () => {
+        const oppositeMm = orientation === 'landscape' ? 297 : 210;
+        expect(layout).not.toMatch(new RegExp(`calc\\(${oppositeMm}mm\\s*-\\s*1px\\)`));
       });
 
       // ── 改ページ (隣接兄弟 page-break-before — Safari 空白ページバグ回避) ──
@@ -127,23 +139,23 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(svgBlock).not.toMatch(/max-height:\s*[\d.]+vh/);
       });
 
-      it(`[${label}] @media print and (orientation: landscape) で svg.fb に max-height mm が生成`, () => {
-        expect(layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/
-        );
+      it(`[${label}] PC: svg.fb に max-height mm が生成 (単一ブロック)`, () => {
+        expect(layout).toMatch(/svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/);
       });
 
-      it(`[${label}] @media print and (orientation: portrait) で svg.fb に max-height mm が生成`, () => {
-        expect(layout).toMatch(
+      it(`[${label}] mobile: landscape / portrait どちらの media query にも svg.fb max-height mm`, () => {
+        expect(mobileOut.layout).toMatch(
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/
+        );
+        expect(mobileOut.layout).toMatch(
           /@media print and \(orientation:\s*portrait\)[\s\S]*?svg\.fb\s*\{[^}]*max-height:\s*[\d.]+mm/
         );
       });
 
-      // ── フォントサイズ clamp (orientation 別に出力される) ─────────────
-      it(`[${label}] orientation 別の titlePt が両方 clamp 範囲 [5.5, 10] 内`, () => {
-        // landscape / portrait それぞれの block 内の font-size を取得
+      // ── フォントサイズ clamp ─────────────
+      it(`[${label}] titlePt が clamp 範囲 [5.5, 10] 内`, () => {
         const ms = [...layout.matchAll(/\.fb-title[^{]*\{[^}]*font-size:\s*([\d.]+)pt/g)];
-        expect(ms.length).toBeGreaterThanOrEqual(2);
+        expect(ms.length).toBeGreaterThanOrEqual(1);
         for (const m of ms) {
           const pt = parseFloat(m[1]);
           expect(pt).toBeGreaterThanOrEqual(5.5);

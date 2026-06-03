@@ -78,8 +78,15 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     ? `@media print { @page { size: auto; margin: 0; } }`
     : `@media print { @page { size: ${sizeMm}; margin: 0; } }`;
 
-  // 向きに依存する寸法は landscape / portrait 両方を出力する。
-  // 実紙の向き (= OS 印刷シートで決まる) に応じて該当 block が選択される。
+  // 向き別寸法:
+  //   - PC: orientation 引数で確定 (印刷モーダルで決まる)。@media (orientation:...) を
+  //     使わず単一ブロックで出力する。viewport アスペクトと @page 用紙向きが食い違う
+  //     ケース (例: 横長ノートPCで portrait 印刷) で orientation media query が
+  //     viewport 基準で評価され「縦 297mm 用紙に landscape ルール (グループ高 210mm)」が
+  //     当たって下 87mm が空白になるバグを防ぐ。
+  //   - モバイル: @page size:auto + OS シートで向き切替できるため両方の orientation
+  //     media query ブロックを出力する。モバイルの場合 viewport 自身も用紙の向きと
+  //     同じになる (横向きにして印刷シート開く=横用紙) ため media query で一致する。
   const land = deriveOrientationDims(true,  rows);
   const port = deriveOrientationDims(false, rows);
   const gapMm = 3;
@@ -159,7 +166,8 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   #savedEmpty { display: none !important; }
 }
 
-/* ── orientation 別の mm 寸法 (iOS Safari の vh 不定性回避) ──
+${isMobile ? `
+/* ── モバイル: OS 印刷シートで向き切替できるため orientation 別ブロック ──
    horizontal: height calc(...-1px) は丸めで次ページに溢れるエッジケース防止。 */
 @media print and (orientation: landscape) {
   .print-page-group { height: calc(${land.pageHmm}mm - 1px) !important; }
@@ -176,7 +184,19 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     line-height: 1.2;
   }
   svg.fb { max-height: ${port.svgMaxMm}mm !important; }
-}`;
+}` : `
+/* ── PC: orientation 引数で固定 (印刷モーダルで決まる)。
+   @media (orientation:...) は使わず単一ブロックで出力。
+   viewport-vs-@page の orientation 食い違いで誤ったブロックが当たり、
+   グループが用紙より低くなって下端が空白になる問題を防ぐ。 */
+@media print {
+  .print-page-group { height: calc(${(orientation === 'landscape' ? land : port).pageHmm}mm - 1px) !important; }
+  .fb-title, .saved-title-input, .saved-print-title {
+    font-size: ${(orientation === 'landscape' ? land : port).titlePt}pt !important;
+    line-height: 1.2;
+  }
+  svg.fb { max-height: ${(orientation === 'landscape' ? land : port).svgMaxMm}mm !important; }
+}`}`;
 
   return { orient, layout };
 }

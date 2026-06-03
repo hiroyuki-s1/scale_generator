@@ -132,14 +132,21 @@ describe('buildPrintCss — ページ枠 mm + grid minmax(0, 1fr) (iOS Safari �
         expect(pgBlock).not.toMatch(/height:\s*100vh/);
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
-      it(`${orientation} ${cols}×${rows}: landscape block で height = calc(210mm - 1px)`, () => {
+      const pageMm = orientation === 'landscape' ? 210 : 297;
+      it(`PC ${orientation} ${cols}×${rows}: 単一 @media print に height = calc(${pageMm}mm - 1px)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
+        expect(layout).toMatch(
+          new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*calc\\(${pageMm}mm\\s*-\\s*1px\\)`)
+        );
+        // 反対 orientation の値が混入しないこと
+        const oppositeMm = orientation === 'landscape' ? 297 : 210;
+        expect(layout).not.toMatch(new RegExp(`calc\\(${oppositeMm}mm\\s*-\\s*1px\\)`));
+      });
+      it(`mobile ${orientation} ${cols}×${rows}: orientation media query で landscape=210mm / portrait=297mm 両方出力`, () => {
+        const { layout } = buildPrintCss({ orientation, cols, rows, isMobile: true });
         expect(layout).toMatch(
           /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
         );
-      });
-      it(`${orientation} ${cols}×${rows}: portrait block で height = calc(297mm - 1px)`, () => {
-        const { layout } = buildPrintCss({ orientation, cols, rows });
         expect(layout).toMatch(
           /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
         );

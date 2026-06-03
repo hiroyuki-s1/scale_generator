@@ -149,18 +149,24 @@ describe('C: orientation 別 mm 寸法 + grid minmax(0, 1fr)', () => {
       expect(pgBlock).not.toMatch(/height:\s*[\d]+mm/);
     });
 
-    it(`dynamic [${cols}×${rows}]: orientation:landscape で height = calc(210mm - 1px)`, () => {
-      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+    it(`mobile [${cols}×${rows}]: orientation:landscape で height = calc(210mm - 1px)`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows, isMobile: true });
       expect(css).toMatch(
         /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
       );
     });
 
-    it(`dynamic [${cols}×${rows}]: orientation:portrait で height = calc(297mm - 1px)`, () => {
-      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+    it(`mobile [${cols}×${rows}]: orientation:portrait で height = calc(297mm - 1px)`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows, isMobile: true });
       expect(css).toMatch(
         /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
       );
+    });
+
+    it(`PC [${cols}×${rows}]: orientation 引数固定で単一 @media print ブロック (反対 orientation の値は出ない)`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+      expect(css).toMatch(/\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/);
+      expect(css).not.toMatch(/calc\(210mm\s*-\s*1px\)/);
     });
 
     it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {

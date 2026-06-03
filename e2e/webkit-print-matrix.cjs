@@ -141,6 +141,18 @@ async function run() {
             reasons.push(`グループ${g.index+1} 高さ ${g.heightMm.toFixed(1)}mm > ${maxMm}mm`);
           }
         }
+        // cards-per-group: 各ページの DOM 上カード数が期待値どおりか
+        // (ユーザー報告 "1×2 で 1ページに 1つしか印刷されない" の再発防止)
+        const perPage = cols * rows;
+        r.groups.forEach((g, i) => {
+          const expectedInGroup = (i === r.groups.length - 1)
+            ? (cards - perPage * (r.groups.length - 1))
+            : perPage;
+          if (g.cards !== expectedInGroup) {
+            pass = false;
+            reasons.push(`ページ${i+1} カード数 ${g.cards} ≠ 期待 ${expectedInGroup}`);
+          }
+        });
         const mark = pass ? '✅' : '❌';
         const heights = r.groups.map(g => g.heightMm.toFixed(0)).join(', ');
         console.log(`${mark} ${label}`);

@@ -78,33 +78,24 @@ describe('buildPrintCss — fb-wrap padding override (secondary bug)', () => {
 });
 
 describe('buildPrintCss — derived font sizes (cellH)', () => {
-  // 計算式 (新): cellH = (pageHmm - 2*padV - gapMm*(rows-1)) / rows
+  // 計算式: cellH = (pageHmm - 2*padV - gapMm*(rows-1)) / rows
   //   pageHmm = landscape:210 / portrait:297, padV=8mm, gapMm=3mm
   //   titlePt = clamp(5.5, 10, cellH / 9)
-  // orientation 別の block 両方に title font-size が出力される
-  it('rows=1 portrait block: titlePt が clamp 上限 10.0pt', () => {
+  // PC は orientation 引数固定の単一ブロック、mobile は orientation media query 両方
+  it('PC portrait rows=1: titlePt が clamp 上限 10.0pt', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
-    // portrait cellH = (297-16-0)/1 = 281 → titlePt = clamp(5.5,10,281/9=31.2) = 10.0
-    expect(layout).toMatch(
-      /@media print and \(orientation:\s*portrait\)[\s\S]*?font-size:\s*10\.0pt/
-    );
+    expect(layout).toMatch(/font-size:\s*10\.0pt/);
   });
-  it('rows=5 portrait block: cellH=53.8 → titlePt 6.0', () => {
-    // 新: cellH = (297 - 16 - 12)/5 = 53.8; titlePt = 53.8/9 = 5.977 → 6.0
+  it('PC portrait rows=5: cellH=53.8 → titlePt 6.0', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toMatch(
-      /@media print and \(orientation:\s*portrait\)[\s\S]*?font-size:\s*6\.0pt/
-    );
+    expect(layout).toMatch(/font-size:\s*6\.0pt/);
   });
-  it('landscape block rows=3: cellH=62.67 → titlePt 7.0', () => {
-    // 新: cellH = (210 - 16 - 6)/3 = 188/3 = 62.67; titlePt = 62.67/9 = 6.96 → 7.0
+  it('PC landscape rows=3: cellH=62.67 → titlePt 7.0', () => {
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toMatch(
-      /@media print and \(orientation:\s*landscape\)[\s\S]*?font-size:\s*7\.0pt/
-    );
+    expect(layout).toMatch(/font-size:\s*7\.0pt/);
   });
-  it('landscape block vs portrait block at same rows: titlePt が異なる', () => {
-    const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
+  it('mobile: landscape と portrait の titlePt が異なる (両方の media query block 出力)', () => {
+    const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3, isMobile: true });
     const landMatch = layout.match(
       /@media print and \(orientation:\s*landscape\)[\s\S]*?font-size:\s*([\d.]+)pt/
     );

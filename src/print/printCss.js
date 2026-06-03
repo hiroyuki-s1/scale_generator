@@ -33,6 +33,8 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
   const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
 
+  const maxCards = cols * rows;
+
   const layout = `
 @media print {
   #savedGrid {
@@ -41,6 +43,7 @@ export function buildPrintCss({ orientation, cols, rows }) {
     gap: ${gapMm}mm !important;
     align-items: start;
   }
+  #savedGrid .saved-card:nth-child(n + ${maxCards + 1}) { display: none !important; }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }
   .fb-title, .saved-title-input {

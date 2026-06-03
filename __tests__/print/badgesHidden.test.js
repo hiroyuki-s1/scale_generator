@@ -22,23 +22,32 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CSS = readFileSync(join(__dirname, '../../src/styles/main.css'), 'utf8');
 const SAVED_TAB = readFileSync(join(__dirname, '../../src/ui/savedTab.js'), 'utf8');
 
-/** @media print { ... } のうち最初のブロックの中身を返す */
+/** @media print { ... } の全ブロックの中身を結合して返す (内側の {} も含む) */
 function extractPrintMedia(css) {
-  const start = css.indexOf('@media print');
-  if (start < 0) return '';
-  let depth = 0;
-  let inBlock = false;
-  let body = '';
-  for (let i = css.indexOf('{', start); i < css.length; i++) {
-    const c = css[i];
-    if (c === '{') { depth++; inBlock = true; }
-    else if (c === '}') {
-      depth--;
-      if (depth === 0 && inBlock) return body;
+  let result = '';
+  let pos = 0;
+  while (true) {
+    const start = css.indexOf('@media print', pos);
+    if (start < 0) break;
+    let depth = 0;
+    let inBlock = false;
+    for (let i = css.indexOf('{', start); i < css.length; i++) {
+      const c = css[i];
+      if (c === '{') {
+        depth++;
+        inBlock = true;
+        if (depth > 1) result += c; // 内側の { は結果に含める
+      } else if (c === '}') {
+        depth--;
+        if (depth === 0 && inBlock) { pos = i + 1; break; }
+        else if (depth >= 1) result += c; // 内側の } は結果に含める
+      } else if (inBlock && depth >= 1) {
+        result += c;
+      }
     }
-    else if (inBlock && depth >= 1) body += c;
+    if (!inBlock) break;
   }
-  return body;
+  return result;
 }
 
 describe('print badge regression guard', () => {

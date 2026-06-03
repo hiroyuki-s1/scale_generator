@@ -63,7 +63,7 @@ const STRING_AREA_H   = FRETBOARD_HEIGHT - 2 * STRING_PADDING;
 
 /**
  * UI モジュール (fretboardSvg / savedTab / main) が参照するエントリポイント。
- * 短いキー名は歴史的な互換性のため維持 (W/H/ML/MR/MT/MB/F0/F1/CR/SP/FW/SH...)。
+ * 短いルート名は歴史的な互換性のため維持 (W/H/ML/MR/MT/MB/F0/F1/CR/SP/FW/SH...)。
  */
 export const SVG = {
   W:   SVG_WIDTH,

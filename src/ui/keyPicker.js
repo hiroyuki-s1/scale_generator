@@ -1,6 +1,6 @@
 import { NOTES } from '../domain/constants.js';
 
-/** キー選択モーダル — 全12キー */
+/** ルート選択モーダル — 全12ルート */
 export function initKeyPicker(store) {
   const triggerBtn = document.getElementById('keyPickerBtn');
   const modal      = document.getElementById('keyPickerModal');

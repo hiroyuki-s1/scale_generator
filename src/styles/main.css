@@ -247,7 +247,7 @@ body {
 }
 .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
 
-/* キー選択ボタン */
+/* ルート選択ボタン */
 .key-picker-btn {
   padding: 9px 14px; border: 1.5px solid var(--border);
   border-radius: 8px; background: var(--surface);
@@ -268,7 +268,7 @@ body {
 .scale-picker-btn:hover { border-color: var(--accent); }
 .scale-picker-btn-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ── 共通ピッカーモーダルヘッダー (キー / スケール / マスク) ── */
+/* ── 共通ピッカーモーダルヘッダー (ルート / スケール / マスク) ── */
 .scale-modal-close {
   background: none; border: none; color: #7070a0;
   font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1;
@@ -280,8 +280,8 @@ body {
 }
 .picker-modal-title { font-size: 16px; font-weight: 700; color: #e8e4dc; }
 
-/* ── キー選択グリッド ── */
-/* ── キー / 度数選択 — 四角グリッドボタン ── */
+/* ── ルート選択グリッド ── */
+/* ── ルート / 度数選択 — 四角グリッドボタン ── */
 .picker-modal-large { width: min(560px, 96vw); }
 .deg-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
@@ -1287,7 +1287,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* ── Editor: 縦積み ── */
   .editor { flex-direction: column; overflow: visible; height: auto; }
 
-  /* スケール（左）+ キー（右）グリッド */
+  /* スケール（左）+ ルート（右）グリッド */
   .editor-sidebar {
     width: 100%; border-right: none; border-bottom: 1px solid var(--border);
     padding: 10px 12px 12px; overflow-y: visible;

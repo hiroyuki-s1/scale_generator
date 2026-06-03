@@ -8,7 +8,7 @@
 - ミラー (GitHub Pages): https://hiroyuki-s1.github.io/scale_generator/
 
 Jazz tension表記（R, b9, 9, m3, M3, 11, #11, P5, b13, 13, m7, M7）で度数を表示。
-キー × スケール/コードを指板にプロット → 複数登録 → A4印刷。
+ルート × スケール/コードを指板にプロット → 複数登録 → A4印刷。
 
 ## Stack
 

@@ -8,7 +8,7 @@
 ギタリストがスケール練習用に**指板図を印刷**する。
 
 主要ユースケース:
-1. キー（ルート）とスケールを選ぶ
+1. ルート（ルート）とスケールを選ぶ
 2. 指板に音をプロット→確認
 3. 必要なら複数スケールを保存（タイトル付き）
 4. A4 1枚に N×M グリッドで一括印刷
@@ -147,7 +147,7 @@ layout = { orientation: 'landscape', cols: 2, rows: 3 }
 activeTab = 'edit'                // 'edit' | 'saved'
 ```
 
-**永続化**: `editState`, `savedScales`, `layout` を `localStorage` キー `sg.v1.*` で保存。
+**永続化**: `editState`, `savedScales`, `layout` を `localStorage` ルート `sg.v1.*` で保存。
 state変更ごと（debounce 200ms）に保存。初回ロードで復元。
 
 ---
@@ -175,7 +175,7 @@ scale_generator/
 │   │   ├─ persist.js            # localStorage 読み書き (debounce保存)
 │   │   └─ snapshot.js           # edit スナップショット複製ヘルパー
 │   ├─ ui/                       # 各UIモジュール (DOM操作)
-│   │   ├─ keyPicker.js          # キー選択 (ダークモーダル)
+│   │   ├─ keyPicker.js          # ルート選択 (ダークモーダル)
 │   │   ├─ scalePicker.js        # スケール/コード選択
 │   │   ├─ degreePicker.js       # 度数トグル
 │   │   ├─ instrumentPicker.js   # ギター/ベース切替

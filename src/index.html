@@ -14,7 +14,7 @@
   <title>神スケールトレーナー｜ギター・ベース指板スケール可視化＆印刷ツール</title>
 
   <!-- ── SEO ─────────────────────────────────────────────────────── -->
-  <meta name="description" content="ギター/ベースの指板上にスケール・コードを可視化して印刷できる無料Webアプリ。Jazz tension表記でキー×スケール/コードを指板にプロットし、複数登録してA4印刷。CAGED・モード・ペンタトニックの練習に。">
+  <meta name="description" content="ギター/ベースの指板上にスケール・コードを可視化して印刷できる無料Webアプリ。Jルート×スケール/コードを指板にプロットし、複数登録してA4印刷。CAGED・モード・ペンタトニックの練習に。">
   <meta name="keywords" content="ギター,ベース,スケール,コード,指板,フレットボード,可視化,印刷,CAGED,モード,ペンタトニック,ジャズ,音楽理論,スケール練習">
   <link rel="canonical" href="https://kami-scale-trainer.org/">
 
@@ -23,7 +23,7 @@
   <meta property="og:site_name" content="神スケールトレーナー">
   <meta property="og:url" content="https://kami-scale-trainer.org/">
   <meta property="og:title" content="神スケールトレーナー｜ギター・ベース指板スケール可視化＆印刷ツール">
-  <meta property="og:description" content="ギター/ベースの指板にスケール・コードを可視化して印刷。Jazz tension表記でキー×スケールをプロットし、複数登録してA4印刷できる無料Webアプリ。">
+  <meta property="og:description" content="ギター/ベースの指板にスケール・コードを可視化して印刷。ルート×スケールをプロットし、複数登録してA4印刷できる無料Webアプリ。">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:image" content="https://kami-scale-trainer.org/ogp.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -147,7 +147,7 @@
   <!-- ── スケールエディター ──────────────────────────────────────────── -->
   <div class="editor">
 
-    <!-- コンパクトサイドバー: キー + スケール/コード -->
+    <!-- コンパクトサイドバー: ルート + スケール/コード -->
     <aside class="editor-sidebar">
 
       <!-- 楽器選択 -->
@@ -159,9 +159,9 @@
         </div>
       </div>
 
-      <!-- キー -->
+      <!-- ルート -->
       <div class="ctrl-group">
-        <div class="ctrl-label">キー</div>
+        <div class="ctrl-label">ルート</div>
         <button class="key-picker-btn" id="keyPickerBtn">A ▾</button>
       </div>
 
@@ -273,11 +273,11 @@
   </div>
 </div>
 
-<!-- ── キー選択モーダル ────────────────────────────────────────────── -->
+<!-- ── ルート選択モーダル ────────────────────────────────────────────── -->
 <div class="modal-overlay" id="keyPickerModal" role="dialog" aria-modal="true" aria-labelledby="keyPickerTitle">
   <div class="instr-modal-box picker-modal-large">
     <div class="picker-modal-header">
-      <span class="picker-modal-title" id="keyPickerTitle">キーを選択</span>
+      <span class="picker-modal-title" id="keyPickerTitle">ルートを選択</span>
       <button class="scale-modal-close" id="keyPickerClose" aria-label="閉じる">✕</button>
     </div>
     <div class="deg-grid" id="keyPickerList"></div>

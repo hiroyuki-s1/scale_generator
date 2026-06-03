@@ -1,7 +1,7 @@
 # 神スケールトレーナー (Kami Scale Trainer) — Claude Code Instructions
 
 ギター/ベース指板上にスケール・コードを可視化し、A4印刷するWebアプリ。
-Jazz tension 表記で度数を表示し、キー × スケール/コードを指板にプロット →
+Jazz tension 表記で度数を表示し、ルート × スケール/コードを指板にプロット →
 複数登録 → 印刷、という流れ。
 
 - 本番 (カスタムドメイン): https://kami-scale-trainer.org/
@@ -80,7 +80,7 @@ main.js → orchestrates all
 
 - `src/config/fretboardGeometry.js` — 指板 SVG ジオメトリの一次ノブ
   (`FRET_START/FRET_END`, `FRET_WIDTH`, `FRETBOARD_HEIGHT`, `DOT_RADIUS`, マージン等)。
-  下部の `SVG` オブジェクト (短縮キー W/H/ML/FW/SH…) は**これらから自動計算**され、
+  下部の `SVG` オブジェクト (短縮ルート W/H/ML/FW/SH…) は**これらから自動計算**され、
   フレット線・ドット・viewBox・マスク矩形すべてが追従する。
   `constants.js` は互換のため `FRET_START/FRET_END/SVG` を re-export しているだけ。
   ※フォントサイズは固定値でスケールしないので、FRET_WIDTH を大きく変えたら

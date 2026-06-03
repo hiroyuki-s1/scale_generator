@@ -120,18 +120,24 @@ main.js → orchestrates all
 - **印刷の改ページ (iOS Safari 最重要・何度もハマった)**: 複数ページ印刷は
   `beforeprint` で `cols×rows` 枚ずつ `.print-page-group` (block div) にまとめ、
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
-  改ページは **`.print-page-group` への `page-break-after: always`** で行う。
-  iOS Safari で動かなかった失敗パターン (絶対に戻さない):
+  改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
+  `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
+  各グループは **固定 height + `overflow: hidden` + `break-inside: avoid`** で
+  1ページに収める。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
   - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
   - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
   - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
   - ❌ グループ高さ = ページ高さ「ぴったり」→ 丸め誤差で次ページに押し出され空白。
-    **[src/print/printCss.js](src/print/printCss.js) の `SAFETY_MM`(=6) でページ高さより
-    小さくする**。`.saved-card` の height で行高を決め、`grid-template-rows` は使わない
-    (ページぴったりの行高 + page-break が iOS で空白ページを生む)。
-  - `:last-child` は `page-break-after: auto` で末尾の余白ページを防ぐ。
+    [src/print/printCss.js](src/print/printCss.js) の `SAFETY_MM`(=12) でページ高さより
+    小さくする。`.saved-card` の height で行高を決め、`grid-template-rows` は使わない。
+  - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
+    作る既知バグ (これが「2P目空白」の主因だった)。`page-break-after` は一切使わず、
+    **隣接兄弟セレクタの `page-break-before`** で2番目以降のグループ前だけに改ページを入れる
+    (最後のグループの後ろには改ページが入らない)。
+  - `:last-child` は `height: auto` で端数ページの余白を防ぐ。
   - 検証: `npm run test:e2e:measure` で各グループ実高さ<ページ高さを実測。
-    `__tests__/print/printCss.matrix.test.js` が「グループ総高さ<ページ高さ」を不変条件で守る。
+    `__tests__/print/printCss.matrix.test.js` が「グループ総高さ<ページ高さ」
+    「page-break-after を使わない」「隣接兄弟 page-break-before」を不変条件で守る。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

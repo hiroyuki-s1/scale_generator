@@ -86,18 +86,19 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(groupH).toBeLessThan(PAGE_H[orientation]);
       });
 
-      // ── 改ページ (.print-page-group block + page-break-after:always) ──────
-      it(`[${label}] .print-page-group に page-break-after:always が存在する`, () => {
-        expect(pgBlock).toMatch(/page-break-after:\s*always/);
+      // ── 改ページ (隣接兄弟 page-break-before — Safari 空白ページバグ回避) ──
+      it(`[${label}] 隣接兄弟 .print-page-group+.print-page-group に page-break-before:always`, () => {
+        expect(layout).toMatch(/\.print-page-group\s*\+\s*\.print-page-group\s*\{[^}]*page-break-before:\s*always/);
       });
 
-      it(`[${label}] .print-page-group は display:block (grid でない)`, () => {
+      it(`[${label}] .print-page-group 単体に page-break-after を使わない`, () => {
+        expect(pgBlock).not.toMatch(/page-break-after/);
+      });
+
+      it(`[${label}] .print-page-group は display:block + overflow:hidden (grid でない)`, () => {
         expect(pgBlock).toMatch(/display:\s*block/);
         expect(pgBlock).not.toMatch(/display:\s*grid/);
-      });
-
-      it(`[${label}] .print-page-group:last-child が page-break-after:auto (末尾空白ページ防止)`, () => {
-        expect(layout).toMatch(/\.print-page-group:last-child[^{]*\{[^}]*page-break-after:\s*auto/);
+        expect(pgBlock).toMatch(/overflow:\s*hidden/);
       });
 
       it(`[${label}] .print-page-inner に grid-template-columns が存在する`, () => {

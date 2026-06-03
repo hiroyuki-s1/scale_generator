@@ -448,16 +448,15 @@ async function testPrintDomStructure(page, device) {
     const inners = document.querySelectorAll('.print-page-inner');
     const panelSaved = document.getElementById('panelSaved');
 
-    const lastGroup = groups[groups.length - 1];
-    const lastGroupBreak = lastGroup ? getComputedStyle(lastGroup).pageBreakAfter : 'N/A';
-
     return {
       totalCards: cards.length,
       groupCount: groups.length,
       innerCount: inners.length,
       panelSavedDisplay: panelSaved ? getComputedStyle(panelSaved).display : 'N/A',
       savedGridDisplay: getComputedStyle(document.getElementById('savedGrid')).display,
-      lastGroupPageBreakAfter: lastGroupBreak,
+      // 改ページは2番目以降のグループの page-break-before で行う (Safari 空白ページバグ回避)
+      group1PageBreakBefore: groups[0] ? getComputedStyle(groups[0]).pageBreakBefore : 'N/A',
+      group2PageBreakBefore: groups[1] ? getComputedStyle(groups[1]).pageBreakBefore : 'N/A',
       group1PageBreakAfter: groups[0] ? getComputedStyle(groups[0]).pageBreakAfter : 'N/A',
     };
   });
@@ -478,13 +477,20 @@ async function testPrintDomStructure(page, device) {
     ? pass(`グループ数: ${printResult.groupCount} (期待: ${expectedGroups})`)
     : fail(`グループ数: ${printResult.groupCount} (期待: ${expectedGroups})`);
 
-  printResult.group1PageBreakAfter === 'always'
-    ? pass(`グループ1 page-break-after: always ✓`)
-    : fail(`グループ1 page-break-after: ${printResult.group1PageBreakAfter} (alwaysであるべき)`);
+  // グループ1の前には改ページなし (1ページ目に出る)
+  printResult.group1PageBreakBefore !== 'always'
+    ? pass(`グループ1 page-break-before: ${printResult.group1PageBreakBefore} (改ページなし ✓)`)
+    : fail(`グループ1 に余分な改ページがある: ${printResult.group1PageBreakBefore}`);
 
-  printResult.lastGroupPageBreakAfter === 'auto'
-    ? pass(`最終グループ page-break-after: auto ✓ (末尾空白ページ防止)`)
-    : fail(`最終グループ page-break-after: ${printResult.lastGroupPageBreakAfter} (autoであるべき)`);
+  // グループ2の前で改ページ (隣接兄弟 page-break-before)
+  printResult.group2PageBreakBefore === 'always'
+    ? pass(`グループ2 page-break-before: always ✓ (2ページ目の先頭で改ページ)`)
+    : fail(`グループ2 page-break-before: ${printResult.group2PageBreakBefore} (alwaysであるべき)`);
+
+  // page-break-after は一切使わない (Safari の最終ページ余分空白バグ回避)
+  printResult.group1PageBreakAfter !== 'always'
+    ? pass(`グループ1 page-break-after を使わない ✓ (Safari 空白ページバグ回避)`)
+    : fail(`グループ1 に page-break-after:always がある (Safari で空白ページの原因)`);
 }
 
 async function testMobileZoom(page, device) {

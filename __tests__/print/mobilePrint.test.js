@@ -69,24 +69,31 @@ function extractAllMobileBlocks(css) {
 const PRINT_CSS_STATIC = extractAllPrintBlocks(CSS);
 const MOBILE_CSS_ALL   = extractAllMobileBlocks(CSS);
 
-// ── A. static CSS: .print-page-group が block + page-break-after:always ────
+// ── A. static CSS: .print-page-group が block + overflow:hidden ────────────
 
 describe('A: .print-page-group — static CSS (main.css @media print)', () => {
   it('display: block !important が存在する', () => {
-    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{]*\{[^}]*display:\s*block\s*!important/);
+    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{+]*\{[^}]*display:\s*block\s*!important/);
   });
 
-  it('page-break-after: always !important が存在する (全ブラウザ対応)', () => {
-    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{]*\{[^}]*page-break-after:\s*always\s*!important/);
+  it('overflow: hidden !important が存在する (ページ高さ超過分を切る)', () => {
+    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{+]*\{[^}]*overflow:\s*hidden\s*!important/);
   });
 
-  it('break-after: page !important が存在する (モダンブラウザ対応)', () => {
-    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{]*\{[^}]*break-after:\s*page\s*!important/);
+  it('break-inside: avoid !important が存在する (グループ内で分割しない)', () => {
+    expect(PRINT_CSS_STATIC).toMatch(/\.print-page-group[^{+]*\{[^}]*break-inside:\s*avoid\s*!important/);
   });
 
-  it('.print-page-group に display:grid が含まれない (block div のみ)', () => {
+  it('.print-page-group 単体に page-break-after を使わない (Safari 空白ページバグ回避)', () => {
     const pgBlock = PRINT_CSS_STATIC.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(pgBlock).not.toMatch(/page-break-after/);
     expect(pgBlock).not.toMatch(/display:\s*grid/);
+  });
+
+  it('隣接兄弟 .print-page-group + .print-page-group に page-break-before:always', () => {
+    expect(PRINT_CSS_STATIC).toMatch(
+      /\.print-page-group\s*\+\s*\.print-page-group[^{]*\{[^}]*page-break-before:\s*always\s*!important/
+    );
   });
 });
 
@@ -97,12 +104,18 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
     for (const orientation of ['landscape', 'portrait']) {
       const label = `${orientation} ${cols}×${rows}`;
 
-      it(`[${label}] .print-page-group: display:block + page-break-after:always`, () => {
+      it(`[${label}] .print-page-group: display:block + overflow:hidden, page-break-after なし`, () => {
         const { layout: css } = buildPrintCss({ orientation, cols, rows });
         const pgBlock = css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
         expect(pgBlock).toMatch(/display:\s*block/);
-        expect(pgBlock).toMatch(/page-break-after:\s*always/);
+        expect(pgBlock).toMatch(/overflow:\s*hidden/);
+        expect(pgBlock).not.toMatch(/page-break-after/);
         expect(pgBlock).not.toMatch(/display:\s*grid/);
+      });
+
+      it(`[${label}] 隣接兄弟に page-break-before:always`, () => {
+        const { layout: css } = buildPrintCss({ orientation, cols, rows });
+        expect(css).toMatch(/\.print-page-group\s*\+\s*\.print-page-group\s*\{[^}]*page-break-before:\s*always/);
       });
 
       it(`[${label}] .print-page-inner: grid-template-columns repeat(${cols})`, () => {
@@ -115,25 +128,19 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
   }
 });
 
-// ── C. .print-page-group:last-child が page-break をリセット ───────────────
+// ── C. .print-page-group:last-child が高さ自由 (端数ページの余白防止) ───────
 
-describe('C: .print-page-group:last-child — 末尾空白ページ防止', () => {
-  it('static CSS: :last-child に page-break-after:auto !important が存在する', () => {
+describe('C: .print-page-group:last-child — 端数ページの余白防止', () => {
+  it('static CSS: :last-child に height:auto !important が存在する', () => {
     expect(PRINT_CSS_STATIC).toMatch(
-      /\.print-page-group:last-child[^{]*\{[^}]*page-break-after:\s*auto\s*!important/
-    );
-  });
-
-  it('static CSS: :last-child に break-after:auto !important が存在する', () => {
-    expect(PRINT_CSS_STATIC).toMatch(
-      /\.print-page-group:last-child[^{]*\{[^}]*break-after:\s*auto\s*!important/
+      /\.print-page-group:last-child[^{]*\{[^}]*height:\s*auto\s*!important/
     );
   });
 
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`dynamic [${cols}×${rows}]: :last-child に page-break-after:auto が生成される`, () => {
+    it(`dynamic [${cols}×${rows}]: :last-child に height:auto が生成される`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
-      expect(css).toMatch(/\.print-page-group:last-child[^{]*\{[^}]*page-break-after:\s*auto/);
+      expect(css).toMatch(/\.print-page-group:last-child[^{]*\{[^}]*height:\s*auto/);
     });
   }
 });

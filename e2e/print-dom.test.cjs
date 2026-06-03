@@ -76,8 +76,9 @@ async function runTest() {
         return {
           index: i,
           outerDisplay: s.display,
+          pageBreakBefore: s.pageBreakBefore,
           pageBreakAfter: s.pageBreakAfter,
-          breakAfter: s.breakAfter,
+          overflow: s.overflow,
           cardCount: g.querySelectorAll('.saved-card').length,
           innerDisplay: innerS?.display,
         };
@@ -92,7 +93,7 @@ async function runTest() {
   console.log(`.print-page-inner数: ${check.innerCount}`, check.innerCount === 2 ? '✅' : `❌ (期待2)`);
   check.groupDetails.forEach(g => {
     const isLast = g.index === check.groupCount - 1;
-    console.log(`  group${g.index+1}: display=${g.outerDisplay} pageBreakAfter=${g.pageBreakAfter} breakAfter=${g.breakAfter} cards=${g.cardCount} innerDisplay=${g.innerDisplay}${isLast?' [last-child]':''}`);
+    console.log(`  group${g.index+1}: display=${g.outerDisplay} pageBreakBefore=${g.pageBreakBefore} pageBreakAfter=${g.pageBreakAfter} overflow=${g.overflow} cards=${g.cardCount} innerDisplay=${g.innerDisplay}${isLast?' [last-child]':''}`);
   });
 
   const ok = check.panelSavedDisplay === 'block'

@@ -1185,13 +1185,15 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    page-break-after: always !important;
-    break-after: page !important;
+  }
+  /* 改ページは2番目以降のグループの「前」で (Safari の page-break-after
+     最終ページ余分空白バグを回避)。height は printCss.js が動的に注入。 */
+  .print-page-group + .print-page-group {
+    break-before: page !important;
+    page-break-before: always !important;
   }
   .print-page-group:last-child {
     height: auto !important;
-    page-break-after: auto !important;
-    break-after: auto !important;
   }
 
   /* スケール名は指板の上にシンプルに印字 */

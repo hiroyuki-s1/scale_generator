@@ -68,14 +68,18 @@ export function buildPrintCss({ orientation, cols, rows }) {
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    page-break-after: always !important;
-    break-after: page !important;
   }
-  /* 最終グループは高さ自由・改ページなし (末尾の空白ページ防止) */
+  /* 改ページは「2番目以降のグループの前」で行う (隣接兄弟セレクタ)。
+     page-break-after:always は Safari で最終ページの後に余分な空白ページを
+     作る既知バグがあるため使わない。page-break-before なら最後のグループの
+     後ろに改ページが入らず、空白ページが出ない。 */
+  .print-page-group + .print-page-group {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+  /* 最終グループは高さ自由 (端数ページが固定高さで余白を作らないように) */
   .print-page-group:last-child {
     height: auto !important;
-    page-break-after: auto !important;
-    break-after: auto !important;
   }
   /* .print-page-inner = 実際のグリッドレイアウト
      grid-template-rows は指定しない:

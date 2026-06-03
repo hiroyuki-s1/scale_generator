@@ -71,7 +71,7 @@ body {
   font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   flex-shrink: 0; letter-spacing: .3px; margin-right: 4px;
 }
-/* アルファ版ピル — オレンジで目立たせる */
+/* ベータ版ピル — オレンジで目立たせる */
 .alpha-pill {
   display: inline-block;
   background: var(--accent);
@@ -438,7 +438,7 @@ body {
 .author-link:hover { opacity: 1; color: var(--text); }
 .author-link-icon { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; }
 
-/* ── 初回起動時アルファ版告知 (画面中央表示) ──────────────────── */
+/* ── 初回起動時ベータ版告知 (画面中央表示) ──────────────────── */
 .alpha-notice {
   position: fixed;
   z-index: 250;

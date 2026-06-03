@@ -37,9 +37,9 @@ if (buildVerEl) {
   buildVerEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
 }
 
-// ── 初回起動時のアルファ版告知 ─────────────────────────────────────────
+// ── 初回起動時のベータ版告知 ─────────────────────────────────────────
 // 「了解しました」で恒久的に非表示。localStorage で一度きりに抑制。
-// バージョン番号を保存するので、アルファ→ベータなど大きく区切るときに
+// バージョン番号を保存するので、ベータ→ベータなど大きく区切るときに
 // ルートを上げれば再告知できる。
 const ALPHA_NOTICE_KEY = 'sg.alphaNoticeDismissed.v1';
 const alphaNoticeEl = document.getElementById('alphaNotice');
@@ -564,7 +564,7 @@ window.addEventListener('afterprint', () => {
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (!confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) return;
-  // アルファ版告知の "了解しました" フラグはリセットで消さない
+  // ベータ版告知の "了解しました" フラグはリセットで消さない
   // (ユーザーが何度も告知を見させられないようにするため)。
   // 他のルートは将来増える可能性があるので、保持したいものを退避して
   // clear → 復元、という方式にしておく。

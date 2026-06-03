@@ -83,20 +83,18 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
       // ── フォントサイズ clamp ─────────────────────────────────────────
       it(`[${label}] titlePt が clamp 範囲 [5.5, 10] 内`, () => {
         const m = layout.match(/\.fb-title[^{]*\{[^}]*font-size:\s*([\d.]+)pt/);
-        if (m) {
-          const pt = parseFloat(m[1]);
-          expect(pt).toBeGreaterThanOrEqual(5.5);
-          expect(pt).toBeLessThanOrEqual(10);
-        }
+        expect(m).not.toBeNull();
+        const pt = parseFloat(m[1]);
+        expect(pt).toBeGreaterThanOrEqual(5.5);
+        expect(pt).toBeLessThanOrEqual(10);
       });
 
       it(`[${label}] legPt が clamp 範囲 [5, 8] 内`, () => {
         const m = layout.match(/\.legend-chip[^{]*\{[^}]*font-size:\s*([\d.]+)pt/);
-        if (m) {
-          const pt = parseFloat(m[1]);
-          expect(pt).toBeGreaterThanOrEqual(5);
-          expect(pt).toBeLessThanOrEqual(8);
-        }
+        expect(m).not.toBeNull();
+        const pt = parseFloat(m[1]);
+        expect(pt).toBeGreaterThanOrEqual(5);
+        expect(pt).toBeLessThanOrEqual(8);
       });
 
       // ── 構造的整合性 ─────────────────────────────────────────────────

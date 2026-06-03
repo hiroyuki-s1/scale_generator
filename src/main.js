@@ -532,37 +532,7 @@ function syncPrintDialog() {
 // ── 印刷前後処理 ──────────────────────────────────────────────────────
 const printOriginalViewBox = new WeakMap();
 let printTabWasHidden = false; // beforeprint でパネルを切り替えたか記憶
-window.addEventListener('beforeprint', () => {
-  // エディタータブ表示中でも登録スケールを印刷できるよう一時的にパネルを切り替える
-  if (panelSaved.classList.contains('hidden')) {
-    panelSaved.classList.remove('hidden');
-    panelEditor.classList.add('hidden');
-    printTabWasHidden = true;
-  }
-  const grid = document.getElementById('savedGrid');
-  if (grid) {
-    const { cols, rows } = store.get().layout;
-    wrapIntoPageGroups(grid, cols, rows);
-  }
-  store.get().saved.forEach(snap => {
-    const svg = document.getElementById('sv' + snap.id);
-    if (!svg) return;
-    const vb = maskViewBox(snap.mask);
-    if (!vb) return;
-    // 既に元の値を保存済み (afterprint 未発火で再度 beforeprint が来た場合) は
-    // 上書きしない。上書きするとマスク済み viewBox を「元の値」として保存してしまう。
-    if (!printOriginalViewBox.has(svg)) {
-      printOriginalViewBox.set(svg, svg.getAttribute('viewBox'));
-    }
-    svg.setAttribute('viewBox', vb);
-    setMaskOverlayVisible(svg, false);
-  });
-});
-window.addEventListener('afterprint', () => {
-  // 印刷ダイアログが閉じたタイミングで印刷モーダルも閉じる。
-  // click ハンドラ内で閉じると iOS で user-activation を消費して
-  // window.print() が "自動印刷" 扱いになるため、ここに移動している。
-  printModal.classList.remove('show');
+function restorePrintState() {
   if (printTabWasHidden) {
     panelSaved.classList.add('hidden');
     panelEditor.classList.remove('hidden');
@@ -580,6 +550,45 @@ window.addEventListener('afterprint', () => {
     }
     setMaskOverlayVisible(svg, true);
   });
+}
+
+window.addEventListener('beforeprint', () => {
+  try {
+    // エディタータブ表示中でも登録スケールを印刷できるよう一時的にパネルを切り替える
+    if (panelSaved.classList.contains('hidden')) {
+      panelSaved.classList.remove('hidden');
+      panelEditor.classList.add('hidden');
+      printTabWasHidden = true;
+    }
+    const grid = document.getElementById('savedGrid');
+    if (grid) {
+      const { cols, rows } = store.get().layout;
+      wrapIntoPageGroups(grid, cols, rows);
+    }
+    store.get().saved.forEach(snap => {
+      const svg = document.getElementById('sv' + snap.id);
+      if (!svg) return;
+      const vb = maskViewBox(snap.mask);
+      if (!vb) return;
+      // 既に元の値を保存済み (afterprint 未発火で再度 beforeprint が来た場合) は
+      // 上書きしない。上書きするとマスク済み viewBox を「元の値」として保存してしまう。
+      if (!printOriginalViewBox.has(svg)) {
+        printOriginalViewBox.set(svg, svg.getAttribute('viewBox'));
+      }
+      svg.setAttribute('viewBox', vb);
+      setMaskOverlayVisible(svg, false);
+    });
+  } catch (err) {
+    restorePrintState();
+    throw err;
+  }
+});
+window.addEventListener('afterprint', () => {
+  // 印刷ダイアログが閉じたタイミングで印刷モーダルも閉じる。
+  // click ハンドラ内で閉じると iOS で user-activation を消費して
+  // window.print() が "自動印刷" 扱いになるため、ここに移動している。
+  printModal.classList.remove('show');
+  restorePrintState();
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {

@@ -26,12 +26,15 @@ export function calcPageGroupSizes(total, perPage) {
 
 /**
  * #savedGrid 直下の .saved-card を cols×rows 枚ずつ .print-page-group にまとめる。
+ * iOS で afterprint が発火しない場合など二重呼び出しに備え、先に unwrap してから実行する。
  * @param {Element} grid
- * @param {number}  cols
- * @param {number}  rows
+ * @param {number}  cols - >= 1 (persist.js の sanitizeLayout で保証)
+ * @param {number}  rows - >= 1 (persist.js の sanitizeLayout で保証)
  */
 export function wrapIntoPageGroups(grid, cols, rows) {
+  unwrapPageGroups(grid); // 二重呼び出し対策: 既存グループを先に解体して冪等性を確保
   const cards = [...grid.querySelectorAll(':scope > .saved-card')];
+  if (cards.length === 0) return;
   const perPage = cols * rows;
   const sizes = calcPageGroupSizes(cards.length, perPage);
   let idx = 0;

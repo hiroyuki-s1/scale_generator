@@ -530,7 +530,14 @@ function syncPrintDialog() {
 
 // ── 印刷前後処理 ──────────────────────────────────────────────────────
 const printOriginalViewBox = new WeakMap();
+let printTabWasHidden = false; // beforeprint でパネルを切り替えたか記憶
 window.addEventListener('beforeprint', () => {
+  // エディタータブ表示中でも登録スケールを印刷できるよう一時的にパネルを切り替える
+  if (panelSaved.classList.contains('hidden')) {
+    panelSaved.classList.remove('hidden');
+    panelEditor.classList.add('hidden');
+    printTabWasHidden = true;
+  }
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
     if (!svg) return;
@@ -550,6 +557,11 @@ window.addEventListener('afterprint', () => {
   // click ハンドラ内で閉じると iOS で user-activation を消費して
   // window.print() が "自動印刷" 扱いになるため、ここに移動している。
   printModal.classList.remove('show');
+  if (printTabWasHidden) {
+    panelSaved.classList.add('hidden');
+    panelEditor.classList.remove('hidden');
+    printTabWasHidden = false;
+  }
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
     if (!svg) return;

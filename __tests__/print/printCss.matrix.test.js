@@ -24,9 +24,10 @@ const ORIENTATIONS = ['landscape', 'portrait'];
 const PAGE_H = { landscape: 190, portrait: 277 };
 const GAP_MM = 3;
 
-// grid-template-rows の mm 値を CSS から抽出するヘルパー
+// .saved-card の height mm 値を CSS から抽出するヘルパー
+// (iOS Safari 空白ページバグ対策で grid-template-rows から .saved-card height に変更)
 function extractCellHmm(css) {
-  const m = css.match(/grid-template-rows:\s*repeat\(\d+,\s*([\d.]+)mm\)/);
+  const m = css.match(/\.saved-card\s*\{[^}]*height:\s*([\d.]+)mm/);
   return m ? parseFloat(m[1]) : null;
 }
 
@@ -63,10 +64,9 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         );
       });
 
-      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, Xmm)`, () => {
-        expect(innerBlock).toMatch(
-          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*[\\d.]+mm\\)`)
-        );
+      it(`[${label}] .saved-card に cellH mm の height が生成される (iOS Safari対応)`, () => {
+        // grid-template-rows ではなく .saved-card height でカード高さを制御する
+        expect(layout).toMatch(/\.saved-card\s*\{[^}]*height:\s*[\d.]+mm/);
       });
 
       // ── cellH 計算の正確性 ──────────────────────────────────────────

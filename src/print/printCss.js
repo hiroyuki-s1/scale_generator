@@ -55,12 +55,19 @@ export function buildPrintCss({ orientation, cols, rows }) {
     page-break-after: auto !important;
     break-after: auto !important;
   }
-  /* .print-page-inner = 実際のグリッドレイアウト */
+  /* .print-page-inner = 実際のグリッドレイアウト
+     grid-template-rows は指定しない:
+     ページ高さぴったりの行高 + page-break-after:always の組み合わせが
+     iOS Safari で空白ページを生成するバグの原因のため。
+     代わりに .saved-card に高さを指定してレイアウトを制御する。 */
   .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, 1fr) !important;
-    grid-template-rows: repeat(${rows}, ${cellHmm}mm) !important;
     gap: ${gapMm}mm !important;
+  }
+  .saved-card {
+    height: ${cellHmm}mm !important;
+    overflow: hidden !important;
   }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }

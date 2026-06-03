@@ -118,16 +118,16 @@ describe('calcMaskViewBox — 幾何学的正確性', () => {
 
 // ── layout × orientation の cellH 検証 ──────────────────────────────────
 
-describe('buildPrintCss — cellH が正値かつページ高さ以内', () => {
+describe('buildPrintCss — cellH が正値かつページ高さ以内 (.saved-card height で検証)', () => {
+  // iOS Safari 空白ページバグ対策: grid-template-rows ではなく .saved-card height を使用
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {
       it(`${orientation} ${cols}×${rows}: cellH > 0 かつ ≤ pageH`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
-        const m = layout.match(/grid-template-rows:\s*repeat\(\d+,\s*([\d.]+)mm\)/);
+        const m = layout.match(/\.saved-card\s*\{[^}]*height:\s*([\d.]+)mm/);
         expect(m).not.toBeNull();
         const cellH = parseFloat(m[1]);
         expect(cellH).toBeGreaterThan(0);
-        // toFixed(1) による丸め誤差 (最大 0.05mm×rows) を考慮して精度を緩める
         const actual = cellH * rows + GAP_MM * (rows - 1);
         expect(Math.abs(actual - PAGE_H[orientation])).toBeLessThan(0.5);
       });

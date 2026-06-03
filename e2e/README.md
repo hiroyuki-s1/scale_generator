@@ -11,6 +11,7 @@ npm run dev
 # 2. E2E テストを実行
 npm run test:e2e          # 全機能テスト (PC/Android/iOS)
 npm run test:e2e:print    # 印刷DOM構造の詳細検証
+npm run test:e2e:measure  # 印刷グループの実高さ計測 (空白ページ診断)
 ```
 
 > dev server (http://localhost:5173) が起動している必要があります。
@@ -33,6 +34,9 @@ npm run test:e2e:print    # 印刷DOM構造の詳細検証
 - `helpers.cjs` — デバイス定義・共通セットアップ (dialog 自動承認、アルファ告知スキップ)
 - `all-features.test.cjs` — 21項目の全機能テスト (楽器選択〜印刷〜削除)
 - `print-dom.test.cjs` — 印刷時の改ページ DOM 構造を詳細検証
+- `measure-print.cjs` — 各ページグループの**実高さを mm 換算して計測**。
+  「グループ高さ = ページ高さぴったり」だと iOS Safari で空白ページが出るため、
+  `printCss.js` の `SAFETY_MM`(=6) でページ高さより小さくしていることを実測で確認する。
 
 ## テスト項目 (all-features)
 

@@ -27,7 +27,14 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277;
   const gapMm  = 3;
-  const cellH  = (pageH - gapMm * (rows - 1)) / rows;
+  // ── 安全マージン (CRITICAL) ──
+  // ページグループの総高さがページ可能高さと「ぴったり一致」すると、
+  // ブラウザの印刷はサブピクセルの丸めで「わずかに超過」と誤判定し、
+  // グループを次ページへ押し出して空白ページを生む (特に iOS Safari)。
+  // グループ高さ = cellH×rows + gap×(rows-1) を pageH より SAFETY_MM 分
+  // 確実に小さくして、空白ページを防ぐ。
+  const SAFETY_MM = 6;
+  const cellH  = (pageH - SAFETY_MM - gapMm * (rows - 1)) / rows;
 
   const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
   const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);

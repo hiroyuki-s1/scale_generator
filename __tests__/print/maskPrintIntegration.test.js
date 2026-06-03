@@ -54,6 +54,7 @@ const MASK_PATTERNS = [
 const ORIENTATIONS = ['landscape', 'portrait'];
 const PAGE_H = { landscape: 190, portrait: 277 };
 const GAP_MM = 3;
+const SAFETY_MM = 6; // printCss.js の空白ページ防止マージンと一致させること
 
 // ── maskViewBox 幾何学テスト ─────────────────────────────────────────────
 
@@ -118,18 +119,24 @@ describe('calcMaskViewBox — 幾何学的正確性', () => {
 
 // ── layout × orientation の cellH 検証 ──────────────────────────────────
 
-describe('buildPrintCss — cellH が正値かつページ高さ以内 (.saved-card height で検証)', () => {
-  // iOS Safari 空白ページバグ対策: grid-template-rows ではなく .saved-card height を使用
+describe('buildPrintCss — cellH が正値かつページ高さ「より小さい」(空白ページ防止)', () => {
+  // iOS Safari 空白ページバグ対策:
+  //   1. grid-template-rows ではなく .saved-card height を使用
+  //   2. グループ総高さ = cellH×rows + gap×(rows-1) を pageH より SAFETY_MM 小さくする
+  //      (ページぴったりだと丸め誤差で次ページに押し出され空白ページが出る)
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {
-      it(`${orientation} ${cols}×${rows}: cellH > 0 かつ ≤ pageH`, () => {
+      it(`${orientation} ${cols}×${rows}: グループ高さ = pageH - SAFETY`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         const m = layout.match(/\.saved-card\s*\{[^}]*height:\s*([\d.]+)mm/);
         expect(m).not.toBeNull();
         const cellH = parseFloat(m[1]);
         expect(cellH).toBeGreaterThan(0);
-        const actual = cellH * rows + GAP_MM * (rows - 1);
-        expect(Math.abs(actual - PAGE_H[orientation])).toBeLessThan(0.5);
+        const groupH = cellH * rows + GAP_MM * (rows - 1);
+        // 期待値: pageH - SAFETY_MM
+        expect(Math.abs(groupH - (PAGE_H[orientation] - SAFETY_MM))).toBeLessThan(0.5);
+        // 不変条件: グループ総高さは必ずページ高さより小さい (空白ページ防止)
+        expect(groupH).toBeLessThan(PAGE_H[orientation]);
       });
     }
   }

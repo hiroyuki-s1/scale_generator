@@ -117,6 +117,21 @@ main.js → orchestrates all
   向き UI は隠して常に縦 (portrait) 固定。横印刷は OS の印刷シートで切替運用。
 - **エディタ指板の自動ズーム**: `MOBILE_ZOOM_BREAKPOINT` 以下でマスク範囲/指板中心を
   基準に viewBox を絞る。resize/回転でも再計算。
+- **印刷の改ページ (iOS Safari 最重要・何度もハマった)**: 複数ページ印刷は
+  `beforeprint` で `cols×rows` 枚ずつ `.print-page-group` (block div) にまとめ、
+  内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
+  改ページは **`.print-page-group` への `page-break-after: always`** で行う。
+  iOS Safari で動かなかった失敗パターン (絶対に戻さない):
+  - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
+  - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
+  - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
+  - ❌ グループ高さ = ページ高さ「ぴったり」→ 丸め誤差で次ページに押し出され空白。
+    **[src/print/printCss.js](src/print/printCss.js) の `SAFETY_MM`(=6) でページ高さより
+    小さくする**。`.saved-card` の height で行高を決め、`grid-template-rows` は使わない
+    (ページぴったりの行高 + page-break が iOS で空白ページを生む)。
+  - `:last-child` は `page-break-after: auto` で末尾の余白ページを防ぐ。
+  - 検証: `npm run test:e2e:measure` で各グループ実高さ<ページ高さを実測。
+    `__tests__/print/printCss.matrix.test.js` が「グループ総高さ<ページ高さ」を不変条件で守る。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

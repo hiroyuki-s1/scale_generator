@@ -23,6 +23,7 @@ const ORIENTATIONS = ['landscape', 'portrait'];
 // A4 印刷可能エリア高さ (mm): margin 10mm×2 除いた値
 const PAGE_H = { landscape: 190, portrait: 277 };
 const GAP_MM = 3;
+const SAFETY_MM = 6; // printCss.js の空白ページ防止マージンと一致させること
 
 // .saved-card の height mm 値を CSS から抽出するヘルパー
 // (iOS Safari 空白ページバグ対策で grid-template-rows から .saved-card height に変更)
@@ -69,13 +70,20 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(layout).toMatch(/\.saved-card\s*\{[^}]*height:\s*[\d.]+mm/);
       });
 
-      // ── cellH 計算の正確性 ──────────────────────────────────────────
+      // ── cellH 計算の正確性 (SAFETY マージンを引いた値) ──────────────
       it(`[${label}] cellH が正の値かつ期待値と一致する`, () => {
         const cellHmm = extractCellHmm(layout);
-        const expected = (PAGE_H[orientation] - GAP_MM * (rows - 1)) / rows;
+        const expected = (PAGE_H[orientation] - SAFETY_MM - GAP_MM * (rows - 1)) / rows;
         expect(cellHmm).not.toBeNull();
         expect(cellHmm).toBeGreaterThan(0);
         expect(cellHmm).toBeCloseTo(expected, 1);
+      });
+
+      // ── 空白ページ防止: グループ総高さ < ページ高さ (CRITICAL) ────────
+      it(`[${label}] グループ総高さがページ高さより小さい (iOS Safari 空白ページ防止)`, () => {
+        const cellHmm = extractCellHmm(layout);
+        const groupH = cellHmm * rows + GAP_MM * (rows - 1);
+        expect(groupH).toBeLessThan(PAGE_H[orientation]);
       });
 
       // ── 改ページ (.print-page-group block + page-break-after:always) ──────

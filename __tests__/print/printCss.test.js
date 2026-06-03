@@ -63,14 +63,15 @@ describe('buildPrintCss — derived font sizes (cellH)', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
     expect(layout).toMatch(/font-size:\s*10\.0pt\s*!important/);
   });
-  it('rows=5 portrait: titlePt computed (~6.0pt) and below clamp ceiling', () => {
-    // cellH = (277 - 3*4)/5 = 53.0; titlePt = 53.0/9 = 5.888 → 5.9
+  it('rows=5 portrait: titlePt computed and below clamp ceiling', () => {
+    // SAFETY=6: cellH = (277 - 6 - 3*4)/5 = 259/5 = 51.8; titlePt = 51.8/9 = 5.755 → 5.8
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toContain('font-size: 5.9pt !important');
+    expect(layout).toContain('font-size: 5.8pt !important');
   });
-  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-6)/3/9) = clamp(..., 6.81) = 6.8', () => {
+  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-6-6)/3/9) = 6.59 → 6.6', () => {
+    // SAFETY=6: cellH = (190 - 6 - 3*2)/3 = 178/3 = 59.33; titlePt = 59.33/9 = 6.59 → 6.6
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toContain('font-size: 6.8pt !important');
+    expect(layout).toContain('font-size: 6.6pt !important');
   });
   it('landscape vs portrait at same rows produces different titlePt', () => {
     const land = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });

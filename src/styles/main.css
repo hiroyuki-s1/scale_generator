@@ -1175,6 +1175,16 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     box-shadow: none !important;
     animation: none !important;
   }
+  /* 改ページ用 div (JS が beforeprint でグループ間に挿入する)。
+     CSS Grid への break-after:page は iOS Safari で動作しないため、
+     シンプルな block 要素の page-break-before で改ページを実現する。 */
+  .print-page-break {
+    break-before: page !important;
+    page-break-before: always !important;
+    height: 0 !important;
+    display: block !important;
+  }
+
   /* スケール名は指板の上にシンプルに印字 */
   .saved-print-title {
     display: block !important;

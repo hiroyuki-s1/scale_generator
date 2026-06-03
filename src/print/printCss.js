@@ -48,8 +48,14 @@ export function buildPrintCss({ orientation, cols, rows }) {
     grid-template-columns: repeat(${cols}, 1fr) !important;
     grid-template-rows: repeat(${rows}, ${cellHmm}mm) !important;
     gap: ${gapMm}mm !important;
-    break-after: page !important;
-    page-break-after: always !important;
+  }
+  /* 改ページは .print-page-break (シンプルな block div) で行う。
+     CSS Grid への break-after:page は iOS Safari で動作しないため使わない。 */
+  .print-page-break {
+    break-before: page !important;
+    page-break-before: always !important;
+    height: 0 !important;
+    display: block !important;
   }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }

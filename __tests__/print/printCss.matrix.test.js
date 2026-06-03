@@ -71,13 +71,17 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(cellHmm).toBeCloseTo(expected, 1);
       });
 
-      // ── 改ページ ────────────────────────────────────────────────────
-      it(`[${label}] break-after:page が存在する`, () => {
-        expect(pgBlock).toMatch(/break-after:\s*page/);
+      // ── 改ページ (.print-page-break で行う — iOS Safari 対応) ──────────
+      it(`[${label}] .print-page-break に page-break-before:always が存在する`, () => {
+        expect(layout).toMatch(/\.print-page-break[^{]*\{[\s\S]*?page-break-before:\s*always/);
       });
 
-      it(`[${label}] page-break-after:always が存在する (fallback)`, () => {
-        expect(pgBlock).toMatch(/page-break-after:\s*always/);
+      it(`[${label}] .print-page-break に break-before:page が存在する (modern)`, () => {
+        expect(layout).toMatch(/\.print-page-break[^{]*\{[\s\S]*?break-before:\s*page/);
+      });
+
+      it(`[${label}] .print-page-group に break-after:page が含まれない (iOS Safari非対応)`, () => {
+        expect(pgBlock).not.toMatch(/break-after/);
       });
 
       // ── フォントサイズ clamp ─────────────────────────────────────────

@@ -26,33 +26,48 @@ export function calcPageGroupSizes(total, perPage) {
 
 /**
  * #savedGrid 直下の .saved-card を cols×rows 枚ずつ .print-page-group にまとめる。
- * iOS で afterprint が発火しない場合など二重呼び出しに備え、先に unwrap してから実行する。
+ *
+ * 改ページの仕組み:
+ *   .print-page-group 自体の break-after:page は iOS Safari で動作しない。
+ *   そのため 2ページ目以降の先頭に .print-page-break (シンプルな block div) を
+ *   挿入し、CSS の page-break-before:always で改ページする。
+ *   ブロック要素への page-break-before は全ブラウザで確実に動作する。
+ *
+ * iOS afterprint 未発火など二重呼び出しに備え、先に unwrap してから実行する。
  * @param {Element} grid
  * @param {number}  cols - >= 1 (persist.js の sanitizeLayout で保証)
  * @param {number}  rows - >= 1 (persist.js の sanitizeLayout で保証)
  */
 export function wrapIntoPageGroups(grid, cols, rows) {
-  unwrapPageGroups(grid); // 二重呼び出し対策: 既存グループを先に解体して冪等性を確保
+  unwrapPageGroups(grid); // 冪等性: 既存グループを先に解体
   const cards = [...grid.querySelectorAll(':scope > .saved-card')];
   if (cards.length === 0) return;
   const perPage = cols * rows;
   const sizes = calcPageGroupSizes(cards.length, perPage);
   let idx = 0;
-  for (const size of sizes) {
+  for (let i = 0; i < sizes.length; i++) {
+    // 2ページ目以降: 改ページ用 div を先に挿入
+    if (i > 0) {
+      const br = document.createElement('div');
+      br.className = 'print-page-break';
+      grid.insertBefore(br, cards[idx]);
+    }
     const group = document.createElement('div');
     group.className = 'print-page-group';
     grid.insertBefore(group, cards[idx]);
-    for (let i = 0; i < size; i++) group.appendChild(cards[idx++]);
+    for (let j = 0; j < sizes[i]; j++) group.appendChild(cards[idx++]);
   }
 }
 
 /**
- * .print-page-group を解体してカードを #savedGrid 直下に戻す。
+ * .print-page-group / .print-page-break を解体してカードを #savedGrid 直下に戻す。
  * @param {Element} grid
  */
 export function unwrapPageGroups(grid) {
-  [...grid.querySelectorAll('.print-page-group')].forEach(group => {
-    while (group.firstChild) grid.insertBefore(group.firstChild, group);
-    group.remove();
+  [...grid.querySelectorAll('.print-page-group, .print-page-break')].forEach(el => {
+    if (el.classList.contains('print-page-group')) {
+      while (el.firstChild) grid.insertBefore(el.firstChild, el);
+    }
+    el.remove();
   });
 }

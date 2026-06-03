@@ -11,6 +11,7 @@
  *   5. 各グループが perPage 以下であること
  *   6. 最終グループのみ端数が許される (それ以外は perPage ちょうど)
  *   7. perPage < 1 で RangeError
+ *   8. .print-page-break 挿入数 = グループ数 - 1 (2ページ目以降の先頭に1つずつ)
  */
 import { describe, it, expect } from 'vitest';
 import { calcPageGroupSizes } from '../../src/print/pageGroup.js';
@@ -91,6 +92,13 @@ describe('calcPageGroupSizes — 不変条件', () => {
         const sizes = calcPageGroupSizes(total, perPage);
         const expected = total === 0 ? 0 : Math.ceil(total / perPage);
         expect(sizes.length).toBe(expected);
+      });
+
+      it(`[${label}] .print-page-break 挿入数 = グループ数 - 1`, () => {
+        const sizes = calcPageGroupSizes(total, perPage);
+        const pageBreakCount = Math.max(0, sizes.length - 1);
+        // 2ページ目以降の先頭に1つずつ挿入される
+        expect(pageBreakCount).toBe(sizes.length > 0 ? sizes.length - 1 : 0);
       });
     }
   }

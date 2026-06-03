@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "node e2e/all-features.test.cjs",
+    "test:e2e:print": "node e2e/print-dom.test.cjs",
     "lint": "eslint src __tests__"
   },
   "devDependencies": {

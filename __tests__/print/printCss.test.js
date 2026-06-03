@@ -64,14 +64,14 @@ describe('buildPrintCss — derived font sizes (cellH)', () => {
     expect(layout).toMatch(/font-size:\s*10\.0pt\s*!important/);
   });
   it('rows=5 portrait: titlePt computed and below clamp ceiling', () => {
-    // SAFETY=6: cellH = (277 - 6 - 3*4)/5 = 259/5 = 51.8; titlePt = 51.8/9 = 5.755 → 5.8
+    // SAFETY=12: cellH = (277 - 12 - 3*4)/5 = 253/5 = 50.6; titlePt = 50.6/9 = 5.62 → 5.6
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toContain('font-size: 5.8pt !important');
+    expect(layout).toContain('font-size: 5.6pt !important');
   });
-  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-6-6)/3/9) = 6.59 → 6.6', () => {
-    // SAFETY=6: cellH = (190 - 6 - 3*2)/3 = 178/3 = 59.33; titlePt = 59.33/9 = 6.59 → 6.6
+  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-12-6)/3/9) = 6.37 → 6.4', () => {
+    // SAFETY=12: cellH = (190 - 12 - 3*2)/3 = 172/3 = 57.33; titlePt = 57.33/9 = 6.37 → 6.4
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toContain('font-size: 6.6pt !important');
+    expect(layout).toContain('font-size: 6.4pt !important');
   });
   it('landscape vs portrait at same rows produces different titlePt', () => {
     const land = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });

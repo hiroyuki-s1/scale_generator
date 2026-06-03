@@ -23,7 +23,7 @@ const ORIENTATIONS = ['landscape', 'portrait'];
 // A4 印刷可能エリア高さ (mm): margin 10mm×2 除いた値
 const PAGE_H = { landscape: 190, portrait: 277 };
 const GAP_MM = 3;
-const SAFETY_MM = 6; // printCss.js の空白ページ防止マージンと一致させること
+const SAFETY_MM = 12; // printCss.js の空白ページ防止マージンと一致させること
 
 // .saved-card の height mm 値を CSS から抽出するヘルパー
 // (iOS Safari 空白ページバグ対策で grid-template-rows から .saved-card height に変更)

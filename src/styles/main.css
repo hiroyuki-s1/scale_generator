@@ -1177,13 +1177,19 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     animation: none !important;
   }
   /* block div への page-break-after は iOS Safari 含む全ブラウザで確実に動作する。
-     (CSS Grid への break-after:page は iOS Safari 非対応のため使わない) */
+     height は printCss.js が動的に注入 (固定高さ + overflow:hidden で
+     グループが絶対にページ高さを超えないようにし、空白ページを防ぐ)。
+     break-inside:avoid でグループ内部の改ページも禁止する。 */
   .print-page-group {
     display: block !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     page-break-after: always !important;
     break-after: page !important;
   }
   .print-page-group:last-child {
+    height: auto !important;
     page-break-after: auto !important;
     break-after: auto !important;
   }

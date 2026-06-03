@@ -71,11 +71,11 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const { page } = await setup(browser, 'ios'); // iOS UA
 
-  // 楽器選択 + スケール3枚登録 (1×2で2ページ)
+  // 楽器選択 + スケール5枚登録 (2×2で2ページ)
   await page.click('#instrumentBtn');
   await page.click('[data-instrument="guitar"]');
   await page.waitForTimeout(300);
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 5; i++) {
     await page.evaluate(() => document.querySelector('[data-tab="editor"]')?.click());
     await page.waitForTimeout(100);
     await page.fill('#fbTitleInput', `テスト${i}`);
@@ -83,9 +83,9 @@ async function main() {
     await page.waitForTimeout(200);
   }
 
-  console.log('=== 印刷グループ高さ計測 (iOS UA, ギター) ===\n');
+  console.log('=== 印刷グループ高さ計測 (iOS UA, ギター, 5枚) ===\n');
 
-  for (const [orientation, cols, rows] of [['portrait', 1, 2], ['landscape', 2, 2], ['portrait', 2, 3]]) {
+  for (const [orientation, cols, rows] of [['portrait', 1, 2], ['portrait', 2, 2], ['landscape', 2, 2], ['portrait', 2, 3]]) {
     const pageHmm = PAGE_H_MM[orientation];
     const pageHpx = pageHmm * PX_PER_MM;
     console.log(`--- ${orientation} ${cols}×${rows} (ページ高さ ${pageHmm}mm = ${pageHpx.toFixed(0)}px) ---`);

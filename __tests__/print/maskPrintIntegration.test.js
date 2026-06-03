@@ -54,7 +54,7 @@ const MASK_PATTERNS = [
 const ORIENTATIONS = ['landscape', 'portrait'];
 const PAGE_H = { landscape: 190, portrait: 277 };
 const GAP_MM = 3;
-const SAFETY_MM = 6; // printCss.js の空白ページ防止マージンと一致させること
+const SAFETY_MM = 12; // printCss.js の空白ページ防止マージンと一致させること
 
 // ── maskViewBox 幾何学テスト ─────────────────────────────────────────────
 

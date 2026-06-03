@@ -33,7 +33,11 @@ export function buildPrintCss({ orientation, cols, rows }) {
   // グループを次ページへ押し出して空白ページを生む (特に iOS Safari)。
   // グループ高さ = cellH×rows + gap×(rows-1) を pageH より SAFETY_MM 分
   // 確実に小さくして、空白ページを防ぐ。
-  const SAFETY_MM = 6;
+  // iOS Safari は @page margin 指定を無視してシステムのデフォルト余白
+  // (各辺 ~12mm) を使うことがあり、その分だけ印刷可能高さが縮む。
+  // グループ高さがそれを超えると次ページへ溢れて空白ページが出るため、
+  // 12mm の余裕を持たせて余白が大きめでも収まるようにする。
+  const SAFETY_MM = 12;
   const cellH  = (pageH - SAFETY_MM - gapMm * (rows - 1)) / rows;
 
   const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
@@ -41,6 +45,8 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
 
   const cellHmm = cellH.toFixed(1);
+  // グループの固定高さ = カード高さ×行数 + 行間gap。pageH より SAFETY_MM 小さい。
+  const groupHmm = (cellH * rows + gapMm * (rows - 1)).toFixed(1);
 
   const layout = `
 @media print {
@@ -49,16 +55,25 @@ export function buildPrintCss({ orientation, cols, rows }) {
     display: block !important;
     gap: 0 !important;
   }
-  /* .print-page-group = block div に page-break-after:always。
-     block div への page-break-after は iOS Safari 含む全ブラウザで確実に動作する。
-     (CSS Grid への break-after:page は iOS Safari 非対応のため使わない) */
+  /* .print-page-group = block div。1ページ1グループを厳密に保証する:
+       - height 固定 + overflow:hidden → グループは絶対にページ高さを超えない
+         (iOS は @page margin を無視して余白を大きく取ることがあり、高さが
+          少しでもページを超えると次ページに溢れて空白ページが出る。固定高さで防ぐ)
+       - break-inside:avoid → グループ内部での改ページを禁止 (分割させない)
+       - page-break-after:always → グループの後で改ページ
+     block への page-break は iOS Safari 含む全ブラウザで動作する。 */
   .print-page-group {
     display: block !important;
+    height: ${groupHmm}mm !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     page-break-after: always !important;
     break-after: page !important;
   }
-  /* 最終グループは page-break-after をリセット (末尾の空白ページ防止) */
+  /* 最終グループは高さ自由・改ページなし (末尾の空白ページ防止) */
   .print-page-group:last-child {
+    height: auto !important;
     page-break-after: auto !important;
     break-after: auto !important;
   }

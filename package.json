@@ -1,7 +1,7 @@
 {
   "name": "scale-generator",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "ギター指板スケール可視化・印刷ツール (vanilla HTML/JS/CSS)",
   "scripts": {

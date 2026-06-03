@@ -128,19 +128,19 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
   }
 });
 
-// ── C. .print-page-group:last-child が高さ自由 (端数ページの余白防止) ───────
+// ── C. ページ枠 100vh + grid 1fr 均等分割 (iOS Safari 空白ページ対策) ───────
 
-describe('C: .print-page-group:last-child — 端数ページの余白防止', () => {
-  it('static CSS: :last-child に height:auto !important が存在する', () => {
-    expect(PRINT_CSS_STATIC).toMatch(
-      /\.print-page-group:last-child[^{]*\{[^}]*height:\s*auto\s*!important/
-    );
-  });
-
+describe('C: ページ枠 height:100vh + grid 1fr', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`dynamic [${cols}×${rows}]: :last-child に height:auto が生成される`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-group に height:100vh が生成される`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
-      expect(css).toMatch(/\.print-page-group:last-child[^{]*\{[^}]*height:\s*auto/);
+      const pgBlock = css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(pgBlock).toMatch(/height:\s*100vh/);
+    });
+
+    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を 1fr 均等分割`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+      expect(css).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*1fr\\)`));
     });
   }
 });

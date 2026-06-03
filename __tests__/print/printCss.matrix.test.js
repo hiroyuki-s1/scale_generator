@@ -20,18 +20,6 @@ import { LAYOUT_PRESETS } from '../../src/domain/constants.js';
 
 const ORIENTATIONS = ['landscape', 'portrait'];
 
-// A4 印刷可能エリア高さ (mm): margin 10mm×2 除いた値
-const PAGE_H = { landscape: 190, portrait: 277 };
-const GAP_MM = 3;
-const SAFETY_MM = 12; // printCss.js の空白ページ防止マージンと一致させること
-
-// .saved-card の height mm 値を CSS から抽出するヘルパー
-// (iOS Safari 空白ページバグ対策で grid-template-rows から .saved-card height に変更)
-function extractCellHmm(css) {
-  const m = css.match(/\.saved-card\s*\{[^}]*height:\s*([\d.]+)mm/);
-  return m ? parseFloat(m[1]) : null;
-}
-
 // .print-page-group ブロックの中身を抽出 (block + page-break 用)
 function extractPageGroupBlock(css) {
   const m = css.match(/\.print-page-group\s*\{([^}]+)\}/);
@@ -65,25 +53,19 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         );
       });
 
-      it(`[${label}] .saved-card に cellH mm の height が生成される (iOS Safari対応)`, () => {
-        // grid-template-rows ではなく .saved-card height でカード高さを制御する
-        expect(layout).toMatch(/\.saved-card\s*\{[^}]*height:\s*[\d.]+mm/);
+      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, 1fr) で均等分割`, () => {
+        expect(innerBlock).toMatch(
+          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*1fr\\)`)
+        );
       });
 
-      // ── cellH 計算の正確性 (SAFETY マージンを引いた値) ──────────────
-      it(`[${label}] cellH が正の値かつ期待値と一致する`, () => {
-        const cellHmm = extractCellHmm(layout);
-        const expected = (PAGE_H[orientation] - SAFETY_MM - GAP_MM * (rows - 1)) / rows;
-        expect(cellHmm).not.toBeNull();
-        expect(cellHmm).toBeGreaterThan(0);
-        expect(cellHmm).toBeCloseTo(expected, 1);
+      // ── 空白ページ防止: ページ枠は 100vh (iOS Safari 余白に追従) ────────
+      it(`[${label}] .print-page-group が height:100vh (1ページ枠)`, () => {
+        expect(pgBlock).toMatch(/height:\s*100vh/);
       });
 
-      // ── 空白ページ防止: グループ総高さ < ページ高さ (CRITICAL) ────────
-      it(`[${label}] グループ総高さがページ高さより小さい (iOS Safari 空白ページ防止)`, () => {
-        const cellHmm = extractCellHmm(layout);
-        const groupH = cellHmm * rows + GAP_MM * (rows - 1);
-        expect(groupH).toBeLessThan(PAGE_H[orientation]);
+      it(`[${label}] .print-page-inner が height:100% (枠いっぱいに広がる)`, () => {
+        expect(innerBlock).toMatch(/height:\s*100%/);
       });
 
       // ── 改ページ (隣接兄弟 page-break-before — Safari 空白ページバグ回避) ──

@@ -122,14 +122,18 @@ main.js → orchestrates all
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
   改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
   `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
-  各グループは **固定 height + `overflow: hidden` + `break-inside: avoid`** で
-  1ページに収める。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
+  各グループは **`height: 100vh` (=1ページ枠) + `overflow: hidden` +
+  `break-inside: avoid`** で1ページに収め、内側 `.print-page-inner` を
+  **`grid-template-rows: repeat(rows, 1fr)`** で均等分割する (ユーザー提案の
+  「ページ枠を先に作り中に指板を入れる」設計)。`100vh` は印刷時ページ高さに
+  追従するため、iOS が `@page margin` を無視して余白を変えてもオーバーフロー
+  しない。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
   - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
   - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
   - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
-  - ❌ グループ高さ = ページ高さ「ぴったり」→ 丸め誤差で次ページに押し出され空白。
-    [src/print/printCss.js](src/print/printCss.js) の `SAFETY_MM`(=12) でページ高さより
-    小さくする。`.saved-card` の height で行高を決め、`grid-template-rows` は使わない。
+  - ❌ グループ高さ mm 固定 = ページ高さ「ぴったり/近い」→ 丸め誤差や iOS の
+    余白で次ページに押し出され空白。mm 固定はやめ、**`height: 100vh` で
+    ページに追従**させる ([src/print/printCss.js](src/print/printCss.js))。
   - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
     作る既知バグ (これが「2P目空白」の主因だった)。`page-break-after` は一切使わず、
     **隣接兄弟セレクタの `page-break-before`** で2番目以降のグループ前だけに改ページを入れる

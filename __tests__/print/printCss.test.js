@@ -64,14 +64,14 @@ describe('buildPrintCss — derived font sizes (cellH)', () => {
     expect(layout).toMatch(/font-size:\s*10\.0pt\s*!important/);
   });
   it('rows=5 portrait: titlePt computed and below clamp ceiling', () => {
-    // SAFETY=12: cellH = (277 - 12 - 3*4)/5 = 253/5 = 50.6; titlePt = 50.6/9 = 5.62 → 5.6
+    // cellH = (277 - 3*4)/5 = 53.0; titlePt = 53.0/9 = 5.888 → 5.9 (フォント計算は SAFETY 無し)
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toContain('font-size: 5.6pt !important');
+    expect(layout).toContain('font-size: 5.9pt !important');
   });
-  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-12-6)/3/9) = 6.37 → 6.4', () => {
-    // SAFETY=12: cellH = (190 - 12 - 3*2)/3 = 172/3 = 57.33; titlePt = 57.33/9 = 6.37 → 6.4
+  it('landscape rows=3: titlePt = clamp(5.5, 10, (190-6)/3/9) = 6.81 → 6.8', () => {
+    // cellH = (190 - 3*2)/3 = 184/3 = 61.33; titlePt = 61.33/9 = 6.81 → 6.8
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toContain('font-size: 6.4pt !important');
+    expect(layout).toContain('font-size: 6.8pt !important');
   });
   it('landscape vs portrait at same rows produces different titlePt', () => {
     const land = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });

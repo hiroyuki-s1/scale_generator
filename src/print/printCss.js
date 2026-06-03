@@ -27,26 +27,14 @@ export function buildPrintCss({ orientation, cols, rows }) {
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277;
   const gapMm  = 3;
-  // ── 安全マージン (CRITICAL) ──
-  // ページグループの総高さがページ可能高さと「ぴったり一致」すると、
-  // ブラウザの印刷はサブピクセルの丸めで「わずかに超過」と誤判定し、
-  // グループを次ページへ押し出して空白ページを生む (特に iOS Safari)。
-  // グループ高さ = cellH×rows + gap×(rows-1) を pageH より SAFETY_MM 分
-  // 確実に小さくして、空白ページを防ぐ。
-  // iOS Safari は @page margin 指定を無視してシステムのデフォルト余白
-  // (各辺 ~12mm) を使うことがあり、その分だけ印刷可能高さが縮む。
-  // グループ高さがそれを超えると次ページへ溢れて空白ページが出るため、
-  // 12mm の余裕を持たせて余白が大きめでも収まるようにする。
-  const SAFETY_MM = 12;
-  const cellH  = (pageH - SAFETY_MM - gapMm * (rows - 1)) / rows;
+  // フォントサイズ計算用の 1 セルあたりの目安高さ (mm)。
+  // レイアウト自体は .print-page-inner の grid 1fr 均等分割で行うため、
+  // この値はフォントサイズの算出だけに使う。
+  const cellH  = (pageH - gapMm * (rows - 1)) / rows;
 
   const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
   const legPt   = clamp(5,   8,  cellH / 11).toFixed(1);
   const legDot  = clamp(9,   16, cellH / 7).toFixed(0);
-
-  const cellHmm = cellH.toFixed(1);
-  // グループの固定高さ = カード高さ×行数 + 行間gap。pageH より SAFETY_MM 小さい。
-  const groupHmm = (cellH * rows + gapMm * (rows - 1)).toFixed(1);
 
   const layout = `
 @media print {
@@ -55,45 +43,41 @@ export function buildPrintCss({ orientation, cols, rows }) {
     display: block !important;
     gap: 0 !important;
   }
-  /* .print-page-group = block div。1ページ1グループを厳密に保証する:
-       - height 固定 + overflow:hidden → グループは絶対にページ高さを超えない
-         (iOS は @page margin を無視して余白を大きく取ることがあり、高さが
-          少しでもページを超えると次ページに溢れて空白ページが出る。固定高さで防ぐ)
-       - break-inside:avoid → グループ内部での改ページを禁止 (分割させない)
-       - page-break-after:always → グループの後で改ページ
-     block への page-break は iOS Safari 含む全ブラウザで動作する。 */
+  /* ── ページ枠アプローチ (iOS Safari 空白ページ対策の決定版) ──
+     各 .print-page-group を「1ページ分の枠」にする:
+       - height: 100vh → 印刷時 1vh = 印刷ページ高さの 1%。100vh で正確に1ページ。
+         iOS が @page margin を無視して余白を変えても、vh はページに追従するため
+         「ページぴったり/オーバーフロー」が起きず空白ページが出ない。
+       - overflow: hidden → 万一はみ出ても切る (溢れて次ページに行かない)
+       - break-inside: avoid → 枠の内部で改ページしない
+     改ページは隣接兄弟の page-break-before のみ (page-break-after は Safari で
+     最終ページ後に余分な空白ページを作るため使わない)。 */
   .print-page-group {
     display: block !important;
-    height: ${groupHmm}mm !important;
+    height: 100vh !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
-  /* 改ページは「2番目以降のグループの前」で行う (隣接兄弟セレクタ)。
-     page-break-after:always は Safari で最終ページの後に余分な空白ページを
-     作る既知バグがあるため使わない。page-break-before なら最後のグループの
-     後ろに改ページが入らず、空白ページが出ない。 */
   .print-page-group + .print-page-group {
     break-before: page !important;
     page-break-before: always !important;
   }
-  /* 最終グループは高さ自由 (端数ページが固定高さで余白を作らないように) */
-  .print-page-group:last-child {
-    height: auto !important;
-  }
-  /* .print-page-inner = 実際のグリッドレイアウト
-     grid-template-rows は指定しない:
-     ページ高さぴったりの行高 + page-break-after:always の組み合わせが
-     iOS Safari で空白ページを生成するバグの原因のため。
-     代わりに .saved-card に高さを指定してレイアウトを制御する。 */
+  /* ページ枠の中を cols×rows の grid で均等分割し、各セルにカードを入れる。
+     grid-template-rows: 1fr で枠 (100vh) を行数で等分するため、mm 固定や
+     ページぴったりの行高を使わずに済む (iOS の空白ページバグを回避)。 */
   .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, 1fr) !important;
+    grid-template-rows: repeat(${rows}, 1fr) !important;
     gap: ${gapMm}mm !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
   }
   .saved-card {
-    height: ${cellHmm}mm !important;
     overflow: hidden !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
   }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }

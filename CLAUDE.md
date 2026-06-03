@@ -138,10 +138,21 @@ main.js → orchestrates all
     作る既知バグ (これが「2P目空白」の主因だった)。`page-break-after` は一切使わず、
     **隣接兄弟セレクタの `page-break-before`** で2番目以降のグループ前だけに改ページを入れる
     (最後のグループの後ろには改ページが入らない)。
-  - `:last-child` は `height: auto` で端数ページの余白を防ぐ。
-  - 検証: `npm run test:e2e:measure` で各グループ実高さ<ページ高さを実測。
-    `__tests__/print/printCss.matrix.test.js` が「グループ総高さ<ページ高さ」
-    「page-break-after を使わない」「隣接兄弟 page-break-before」を不変条件で守る。
+  - ❌ **モバイルで `@page { size: 210mm 297mm }` 固定** → iOS の印刷シートで
+    「横」に切り替えると、@page 指定高さ(297mm)と実用紙高さ(210mm)がズレ、
+    `100vh` が 297mm 基準のまま横用紙からはみ出して2P目空白。**モバイルは
+    `@page { size: auto }`** で用紙の向きに `100vh` を追従させる
+    ([src/print/printCss.js](src/print/printCss.js) の `isMobile` 分岐)。
+    PC は向きボタンを効かせるため mm 固定のまま。
+  - **マスクで縦長になった指板のはみ出し**: `svg.fb` に `max-height:(88/rows)vh`
+    を直接指定 (flex は SVG 高さが 0 に潰れる)。`height:auto + max-height(vh) +
+    display:block`、`preserveAspectRatio="xMidYMid meet"` で縦長は横が縮みフィット。
+  - 検証: `npm run e2e:pdf` 系 (`e2e/print-pdf-check.cjs` = 縦長はみ出し、
+    `e2e/print-landscape.cjs` = 横印刷ページ数) で **実印刷 PDF** を生成して確認。
+    `page.pdf()` は実レンダリングするが Playwright `emulateMedia` は SVG 高さを
+    0 と誤測定するので、印刷の見た目検証は必ず PDF で行う。
+    `__tests__/print/printCss.matrix.test.js` が「隣接兄弟 page-break-before」
+    「svg.fb の max-height vh」等を不変条件で守る。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

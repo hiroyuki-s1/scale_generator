@@ -22,6 +22,22 @@ describe('buildPrintCss — orientation', () => {
     expect(port.orient).toContain('@page');
     expect(port.orient).toContain('margin: 10mm 12mm');
   });
+
+  // iOS 横印刷の空白ページ対策: モバイルは @page size:auto で用紙の向きに追従させる
+  it('isMobile=true sets @page size:auto (用紙の向きに追従, iOS 横印刷の空白防止)', () => {
+    const land = buildPrintCss({ ...DEFAULT, isMobile: true });
+    const port = buildPrintCss({ ...DEFAULT, orientation: 'portrait', isMobile: true });
+    expect(land.orient).toContain('size: auto');
+    expect(port.orient).toContain('size: auto');
+    // mm 固定は出さない (固定すると横切替で 100vh がはみ出す)
+    expect(land.orient).not.toContain('297mm 210mm');
+    expect(port.orient).not.toContain('210mm 297mm');
+  });
+
+  it('isMobile=false (PC) は従来通り mm 寸法で size 指定 (向きボタン有効)', () => {
+    const land = buildPrintCss({ ...DEFAULT, isMobile: false });
+    expect(land.orient).toContain('size: 297mm 210mm');
+  });
 });
 
 describe('buildPrintCss — layout cols/gap (the actual bug)', () => {

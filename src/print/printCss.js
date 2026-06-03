@@ -13,16 +13,22 @@
 const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
 
 /**
- * @param {{orientation:'landscape'|'portrait', cols:number, rows:number}} layout
+ * @param {{orientation:'landscape'|'portrait', cols:number, rows:number, isMobile?:boolean}} layout
  * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
  */
-export function buildPrintCss({ orientation, cols, rows }) {
-  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくい。
-  // 明示的な mm 寸法 (210×297 / 297×210) で書くほうがブラウザ実装の幅広い差を吸収できる。
-  // ただし最終的な向きは OS の印刷ダイアログ側でも上書き可能なので、モバイルでは
-  // ユーザーに「OS ダイアログでも向きを揃える」よう案内している (印刷モーダル内)。
+export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
+  // @page size の扱い (CRITICAL — iOS Safari 横印刷の空白ページ対策):
+  //   - PC: 印刷モーダルの向きボタンを効かせるため mm 寸法で size を指定。
+  //   - モバイル: 向きは OS の印刷シートで切り替える運用。ここで size を
+  //     portrait 固定 (210mm 297mm) してしまうと、ユーザーが iOS で「横」に
+  //     切り替えたとき @page の指定高さ(297mm)と実用紙高さ(210mm)がズレ、
+  //     グループの height:100vh が 297mm 基準のまま横用紙からはみ出して
+  //     2ページ目に空白が出る。size:auto なら 100vh が実際の用紙の向きに
+  //     追従するため、縦でも横でも1ページに収まり空白ページが出ない。
   const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
-  const orient = `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
+  const orient = isMobile
+    ? `@media print { @page { size: auto; margin: 10mm 12mm; } }`
+    : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277;
@@ -120,7 +126,10 @@ export function initPrintCss(store) {
   const layoutEl = document.getElementById('print-layout');
 
   function update() {
-    const css = buildPrintCss(store.get().layout);
+    // 回転で変わるため毎回判定。モバイルは @page size:auto で用紙の向きに追従させる。
+    const isMobile = typeof window !== 'undefined'
+      && window.matchMedia('(max-width: 767px)').matches;
+    const css = buildPrintCss({ ...store.get().layout, isMobile });
     orientEl.textContent = css.orient;
     layoutEl.textContent = css.layout;
   }

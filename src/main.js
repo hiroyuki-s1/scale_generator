@@ -17,7 +17,8 @@ import { initSavedTab }         from './ui/savedTab.js';
 import { initColorModal }       from './ui/colorModal.js';
 import { initLayoutPicker }     from './ui/layoutPicker.js';
 import { initHeaderMenu }       from './ui/headerMenu.js';
-import { initPrintCss }         from './print/printCss.js';
+import { initPrintCss }                    from './print/printCss.js';
+import { wrapIntoPageGroups, unwrapPageGroups } from './print/pageGroup.js';
 import { initInstrumentPicker } from './ui/instrumentPicker.js';
 import {
   drawFretboardBase,
@@ -538,19 +539,10 @@ window.addEventListener('beforeprint', () => {
     panelEditor.classList.add('hidden');
     printTabWasHidden = true;
   }
-  // CSS Grid は印刷ページ分割が不安定なため、JS で cols×rows 枚ずつ div にまとめる。
-  // .print-page-group に page-break-after:always を当てることで確実に改ページする。
   const grid = document.getElementById('savedGrid');
   if (grid) {
-    const cards = [...grid.querySelectorAll(':scope > .saved-card')];
     const { cols, rows } = store.get().layout;
-    const perPage = cols * rows;
-    for (let i = 0; i < cards.length; i += perPage) {
-      const group = document.createElement('div');
-      group.className = 'print-page-group';
-      grid.insertBefore(group, cards[i]);
-      cards.slice(i, i + perPage).forEach(c => group.appendChild(c));
-    }
+    wrapIntoPageGroups(grid, cols, rows);
   }
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
@@ -576,14 +568,8 @@ window.addEventListener('afterprint', () => {
     panelEditor.classList.remove('hidden');
     printTabWasHidden = false;
   }
-  // .print-page-group を解体してカードを #savedGrid 直下に戻す
   const grid = document.getElementById('savedGrid');
-  if (grid) {
-    [...grid.querySelectorAll('.print-page-group')].forEach(group => {
-      while (group.firstChild) grid.insertBefore(group.firstChild, group);
-      group.remove();
-    });
-  }
+  if (grid) unwrapPageGroups(grid);
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
     if (!svg) return;

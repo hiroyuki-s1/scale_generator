@@ -25,10 +25,15 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   //     グループの height:100vh が 297mm 基準のまま横用紙からはみ出して
   //     2ページ目に空白が出る。size:auto なら 100vh が実際の用紙の向きに
   //     追従するため、縦でも横でも1ページに収まり空白ページが出ない。
+  // @page margin は 0 にする (CRITICAL):
+  //   iOS Safari は vh の基準を「用紙全体」とし @page margin を含めて計算する
+  //   ことがある。@page margin があると 100vh が margin 込みで印刷領域を超え、
+  //   横用紙(210mm)で溢れて空白ページが出る。margin:0 にして 100vh = 用紙全体に
+  //   一致させ、用紙端の余白はグループの padding (box-sizing:border-box) で確保する。
   const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
   const orient = isMobile
-    ? `@media print { @page { size: auto; margin: 10mm 12mm; } }`
-    : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
+    ? `@media print { @page { size: auto; margin: 0; } }`
+    : `@media print { @page { size: ${size}; margin: 0; } }`;
 
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277;
@@ -59,6 +64,8 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   .print-page-group {
     display: block !important;
     height: 100vh !important;
+    box-sizing: border-box !important;
+    padding: 8mm 10mm !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;

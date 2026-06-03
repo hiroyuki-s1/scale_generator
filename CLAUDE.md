@@ -144,11 +144,18 @@ main.js → orchestrates all
     `@page { size: auto }`** で用紙の向きに `100vh` を追従させる
     ([src/print/printCss.js](src/print/printCss.js) の `isMobile` 分岐)。
     PC は向きボタンを効かせるため mm 固定のまま。
+  - ❌ **`body` のデフォルト margin(8px) + `@page margin`** → `height:100vh` の
+    グループと合算して印刷領域を超え、特に高さの低い**横用紙(210mm)で2P目空白**。
+    対策: **`@page { margin: 0 }`** にして `100vh` = 用紙全体に一致させ、用紙端の
+    余白は `.print-page-group` の `padding: 8mm 10mm` + `box-sizing: border-box`
+    で確保する。`html, body` と全コンテナ (`.app-body`/`#panelSaved`/
+    `.saved-section`/`#savedGrid`) の `margin`/`padding` も `0` にする
+    (iOS は body margin を印刷で残すため)。
   - **マスクで縦長になった指板のはみ出し**: `svg.fb` に `max-height:(88/rows)vh`
     を直接指定 (flex は SVG 高さが 0 に潰れる)。`height:auto + max-height(vh) +
     display:block`、`preserveAspectRatio="xMidYMid meet"` で縦長は横が縮みフィット。
   - 検証: `npm run e2e:pdf` 系 (`e2e/print-pdf-check.cjs` = 縦長はみ出し、
-    `e2e/print-landscape.cjs` = 横印刷ページ数) で **実印刷 PDF** を生成して確認。
+    `e2e/print-ls-clean.cjs` = 横印刷の2×2配置を横viewportで位置測定) で確認。
     `page.pdf()` は実レンダリングするが Playwright `emulateMedia` は SVG 高さを
     0 と誤測定するので、印刷の見た目検証は必ず PDF で行う。
     `__tests__/print/printCss.matrix.test.js` が「隣接兄弟 page-break-before」

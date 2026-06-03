@@ -14,13 +14,16 @@ describe('buildPrintCss — orientation', () => {
     const { orient } = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
     expect(orient).toContain('size: 210mm 297mm');
   });
-  it('orient string always contains @page and 10mm 12mm margin', () => {
+  it('orient string always contains @page and margin:0', () => {
+    // @page margin は 0。用紙端の余白は .print-page-group の padding で確保する
+    // (iOS は vh を用紙全体基準で計算することがあり、@page margin があると
+    //  100vh が margin 込みで印刷領域を超えて横用紙で空白ページが出るため)。
     const land = buildPrintCss(DEFAULT);
     const port = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
     expect(land.orient).toContain('@page');
-    expect(land.orient).toContain('margin: 10mm 12mm');
+    expect(land.orient).toMatch(/margin:\s*0/);
     expect(port.orient).toContain('@page');
-    expect(port.orient).toContain('margin: 10mm 12mm');
+    expect(port.orient).toMatch(/margin:\s*0/);
   });
 
   // iOS 横印刷の空白ページ対策: モバイルは @page size:auto で用紙の向きに追従させる

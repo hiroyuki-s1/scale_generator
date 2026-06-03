@@ -1143,7 +1143,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* PRINT BASE */
 @media print {
-  body { background: #fff; height: auto; overflow: auto; }
+  /* CRITICAL (iOS 横印刷の空白対策):
+     body のデフォルト margin(8px) を残すと、height:100vh のグループと合算して
+     必ず1ページを超え、特に高さの低い横用紙(210mm)で2P目に溢れる。
+     html/body/全コンテナの margin・padding を 0 にしてグループだけが
+     印刷領域を占めるようにする。 */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff;
+    height: auto !important;
+    overflow: visible !important;
+  }
   .header, .modal-overlay, .btn-delete, .legend { display: none !important; }
   .app-toast, #appToast { display: none !important; }
   .fb-fullscreen { display: none !important; }
@@ -1152,9 +1163,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .name-list-bar { display: none !important; }
   #panelEditor { display: none !important; }
   /* flex は iOS Safari で page-break-after が動作しないため block にする */
-  #panelSaved { display: block !important; }
-  .app-body { overflow: visible !important; height: auto !important; display: block !important; }
-  .saved-section { display: block !important; padding: 0 !important; overflow: visible !important; }
+  #panelSaved { display: block !important; margin: 0 !important; padding: 0 !important; }
+  .app-body { overflow: visible !important; height: auto !important; display: block !important; margin: 0 !important; padding: 0 !important; }
+  .saved-section { display: block !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
   .saved-section-hdr { display: none !important; }
   svg.fb { min-width: 0 !important; }
 
@@ -1183,6 +1194,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
      最終ページ後に余分な空白ページを作るため使わない)。 */
   .print-page-group {
     display: block !important;
+    box-sizing: border-box !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;

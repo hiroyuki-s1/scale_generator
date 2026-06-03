@@ -76,6 +76,11 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(pgBlock).not.toMatch(/page-break-after/);
       });
 
+      it(`[${label}] .print-page-group に padding + box-sizing:border-box (用紙端余白を vh 内で確保)`, () => {
+        expect(pgBlock).toMatch(/padding:\s*[\d.]+mm/);
+        expect(pgBlock).toMatch(/box-sizing:\s*border-box/);
+      });
+
       it(`[${label}] .print-page-group は display:block + overflow:hidden (grid でない)`, () => {
         expect(pgBlock).toMatch(/display:\s*block/);
         expect(pgBlock).not.toMatch(/display:\s*grid/);

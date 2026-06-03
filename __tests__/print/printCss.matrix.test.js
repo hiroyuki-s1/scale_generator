@@ -88,6 +88,20 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         );
       });
 
+      // ── 指板はみ出し防止: svg.fb に max-height vh (マスク縦長対策) ──────
+      it(`[${label}] svg.fb に max-height:(88/rows)vh が生成される (縦長指板はみ出し防止)`, () => {
+        const expected = (88 / rows).toFixed(2);
+        expect(layout).toMatch(
+          new RegExp(`svg\\.fb\\s*\\{[^}]*max-height:\\s*${expected.replace('.', '\\.')}vh`)
+        );
+      });
+
+      it(`[${label}] svg.fb は height:auto + display:block (1.0.0 で動作した形)`, () => {
+        const svgBlock = layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(svgBlock).toMatch(/height:\s*auto/);
+        expect(svgBlock).toMatch(/display:\s*block/);
+      });
+
       // ── フォントサイズ clamp ─────────────────────────────────────────
       it(`[${label}] titlePt が clamp 範囲 [5.5, 10] 内`, () => {
         const m = layout.match(/\.fb-title[^{]*\{[^}]*font-size:\s*([\d.]+)pt/);

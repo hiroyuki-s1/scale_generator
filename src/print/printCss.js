@@ -74,23 +74,40 @@ export function buildPrintCss({ orientation, cols, rows }) {
   }
   .saved-card {
     overflow: hidden !important;
-    min-height: 0 !important;
     min-width: 0 !important;
+    break-inside: avoid;
+    margin: 0 !important;
+    padding: 0;
   }
-  .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }
   .fb-title, .saved-title-input {
     font-size: ${titlePt}pt !important;
     line-height: 1.2;
   }
   .fb-wrap, .saved-card .fb-wrap {
+    overflow: hidden !important;
+    text-align: center !important;
     padding: 1.5mm 1.5mm 1mm !important;
-    overflow: visible;
     border: 1px solid #ddd !important;
     border-radius: 2px !important;
     box-shadow: none !important;
+    box-sizing: border-box !important;
   }
-  svg.fb { min-width: 0 !important; width: 100% !important; height: auto !important; display: block !important; }
+  /* 指板 SVG を「1セルの高さ」に収める (マスクで縦長になってもはみ出さない)。
+     max-height を vh で直接指定するのが確実 (flex や % は親高さ依存で
+     SVG だと 0 に潰れたり効かなかったりする)。
+     セル高さ ≒ 100vh/rows。タイトル・border・gap 分を引いて 88/rows vh。
+     preserveAspectRatio="xMidYMid meet" なので、縦長指板は max-height で
+     制限され横が縮み、横長指板は width:100% で収まる (どちらもはみ出さない)。 */
+  svg.fb {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: ${(88 / rows).toFixed(2)}vh !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
   /* .legend は main.css の @media print で display:none !important のため
      印刷では非表示。ここで凡例のサイズ指定はしない (dead code を避ける)。 */
 }`;

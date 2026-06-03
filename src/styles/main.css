@@ -1145,6 +1145,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 @media print {
   body { background: #fff; height: auto; overflow: auto; }
   .header, .modal-overlay, .btn-delete, .legend { display: none !important; }
+  .app-toast, #appToast { display: none !important; }
   .fb-fullscreen { display: none !important; }
   /* Hide editor panel, show saved panel */
   .tab-nav { display: none !important; }

@@ -37,25 +37,30 @@ export function buildPrintCss({ orientation, cols, rows }) {
 
   const layout = `
 @media print {
-  /* #savedGrid はラッパーのみ。グリッドは .print-page-group が担う */
+  /* #savedGrid はラッパーのみ */
   #savedGrid {
     display: block !important;
     gap: 0 !important;
   }
-  /* beforeprint で JS が cols×rows 枚ずつこの div にまとめる */
+  /* .print-page-group = block div に page-break-after:always。
+     block div への page-break-after は iOS Safari 含む全ブラウザで確実に動作する。
+     (CSS Grid への break-after:page は iOS Safari 非対応のため使わない) */
   .print-page-group {
+    display: block !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* 最終グループは page-break-after をリセット (末尾の空白ページ防止) */
+  .print-page-group:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+  /* .print-page-inner = 実際のグリッドレイアウト */
+  .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, 1fr) !important;
     grid-template-rows: repeat(${rows}, ${cellHmm}mm) !important;
     gap: ${gapMm}mm !important;
-  }
-  /* 改ページは .print-page-break (シンプルな block div) で行う。
-     CSS Grid への break-after:page は iOS Safari で動作しないため使わない。 */
-  .print-page-break {
-    break-before: page !important;
-    page-break-before: always !important;
-    height: 0 !important;
-    display: block !important;
   }
   .saved-card { break-inside: avoid; margin: 0 !important; padding: 0; }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }

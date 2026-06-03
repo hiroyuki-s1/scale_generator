@@ -1,12 +1,13 @@
 /**
  * 印刷用ページグループ管理。
  *
- * CSS Grid は印刷時のページ分割が不安定なため、
- * beforeprint で cols×rows 枚ずつ .print-page-group div にまとめ、
- * afterprint で元に戻すことで確実な改ページを実現する。
- *
- * calcPageGroupSizes は純粋関数 → テスト容易。
- * wrap/unwrap は DOM 操作 → main.js の beforeprint/afterprint から呼ぶ。
+ * 改ページ戦略 (試行錯誤の記録):
+ *   × CSS Grid の break-after:page     → iOS Safari で動作しない
+ *   × .print-page-break (page-break-before:always) → break要素自体が1P消費して空白ページが発生
+ *   ○ .print-page-group を block div にして page-break-after:always
+ *     → block div への page-break-after は全ブラウザで確実に動作する
+ *     → 最終グループは :last-child で auto にして末尾の空白ページを防ぐ
+ *     → グリッドレイアウトは内側の .print-page-inner で担う
  */
 
 /**
@@ -27,11 +28,10 @@ export function calcPageGroupSizes(total, perPage) {
 /**
  * #savedGrid 直下の .saved-card を cols×rows 枚ずつ .print-page-group にまとめる。
  *
- * 改ページの仕組み:
- *   .print-page-group 自体の break-after:page は iOS Safari で動作しない。
- *   そのため 2ページ目以降の先頭に .print-page-break (シンプルな block div) を
- *   挿入し、CSS の page-break-before:always で改ページする。
- *   ブロック要素への page-break-before は全ブラウザで確実に動作する。
+ * 構造:
+ *   .print-page-group (block, page-break-after:always)
+ *     .print-page-inner (grid, cols × rows レイアウト)
+ *       .saved-card × N
  *
  * iOS afterprint 未発火など二重呼び出しに備え、先に unwrap してから実行する。
  * @param {Element} grid
@@ -45,29 +45,26 @@ export function wrapIntoPageGroups(grid, cols, rows) {
   const perPage = cols * rows;
   const sizes = calcPageGroupSizes(cards.length, perPage);
   let idx = 0;
-  for (let i = 0; i < sizes.length; i++) {
-    // 2ページ目以降: 改ページ用 div を先に挿入
-    if (i > 0) {
-      const br = document.createElement('div');
-      br.className = 'print-page-break';
-      grid.insertBefore(br, cards[idx]);
-    }
+  for (const size of sizes) {
     const group = document.createElement('div');
     group.className = 'print-page-group';
+    const inner = document.createElement('div');
+    inner.className = 'print-page-inner';
+    group.appendChild(inner);
     grid.insertBefore(group, cards[idx]);
-    for (let j = 0; j < sizes[i]; j++) group.appendChild(cards[idx++]);
+    for (let i = 0; i < size; i++) inner.appendChild(cards[idx++]);
   }
 }
 
 /**
- * .print-page-group / .print-page-break を解体してカードを #savedGrid 直下に戻す。
+ * .print-page-group を解体してカードを #savedGrid 直下に戻す。
  * @param {Element} grid
  */
 export function unwrapPageGroups(grid) {
-  [...grid.querySelectorAll('.print-page-group, .print-page-break')].forEach(el => {
-    if (el.classList.contains('print-page-group')) {
-      while (el.firstChild) grid.insertBefore(el.firstChild, el);
-    }
-    el.remove();
+  [...grid.querySelectorAll('.print-page-group')].forEach(group => {
+    const inner = group.querySelector('.print-page-inner');
+    const src = inner ?? group;
+    while (src.firstChild) grid.insertBefore(src.firstChild, group);
+    group.remove();
   });
 }

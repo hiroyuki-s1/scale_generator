@@ -30,9 +30,15 @@ function extractCellHmm(css) {
   return m ? parseFloat(m[1]) : null;
 }
 
-// .print-page-group ブロックの中身を抽出
+// .print-page-group ブロックの中身を抽出 (block + page-break 用)
 function extractPageGroupBlock(css) {
   const m = css.match(/\.print-page-group\s*\{([^}]+)\}/);
+  return m ? m[1] : '';
+}
+
+// .print-page-inner ブロックの中身を抽出 (grid レイアウト用)
+function extractPageInnerBlock(css) {
+  const m = css.match(/\.print-page-inner\s*\{([^}]+)\}/);
   return m ? m[1] : '';
 }
 
@@ -41,7 +47,8 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
     for (const orientation of ORIENTATIONS) {
       const label = `${orientation} ${cols}×${rows}`;
       const { orient, layout } = buildPrintCss({ orientation, cols, rows });
-      const pgBlock = extractPageGroupBlock(layout);
+      const pgBlock    = extractPageGroupBlock(layout);  // .print-page-group (block)
+      const innerBlock = extractPageInnerBlock(layout);  // .print-page-inner (grid)
 
       // ── @page ──────────────────────────────────────────────────────
       it(`[${label}] @page size が orientation に対応した mm 寸法`, () => {
@@ -49,15 +56,15 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(orient).toContain(expected);
       });
 
-      // ── グリッド構造 ────────────────────────────────────────────────
-      it(`[${label}] .print-page-group: grid-template-columns = repeat(${cols}, 1fr)`, () => {
-        expect(pgBlock).toMatch(
+      // ── グリッド構造 (.print-page-inner) ──────────────────────────
+      it(`[${label}] .print-page-inner: grid-template-columns = repeat(${cols}, 1fr)`, () => {
+        expect(innerBlock).toMatch(
           new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*1fr\\)`)
         );
       });
 
-      it(`[${label}] .print-page-group: grid-template-rows = repeat(${rows}, Xmm)`, () => {
-        expect(pgBlock).toMatch(
+      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, Xmm)`, () => {
+        expect(innerBlock).toMatch(
           new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*[\\d.]+mm\\)`)
         );
       });
@@ -71,17 +78,24 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(cellHmm).toBeCloseTo(expected, 1);
       });
 
-      // ── 改ページ (.print-page-break で行う — iOS Safari 対応) ──────────
-      it(`[${label}] .print-page-break に page-break-before:always が存在する`, () => {
-        expect(layout).toMatch(/\.print-page-break[^{]*\{[\s\S]*?page-break-before:\s*always/);
+      // ── 改ページ (.print-page-group block + page-break-after:always) ──────
+      it(`[${label}] .print-page-group に page-break-after:always が存在する`, () => {
+        expect(pgBlock).toMatch(/page-break-after:\s*always/);
       });
 
-      it(`[${label}] .print-page-break に break-before:page が存在する (modern)`, () => {
-        expect(layout).toMatch(/\.print-page-break[^{]*\{[\s\S]*?break-before:\s*page/);
+      it(`[${label}] .print-page-group は display:block (grid でない)`, () => {
+        expect(pgBlock).toMatch(/display:\s*block/);
+        expect(pgBlock).not.toMatch(/display:\s*grid/);
       });
 
-      it(`[${label}] .print-page-group に break-after:page が含まれない (iOS Safari非対応)`, () => {
-        expect(pgBlock).not.toMatch(/break-after/);
+      it(`[${label}] .print-page-group:last-child が page-break-after:auto (末尾空白ページ防止)`, () => {
+        expect(layout).toMatch(/\.print-page-group:last-child[^{]*\{[^}]*page-break-after:\s*auto/);
+      });
+
+      it(`[${label}] .print-page-inner に grid-template-columns が存在する`, () => {
+        expect(layout).toMatch(
+          new RegExp(`\\.print-page-inner[^{]*\\{[\\s\\S]*?grid-template-columns:\\s*repeat\\(${cols},`)
+        );
       });
 
       // ── フォントサイズ clamp ─────────────────────────────────────────

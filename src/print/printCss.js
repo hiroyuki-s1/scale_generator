@@ -81,8 +81,11 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   // 控えめすぎる予約 (以前は @page margin 20mm + 16mm=計36mm) では横印刷で枠が用紙を
   // 超え2P目空白が再発した。→ 用紙高から **50mm** を予約 (@page上下20mm + iOS物理余白の
   // 機種差ぶんを多めに) し、どの向き/機種でも用紙を超えないようにする。
-  const RESERVE_MM = 50;
-  const usableH = sheetH - RESERVE_MM; // landscape 160mm / portrait 247mm
+  // 実機検証(2P空白/はみ出し)から逆算すると iOS の確保余白は約52mm。予約50mmでは
+  // 2mm 足りず縦横とも僅かにはみ出した。余裕をみて 64mm 予約する (約12mm のslack)。
+  // ※ それでもはみ出す/余白過多ならこの数値だけ調整する (実機依存の唯一の調整ノブ)。
+  const RESERVE_MM = 64;
+  const usableH = sheetH - RESERVE_MM; // landscape 146mm / portrait 233mm
   // 1 セル(指板1枚)の高さ。usableH を行数で均等分割した値。
   const cellMm  = Math.max(18, (usableH - gapMm * (rows - 1)) / rows);
   const titlePt = clamp(5.5, 10, cellMm / 9).toFixed(1);

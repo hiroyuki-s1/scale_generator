@@ -5,111 +5,53 @@
  *   - <style id="print-orient">  ... @page (用紙サイズ・マージン)
  *   - <style id="print-layout">  ... 登録スケールグリッドのレイアウトと寸法
  *
- * 設計上の最重要ポイント (iOS Safari 横印刷の2P目空白バグの根本対策):
- *   ─ vh は使わない ─
- *     iOS Safari は @media print で vh を「印刷ページ高さ」ではなく
- *     「ビューポート高さ」基準で解決することがある。@page size:auto +
- *     margin:0 でも完全には統一されておらず、特に横用紙(210mm 高)で
- *     vh が 297mm 相当を返してしまい、グループが用紙からはみ出して
- *     2ページ目が空白になる。
- *   ─ orientation を CSS media query で出し分け ─
- *     .print-page-group の height や svg.fb の max-height など
- *     向き依存の寸法は `@media print and (orientation: landscape|portrait)`
- *     ブロックに mm 単位で定義する。
- *     - 向き media query は iOS Safari でも実用紙の向きに正しく反応する
- *     - mm 単位は vh と違いビューポート由来の不定性がない
- *     これにより、ユーザーが OS 印刷シートで縦/横を切り替えても、
- *     実紙の向きに合った寸法が必ず適用される。
- *   ─ orientation 引数の扱い ─
- *     buildPrintCss({orientation, ...}) の orientation は PC の
- *     `@page size` (PC は印刷モーダルの向きボタンに従う) にのみ使う。
- *     `.print-page-group` の height などレイアウト系の寸法は
- *     orientation 引数に関わらず両方の orientation 用ブロックを出力する
- *     (モバイルでは OS シートで向きが切り替わるため、CSS 側はどちらでも
- *     動くようにしておく必要がある)。
- *   ─ 1px 安全マージン ─
- *     `height: calc(297mm - 1px)` のように 1px 引いてある。
- *     ブラウザのサブピクセル丸めで「ちょうど用紙高」が次ページに溢れる
- *     エッジケース (Chrome / Safari いずれも観測例あり) を防ぐ。
- *   ─ grid 行/列は minmax(0, 1fr) ─
- *     `1fr` は実際には `minmax(auto, 1fr)` として解決され、子要素の
- *     min-content が大きいと grid 行が広がってページ枠を突破する
- *     (Safari に顕著)。`minmax(0, 1fr)` で強制的に均等分割し、子要素は
- *     overflow:hidden で切る。
+ * ── 設計の核心 (iOS Safari 縦印刷で安定する実績ある方式 = dedecc4 復元) ──
+ *   `.print-page-group` の高さは **`height: 100vh`** とする。
+ *   印刷時 `1vh` = 印刷ページ高さの 1% なので `100vh` で正確に1ページ枠になる。
+ *   **iOS が @page margin を無視/変更しても、vh は実際の印刷ページに追従する**ため、
+ *   「ページぴったり/オーバーフロー」が起きず空白ページが出ない。
  *
- *  画面用の `#savedGrid.screen-grid` ルールが詳細度 (1,1,0) で当たるため、
- *  印刷用ルールの grid-template-columns / gap / fb-wrap の padding は
- *  `!important` を付けて確実に勝たせる。
+ *   過去に mm 固定 height へ変更したところ、iOS の AirPrint 物理余白を CSS 側で
+ *   手動補正する必要が生じ、補正値が機種差に追いつかず縦印刷で2P目空白が再発した。
+ *   vh はページ追従なので、この補正自体が不要 = mm 固定には戻さない。
+ *
+ *   その他の要点:
+ *   - `@page { size: <mm>; margin: 10mm 12mm }` — 向きは mm 明示。margin があっても
+ *     100vh はページ追従なので干渉しない。モバイルの横印刷は OS 印刷シートで縦のまま
+ *     運用する案内を印刷モーダルに表示している (CLAUDE.md 参照)。
+ *   - 改ページは隣接兄弟 `.print-page-group + .print-page-group` の
+ *     `page-break-before: always` のみ (page-break-after は Safari で最終ページ後に
+ *     余分な空白ページを作るため不使用)。
+ *   - grid 行/列は **`minmax(0, 1fr)`** — `1fr` (=minmax(auto,1fr)) は子の min-content で
+ *     行が膨張して2P目空白になる Safari バグの典型原因。子は overflow:hidden で切る。
+ *   - マスクで縦長になった指板は `svg.fb` の `max-height: <セル高さ相当>vh` で枠内に収める
+ *     (preserveAspectRatio="xMidYMid meet" で縦長は横が縮みフィット)。
+ *
+ *  画面用 `#savedGrid.screen-grid` ルールが詳細度 (1,1,0) で当たるため、印刷用の
+ *  grid-template-columns / gap / fb-wrap padding は `!important` で確実に勝たせる。
  */
 
 const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
 
 /**
- * 1向き分の派生寸法を計算する。
- * @param {boolean} isLand
- * @param {number}  rows
- * @returns {{pageHmm:number, cellHmm:number, titlePt:string, svgMaxMm:string}}
- */
-// @page margin (CRITICAL — iOS Safari 縦印刷 2P目空白の本丸):
-//   @page { margin: 0 } を iOS Safari は「用紙端まで描画」と解釈し、AirPrint の
-//   物理印刷不可領域や Safari デフォルト余白(片側 ~12.7mm)で最下部が溢れて
-//   2ページ目に押し出される。margin を物理余白「以上」に明示設定すると、
-//   コンテンツが余白の内側に確実に収まり溢れない。13mm は AirPrint 物理余白
-//   (~10mm) と Safari デフォルト(~12.7mm) の両方をカバーする値。
-const PAGE_MARGIN_MM = 13;
-
-function deriveOrientationDims(isLand, rows) {
-  const pageHmm = isLand ? 210 : 297;
-  // 印刷可能領域 (ページボックス) = 用紙 - @page margin×2。
-  const printableHmm = pageHmm - 2 * PAGE_MARGIN_MM; // portrait 271 / landscape 184
-  // グループ高さはページボックスより SAFETY_MM 小さく (丸め誤差の保険)。
-  //   二重の安全: ① @page margin で物理余白の内側にコンテンツを収める
-  //              ② グループをページボックスより更に小さくする
-  //   万一 Safari が @page margin を無視しても、グループは用紙より
-  //   2×13+2 = 28mm 小さい (portrait 269 / landscape 182) ので、
-  //   Safari デフォルト余白(上下 ~25mm)でも収まる。
-  const SAFETY_MM = 2;
-  const groupHmm  = printableHmm - SAFETY_MM; // portrait 269 / landscape 182
-  // @page margin で用紙端余白を確保済みなので、グループ内 padding は小さくてよい
-  const padV    = 3;
-  const padH    = 4;
-  const gapMm   = 3;
-  const cellHmm = (groupHmm - 2 * padV - gapMm * (rows - 1)) / rows;
-  // タイトル + fb-wrap border/padding 等のヘッダ系で約 7mm 確保
-  const reserveMm = 7;
-  const svgMaxMm  = Math.max(10, cellHmm - reserveMm).toFixed(1);
-  const titlePt   = clamp(5.5, 10, cellHmm / 9).toFixed(1);
-  return { pageHmm, groupHmm, cellHmm, titlePt, svgMaxMm, padV, padH };
-}
-
-/**
  * @param {{orientation:'landscape'|'portrait', cols:number, rows:number, isMobile?:boolean}} layout
  * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
  */
-export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
-  // @page の用紙サイズ:
-  //   - PC: 印刷モーダルの向きボタンを尊重するため明示 mm 指定
-  //   - モバイル: OS 印刷シートで向きを切替できるため size:auto
-  // margin は PAGE_MARGIN_MM(13mm) を明示設定する (CRITICAL):
-  //   margin:0 だと iOS Safari が用紙端まで描画し物理余白で2P目空白になる。
-  //   物理余白以上の margin を設定してコンテンツを余白の内側に収める。
-  const sizeMm = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
-  const orient = isMobile
-    ? `@media print { @page { size: auto; margin: ${PAGE_MARGIN_MM}mm; } }`
-    : `@media print { @page { size: ${sizeMm}; margin: ${PAGE_MARGIN_MM}mm; } }`;
+export function buildPrintCss({ orientation, cols, rows }) {
+  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくいので
+  // 明示的な mm 寸法で書く。最終的な向きは OS 印刷ダイアログでも上書き可能。
+  const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
+  const orient = `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
-  // 向き別寸法:
-  //   - PC: orientation 引数で確定 (印刷モーダルで決まる)。@media (orientation:...) を
-  //     使わず単一ブロックで出力する。viewport アスペクトと @page 用紙向きが食い違う
-  //     ケース (例: 横長ノートPCで portrait 印刷) で orientation media query が
-  //     viewport 基準で評価され「縦 297mm 用紙に landscape ルール (グループ高 210mm)」が
-  //     当たって下 87mm が空白になるバグを防ぐ。
-  //   - モバイル: @page size:auto + OS シートで向き切替できるため両方の orientation
-  //     media query ブロックを出力する。モバイルの場合 viewport 自身も用紙の向きと
-  //     同じになる (横向きにして印刷シート開く=横用紙) ため media query で一致する。
-  const land = deriveOrientationDims(true,  rows);
-  const port = deriveOrientationDims(false, rows);
-  const gapMm = 3;
+  const isLand = orientation === 'landscape';
+  const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm) — フォント計算用
+  const gapMm  = 3;
+  // フォントサイズ計算用の 1 セルあたり目安高さ (mm)。レイアウト自体は grid 1fr 均等分割。
+  const cellH  = (pageH - gapMm * (rows - 1)) / rows;
+  const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
+  // マスク縦長指板を1セルに収めるための max-height。100vh をセル数で割った相対値。
+  // タイトル/border 分の余裕として 92/rows (vh) を上限にする。
+  const svgMaxVh = (92 / rows).toFixed(2);
 
   const layout = `
 @media print {
@@ -118,16 +60,10 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     display: block !important;
     gap: 0 !important;
   }
-  /* ページ枠 — 1グループ = 1ページ。
-     - display:block + overflow:hidden + break-inside:avoid: グループ内で分割しない
-     - padding は中身 (グリッド) との余白として box-sizing:border-box で確保
-     - height は下の @media (orientation) で mm 指定 (iOS Safari vh 不定性対策)
-     改ページは隣接兄弟 page-break-before のみ
-     (page-break-after は Safari で最終ページ後に余分な空白を作るため不使用)。 */
+  /* ページ枠 — 1グループ = 1ページ。height:100vh が印刷ページに追従する。 */
   .print-page-group {
     display: block !important;
-    box-sizing: border-box !important;
-    padding: ${port.padV}mm ${port.padH}mm !important;
+    height: 100vh !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -136,10 +72,8 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     break-before: page !important;
     page-break-before: always !important;
   }
-  /* ページ枠の中を cols×rows の grid で均等分割。
-     minmax(0, 1fr) で子要素の min-content に押されて行が伸びるのを防ぐ
-     (Safari の grid + print pagination で顕著な「ちょうどページ高に
-     収まらず2P目空白」の典型原因)。 */
+  /* ページ枠の中を cols×rows の grid で均等分割。minmax(0,1fr) で Safari の
+     min-content 膨張 (2P目空白の典型原因) を防ぐ。 */
   .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, minmax(0, 1fr)) !important;
@@ -158,6 +92,10 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     padding: 0;
   }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }
+  .fb-title, .saved-title-input, .saved-print-title {
+    font-size: ${titlePt}pt !important;
+    line-height: 1.2;
+  }
   .fb-wrap, .saved-card .fb-wrap {
     overflow: hidden !important;
     text-align: center !important;
@@ -167,56 +105,22 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     box-shadow: none !important;
     box-sizing: border-box !important;
   }
-  /* SVG: max-height は下の @media (orientation) で mm 指定。
-     基本指定 (width/height/display) はここに。 */
+  /* 指板 SVG: マスクで縦長になっても max-height(vh) で1セルに収める。
+     preserveAspectRatio="xMidYMid meet" なので縦長は横が縮みフィット。 */
   svg.fb {
     min-width: 0 !important;
     width: 100% !important;
     height: auto !important;
     max-width: 100% !important;
+    max-height: ${svgMaxVh}vh !important;
     display: block !important;
     margin: 0 auto !important;
   }
-  /* 印刷時に紛れ込みやすい要素を強制非表示 (再発防止の保険)。
-     画面要素のうち、印刷で出てしまうと .print-page-group の下に余分な
-     高さを持つ要素として 2P 目空白を誘発する。
-       - .saved-warn-restore: 削除警告を dismiss した状態で表示される
-       - #savedEmpty:         登録ゼロ件時のプレースホルダ */
+  /* 印刷に紛れ込むと .print-page-group の下に余分な高さを作り2P目空白を誘発する
+     画面要素を強制非表示 (再発防止の保険)。 */
   .saved-warn-restore { display: none !important; }
   #savedEmpty { display: none !important; }
-}
-
-${isMobile ? `
-/* ── モバイル: OS 印刷シートで向き切替できるため orientation 別ブロック ──
-   horizontal: height calc(...-1px) は丸めで次ページに溢れるエッジケース防止。 */
-@media print and (orientation: landscape) {
-  .print-page-group { height: ${land.groupHmm}mm !important; }
-  .fb-title, .saved-title-input, .saved-print-title {
-    font-size: ${land.titlePt}pt !important;
-    line-height: 1.2;
-  }
-  svg.fb { max-height: ${land.svgMaxMm}mm !important; }
-}
-@media print and (orientation: portrait) {
-  .print-page-group { height: ${port.groupHmm}mm !important; }
-  .fb-title, .saved-title-input, .saved-print-title {
-    font-size: ${port.titlePt}pt !important;
-    line-height: 1.2;
-  }
-  svg.fb { max-height: ${port.svgMaxMm}mm !important; }
-}` : `
-/* ── PC: orientation 引数で固定 (印刷モーダルで決まる)。
-   @media (orientation:...) は使わず単一ブロックで出力。
-   viewport-vs-@page の orientation 食い違いで誤ったブロックが当たり、
-   グループが用紙より低くなって下端が空白になる問題を防ぐ。 */
-@media print {
-  .print-page-group { height: ${(orientation === 'landscape' ? land : port).groupHmm}mm !important; }
-  .fb-title, .saved-title-input, .saved-print-title {
-    font-size: ${(orientation === 'landscape' ? land : port).titlePt}pt !important;
-    line-height: 1.2;
-  }
-  svg.fb { max-height: ${(orientation === 'landscape' ? land : port).svgMaxMm}mm !important; }
-}`}`;
+}`;
 
   return { orient, layout };
 }
@@ -226,9 +130,7 @@ export function initPrintCss(store) {
   const layoutEl = document.getElementById('print-layout');
 
   function update() {
-    const isMobile = typeof window !== 'undefined'
-      && window.matchMedia('(max-width: 767px)').matches;
-    const css = buildPrintCss({ ...store.get().layout, isMobile });
+    const css = buildPrintCss(store.get().layout);
     orientEl.textContent = css.orient;
     layoutEl.textContent = css.layout;
   }

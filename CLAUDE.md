@@ -122,26 +122,21 @@ main.js → orchestrates all
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
   改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
   `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
-  各グループは **`@media print and (orientation: …)` 内で mm 指定した
-  `height`** (landscape 204mm / portrait 291mm) + `overflow: hidden` +
-  `break-inside: avoid`** で1ページに収め、内側 `.print-page-inner` を
-  **`grid-template-rows/columns: repeat(n, minmax(0, 1fr))`** で均等分割する。
-  寸法ロジックは [src/print/printCss.js](src/print/printCss.js) の
-  `deriveOrientationDims()` に集約。iOS Safari で動かなかった失敗パターン
-  (絶対に戻さない):
+  各グループは **`height: 100vh`** (= 印刷ページに追従する1ページ枠) +
+  `overflow: hidden` + `break-inside: avoid` で1ページに収め、内側
+  `.print-page-inner` を **`grid-template-rows/columns: repeat(n, minmax(0, 1fr))`**
+  で均等分割する。`@page { size: <mm>; margin: 10mm 12mm }`。
+  **重要 (試行錯誤の結論)**: 一時 `height` を mm 固定にしたが、iOS 実機の AirPrint
+  物理余白を CSS 側で補正しきれず**縦印刷で2P目空白が再発**した。`100vh` は
+  印刷ページ高さに追従するため物理余白の手動補正が不要で、これが iOS で安定する
+  (= dedecc4 の実装。ユーザー証言「以前は縦が動いていた」が決め手)。**mm 固定 height
+  には二度と戻さない**。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
   - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
   - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
   - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
   - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
     作る既知バグ。`page-break-after` は一切使わず、**隣接兄弟セレクタの
     `page-break-before`** で2番目以降のグループ前だけに改ページを入れる。
-  - ❌ **`height: 100vh`** → iOS Safari は print で `vh` を「印刷ページ高さ」では
-    なく「ビューポート高さ」基準で解決する不定性があり、横用紙で portrait
-    viewport(297mm) を返してはみ出し2P空白。**`vh` は一切使わず**、向き依存の
-    寸法 (グループ height・svg max-height) は **`@media print and
-    (orientation: landscape|portrait)` ブロックに mm で定義**する
-    (モバイルは両 orientation を出力 = OS シート切替に追従、PC は orientation
-    引数で単一ブロック = viewport-vs-@page 食い違いを回避)。
   - ❌ **グループ高さ = 用紙ぴったり/近い** → **実機 iOS の AirPrint 物理印刷不可領域
     (各辺 ~10mm)** で溢れ、PC PDF では見えない2P目空白が実機で出る (WebKit headless も
     物理余白が無いので CSS 上 291<297 で正常に見え、見逃した)。`deriveOrientationDims`
@@ -149,10 +144,6 @@ main.js → orchestrates all
     実機の上下計 ~20mm 余白を吸収する。下辺余白の大きい機種で再発したら 26〜28 に上げる。
   - ❌ **grid `1fr`** → Safari で子の min-content に押されて行が膨張し2P空白。
     **`minmax(0, 1fr)`** で強制均等分割し、子は `overflow: hidden` で切る。
-  - ❌ **`body` margin(8px) + `@page margin`** → グループ高さと合算して用紙を超え
-    横用紙で2P空白。**`@page { margin: 0 }`** + グループ `padding: 8mm 10mm`
-    (`box-sizing: border-box`)。`html, body` と全コンテナ
-    (`.app-body`/`#panelSaved`/`.saved-section`/`#savedGrid`) の margin/padding も 0。
   - **マスクで縦長になった指板**: `svg.fb` に `max-height: <cellHmm-7>mm` を
     orientation block 側で指定。`preserveAspectRatio="xMidYMid meet"` で
     縦長は横が縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。

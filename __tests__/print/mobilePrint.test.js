@@ -134,39 +134,17 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
   }
 });
 
-// ── C. orientation 別 mm 寸法 + grid minmax(0, 1fr) (iOS Safari 横印刷 2P空白対策) ───
-// v1.0.0 以前は .print-page-group に height:100vh を一律に当てていたが、
-// iOS Safari は print + landscape で vh をビューポート基準に解決する
-// 不定性があり、グループが用紙からはみ出して2P目空白になる事故が頻発した。
-// 現在は orientation media query 内で mm 単位で出すことで根本回避している。
+// ── C. ページ枠 height:100vh + grid minmax(0, 1fr) ───────────────────────
+// 100vh は印刷ページに追従するため iOS の物理余白補正が不要 (dedecc4 復元)。
+// 一時 mm 固定にしたが iOS 縦印刷で2P空白が再発したため戻した。
 
-describe('C: orientation 別 mm 寸法 + grid minmax(0, 1fr)', () => {
+describe('C: ページ枠 height:100vh + grid minmax(0, 1fr)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`dynamic [${cols}×${rows}]: .print-page-group base block には height を持たせない`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-group が height:100vh (mm固定にしない)`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
       const pgBlock = css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-      expect(pgBlock).not.toMatch(/height:\s*100vh/);
-      expect(pgBlock).not.toMatch(/height:\s*[\d]+mm/);
-    });
-
-    it(`mobile [${cols}×${rows}]: orientation:landscape で height = 182mm`, () => {
-      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows, isMobile: true });
-      expect(css).toMatch(
-        /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*182mm/
-      );
-    });
-
-    it(`mobile [${cols}×${rows}]: orientation:portrait で height = 269mm`, () => {
-      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows, isMobile: true });
-      expect(css).toMatch(
-        /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*269mm/
-      );
-    });
-
-    it(`PC [${cols}×${rows}]: orientation 引数固定で単一 @media print ブロック (反対 orientation の値は出ない)`, () => {
-      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
-      expect(css).toMatch(/\.print-page-group\s*\{[^}]*height:\s*269mm/);
-      expect(css).not.toMatch(/182mm/);
+      expect(pgBlock).toMatch(/height:\s*100vh/);
+      expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
     });
 
     it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {

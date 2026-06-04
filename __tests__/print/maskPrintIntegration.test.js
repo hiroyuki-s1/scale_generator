@@ -116,47 +116,26 @@ describe('calcMaskViewBox — 幾何学的正確性', () => {
 
 // ── layout × orientation の cellH 検証 ──────────────────────────────────
 
-describe('buildPrintCss — ページ枠 mm + grid minmax(0, 1fr) (iOS Safari 空白ページ対策)', () => {
-  // iOS Safari 空白ページバグの最新対策 (v1.0.0 以降):
-  //   - height:100vh → orientation media query 内で mm 指定に変更
-  //     iOS Safari は print mode で vh をビューポート基準で解決する不定性が
-  //     あり、横用紙(210mm)で 100vh が portrait viewport を返してはみ出す。
-  //   - grid 1fr → minmax(0, 1fr)
-  //     1fr は実装上 minmax(auto, 1fr) として子要素の min-content に押されて
-  //     行が広がる Safari バグの典型原因。minmax(0, 1fr) で強制均等分割。
+describe('buildPrintCss — ページ枠 height:100vh + grid minmax(0, 1fr)', () => {
+  // 100vh は印刷ページに追従するため iOS の物理余白補正が不要 (dedecc4 復元)。
+  // grid minmax(0,1fr) で Safari の min-content 行膨張 (2P空白の典型) を防ぐ。
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {
-      it(`${orientation} ${cols}×${rows}: .print-page-group base block には height を持たせない`, () => {
+      it(`${orientation} ${cols}×${rows}: .print-page-group が height:100vh (mm固定にしない)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         const pgBlock = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-        expect(pgBlock).not.toMatch(/height:\s*100vh/);
+        expect(pgBlock).toMatch(/height:\s*100vh/);
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
-      });
-      // グループ高さは用紙より 6mm 小さい (最下行はみ出し防止)
-      const groupMm = orientation === 'landscape' ? 182 : 269;
-      it(`PC ${orientation} ${cols}×${rows}: 単一 @media print に height = ${groupMm}mm`, () => {
-        const { layout } = buildPrintCss({ orientation, cols, rows });
-        expect(layout).toMatch(
-          new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*${groupMm}mm`)
-        );
-        // 反対 orientation の値が混入しないこと
-        const oppositeMm = orientation === 'landscape' ? 269 : 182;
-        expect(layout).not.toMatch(new RegExp(`height:\\s*${oppositeMm}mm`));
-      });
-      it(`mobile ${orientation} ${cols}×${rows}: orientation media query で landscape=210mm / portrait=297mm 両方出力`, () => {
-        const { layout } = buildPrintCss({ orientation, cols, rows, isMobile: true });
-        expect(layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*182mm/
-        );
-        expect(layout).toMatch(
-          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*269mm/
-        );
       });
       it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         expect(layout).toMatch(
           new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
         );
+      });
+      it(`${orientation} ${cols}×${rows}: svg.fb に max-height vh (マスク縦長対策)`, () => {
+        const { layout } = buildPrintCss({ orientation, cols, rows });
+        expect(layout).toMatch(/svg\.fb\s*\{[^}]*max-height:\s*[\d.]+vh/);
       });
     }
   }

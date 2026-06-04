@@ -14,14 +14,15 @@
  *        さらに確保するため、幾何学的な印刷可能高さぴったりだと枠が用紙を超えて空白。
  *     ❌ `height: auto` (高さ無し) …空白は出ないがカードが上詰めになり、ページを
  *        均等分割して各セルに1枚ずつ配置できない。
- *   → **結論**: `.print-page-inner` に **用紙高から大きめ(50mm)予約した控えめ mm 高さ**
- *      (usableH) を与え、それを grid **`minmax(0,1fr)`** で cols×rows 均等分割する。
+ *   → **結論**: `.print-page-inner` に **用紙高から予約量(PRINT_RESERVE_MM)を引いた
+ *      控えめ mm 高さ** (usableH) を与え、grid **`minmax(0,1fr)`** で cols×rows 均等分割。
  *      ・控えめ mm なのでどの向き/機種でも用紙を超えない (2P目空白を出さない)
  *      ・1fr 均等分割なので各セルに1枚ずつ均等配置される (上詰めにならない)
  *      ・vh を使わないので iOS の vh-in-print 問題に影響されない
  *      `.print-page-group` 自体は height 無し(auto) で inner を包むだけ。
- *      ※ usableH の予約量(現50mm)は iOS 実機の印刷可能高さに依存する調整値。
- *        2P空白が出るなら予約を増やす / 余白が多すぎるなら減らす。**実機確認が必要**。
+ *      ※ 予約量はファイル上部 PRINT_RESERVE_MM で モバイル/PC × 縦/横 別に調整可能。
+ *        モバイルは iOS の隠し余白が大きいため予約大、PC は @page margin を尊重するため
+ *        予約小 (用紙いっぱい)。同じ値を共用すると PC が上詰めになるので分けている。
  *
  *   その他の要点:
  *   - `@page` は PC / モバイルで size を出し分ける (詳細は buildPrintCss 内コメント)。
@@ -58,9 +59,20 @@
 //  縦・横で別々に調整できる。用紙高: 縦(A4 portrait)=297mm / 横(A4 landscape)=210mm。
 //  実際の1ページ枠の高さ = 用紙高 − 下の予約値。
 //    例) 縦: 297 − 64 = 233mm が1ページ枠   /   横: 210 − 64 = 146mm が1ページ枠
+//  ★モバイルと PC で別々★ — iOS/Android は印刷時の隠し余白が大きいので予約も大きいが、
+//  PC ブラウザ印刷は @page margin を尊重するので予約は小さく(用紙いっぱいに使う)。
+//  同じ値を両方に使うと、モバイル基準だと PC が上詰めになる/PC 基準だとモバイルがはみ出す。
 const PRINT_RESERVE_MM = {
-  portrait:  164,   // ← 縦印刷の予約量(mm)。縦で空白が出るなら増やす
-  landscape: 164,   // ← 横印刷の予約量(mm)。横ではみ出すなら増やす
+  // モバイル(スマホ/タブレット): 実機で調整した確定値
+  mobile:  {
+    portrait:  164,   // ← スマホ縦印刷の予約量(mm)。縦で空白が出るなら増やす
+    landscape: 164,   // ← スマホ横印刷の予約量(mm)。横ではみ出すなら増やす
+  },
+  // PC: @page margin(上下20mm) + 少しの安全分だけ。用紙いっぱいに均等配置する
+  desktop: {
+    portrait:  24,    // ← PC縦印刷の予約量(mm)。PCで空白/はみ出しが出るなら増やす
+    landscape: 24,    // ← PC横印刷の予約量(mm)
+  },
 };
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -98,14 +110,13 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   // ── グリッド高さの算出 (2P目空白を出さないための核心) ────────────────────
   // 用紙の高さ (A4: landscape=短辺210mm / portrait=長辺297mm)。
   const sheetH = isLand ? 210 : 297;
-  // iOS は `@page margin` に加えて端末側の物理余白をさらに確保するため、幾何学的な
-  // 印刷可能高さ (sheet − @page margin) より「実際に使える高さ」はかなり小さい。
-  // 控えめすぎる予約 (以前は @page margin 20mm + 16mm=計36mm) では横印刷で枠が用紙を
-  // 超え2P目空白が再発した。→ 用紙高から **50mm** を予約 (@page上下20mm + iOS物理余白の
-  // 機種差ぶんを多めに) し、どの向き/機種でも用紙を超えないようにする。
-  // 予約量はファイル上部の PRINT_RESERVE_MM (縦/横で別々) を参照。調整はそこだけ。
-  const RESERVE_MM = isLand ? PRINT_RESERVE_MM.landscape : PRINT_RESERVE_MM.portrait;
-  const usableH = sheetH - RESERVE_MM; // 例: landscape 210-64=146mm / portrait 297-64=233mm
+  // 用紙高から「予約量」を引いた高さを1ページ枠とする。予約量はファイル上部の
+  // PRINT_RESERVE_MM (モバイル/PC × 縦/横) を参照。調整はそこだけ。
+  // iOS/Android は @page margin の上に端末側の隠し余白を大きく確保するため予約を
+  // 大きく、PC は @page margin を尊重するため予約を小さくする (= 用紙いっぱいに使う)。
+  const reserve  = isMobile ? PRINT_RESERVE_MM.mobile : PRINT_RESERVE_MM.desktop;
+  const RESERVE_MM = isLand ? reserve.landscape : reserve.portrait;
+  const usableH = sheetH - RESERVE_MM;
   // 1 セル(指板1枚)の高さ。usableH を行数で均等分割した値。
   const cellMm  = Math.max(18, (usableH - gapMm * (rows - 1)) / rows);
   const titlePt = clamp(5.5, 10, cellMm / 9).toFixed(1);
@@ -132,12 +143,11 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     page-break-before: always !important;
   }
   /* ★ レイアウトの核心 (空白バグと上詰めの両方を解決):
-     高さを **用紙高から 50mm 予約した控えめ mm 実寸 (usableH)** で持ち、それを cols×rows
-     の grid で **均等分割 (minmax(0,1fr))** する。各セルに1枚ずつ・ページに均等配置され
-     (上詰めにならない)、かつ控えめ高さなので用紙を超えず2P空白も出ない。
+     高さを **用紙高から予約量(PRINT_RESERVE_MM)を引いた mm 実寸 (usableH)** で持ち、
+     それを cols×rows の grid で **均等分割 (minmax(0,1fr))** する。各セルに1枚ずつ・
+     ページに均等配置され (上詰めにならない)、控えめ高さなので用紙を超えず2P空白も出ない。
      - vh は使わない: iOS 横印刷で viewport(縦持ち)基準になり用紙を超え2P空白が出る。
-     - 「控えめ(用紙高 − 50mm)」: iOS は @page margin の上に端末物理余白を足すため、
-       幾何学的な印刷可能高さより小さくしないと枠が用紙を超える。50mm 予約で吸収。
+     - 予約量はモバイル/PC で別 (モバイルは隠し余白が大きいので大きく予約)。
      - 行は minmax(0,1fr): 素の 1fr だと Safari の min-content 膨張で行が伸び2P空白。 */
   .print-page-inner {
     display: grid !important;

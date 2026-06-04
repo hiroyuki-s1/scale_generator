@@ -137,27 +137,22 @@ main.js → orchestrates all
   - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
     作る既知バグ。`page-break-after` は一切使わず、**隣接兄弟セレクタの
     `page-break-before`** で2番目以降のグループ前だけに改ページを入れる。
-  - ❌ **グループ高さ = 用紙ぴったり/近い** → **実機 iOS の AirPrint 物理印刷不可領域
-    (各辺 ~10mm)** で溢れ、PC PDF では見えない2P目空白が実機で出る (WebKit headless も
-    物理余白が無いので CSS 上 291<297 で正常に見え、見逃した)。`deriveOrientationDims`
-    の **`SAFETY_MM = 22`** で用紙より小さく (portrait 275mm / landscape 188mm) し、
-    実機の上下計 ~20mm 余白を吸収する。下辺余白の大きい機種で再発したら 26〜28 に上げる。
+  - ❌ **mm 固定 height** → iOS 実機の AirPrint 物理余白(機種差 10〜16mm)を CSS 側で
+    手動補正する必要が生じ、補正値が機種差に追いつかず**縦印刷で2P空白が再発**。
+    `100vh` ならページ追従で補正不要。`@page margin` も 0/auto にせず `10mm 12mm` を
+    明示 (margin:0 は iOS が用紙端まで描画して物理余白で溢れる)。
   - ❌ **grid `1fr`** → Safari で子の min-content に押されて行が膨張し2P空白。
     **`minmax(0, 1fr)`** で強制均等分割し、子は `overflow: hidden` で切る。
-  - **マスクで縦長になった指板**: `svg.fb` に `max-height: <cellHmm-7>mm` を
-    orientation block 側で指定。`preserveAspectRatio="xMidYMid meet"` で
-    縦長は横が縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
-  - 検証 (3層): **①ユニット** `__tests__/print/printCss.matrix.test.js` が「グループ
-    高さ < 用紙 - 18mm」「中身がグループ内に収まる」「vh 不使用」「minmax(0,1fr)」
-    「隣接兄弟 page-break-before」を不変条件で守る。**②実 PDF** `node
-    e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し、要 dev server)。
-    **③WebKit実測 (iOS Safariエンジン)** `node e2e/webkit-2x2-check.cjs` で
-    グループ高さが「用紙 - 実機余白20mm」に収まるか実測。WebKit は
-    `e2e/setup-webkit-libs.sh` で起動用ライブラリを sudo 無し導入 (この環境は
-    playwright install-deps が使えないため)。WebKit headless は emulateMedia('print')
-    と SVG/filter 描画でクラッシュするので、ダミーカード注入 + @media print→all
-    書き換えで測定する。Playwright `emulateMedia` は SVG 高さを 0 と誤測定するため
-    見た目は必ず PDF で。
+  - **マスクで縦長になった指板**: `svg.fb` に `max-height: (92/rows)vh` を指定
+    (100vh 枠の中の1セル相当)。`preserveAspectRatio="xMidYMid meet"` で縦長は横が
+    縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
+  - 検証: **①ユニット** `__tests__/print/printCss.matrix.test.js` が「height:100vh
+    維持(mm固定にしない)」「minmax(0,1fr)」「隣接兄弟 page-break-before」
+    「svg max-height vh」を不変条件で守る。**②実 PDF** `node e2e/layout-matrix-pdf.cjs`
+    (全9レイアウトのはみ出し検出、要 dev server)。**③WebKit (iOS Safariエンジン)**
+    は `e2e/setup-webkit-libs.sh` で起動用ライブラリを sudo 無し導入できるが、
+    headless は emulateMedia('print') と SVG/filter でクラッシュし、100vh の印刷時
+    実値も測れない (viewport基準になる) ため、**iOS 印刷の最終確認は実機必須**。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

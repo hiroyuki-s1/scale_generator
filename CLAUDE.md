@@ -131,14 +131,29 @@ main.js → orchestrates all
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
   改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
   `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
-  各グループは **height を指定せず (auto)** + `overflow: hidden` + `break-inside: avoid`。
-  内側 `.print-page-inner` は **列 `repeat(cols, minmax(0,1fr))` / 行 `repeat(rows, auto)`**。
-  指板 SVG は **`max-height: <印刷可能高さ ÷ 行数 − 安全マージン> mm` の実寸**で縛る。
-  → 枠は中身(mm実寸の指板)ぶんの高さになり、**1ページを物理的に超えられない**。
-  **★ 以前は `height: 100vh` を使っていたが、スマホ(縦持ち)で横用紙を印刷すると
-  iOS Safari が 100vh を「縦持ち viewport の高さ」で解決し、横用紙の印刷可能高さを
-  大幅に超えて2P目空白を出した (横だけ壊れる)。vh は用紙でなく viewport 基準になり得る
-  ので印刷の高さに使わない。** 安全マージン (現 16mm) で AirPrint 物理余白の機種差も吸収。
+  各グループ `.print-page-group` は **height 指定なし(auto)** + `overflow: hidden` +
+  `break-inside: avoid`。内側 `.print-page-inner` に **「用紙高 − 予約量(mm)」の控えめな
+  mm 高さ**を与え、それを **列・行とも `repeat(n, minmax(0,1fr))`** で均等分割する
+  (各セルに1枚ずつ・ページに均等配置)。指板 SVG は `max-height: <mm>` で枠内に収める。
+  → 枠は控えめ mm なので **1ページを超えられず2P空白を出さない**、かつ 1fr 均等分割なので
+  **上詰めにならない**。
+  **★ 高さに `vh` は使わない (CRITICAL)**: スマホ(縦持ち)で横用紙を印刷すると iOS Safari が
+  `100vh` を「縦持ち viewport の高さ」で解決し、横用紙の印刷可能高さを大幅に超えて2P目空白を
+  出す (横だけ壊れる)。`height: auto` は上詰めに、`用紙ぴったりの mm` は iOS 物理余白で空白に
+  なるため、いずれも不可。
+
+  **★ 予約量はモバイル/PC で分離 + 最終値は人間が実機調整 (CRITICAL・忘れるな)**:
+  予約量は [src/print/printCss.js](src/print/printCss.js) 上部の `PRINT_RESERVE_MM`
+  (`{ mobile:{portrait,landscape}, desktop:{portrait,landscape} }`) で持つ。
+  iOS/Android は印刷時に端末の隠し余白を大きく確保するので予約を大きく、PC ブラウザは
+  @page margin を尊重するので予約を小さく(用紙いっぱい)する。**共用は厳禁** — モバイル基準を
+  PC に流用すると PC が上詰め、PC 基準をモバイルに流用するとモバイルがはみ出す
+  (両方ともユーザー報告で実証)。
+  **予約量の正しい mm 値は実プリンタ/iOS の物理余白に依存し headless では検証不可。
+  最終調整は人間が実機(縦/横 × スマホ/PC)で印刷して `PRINT_RESERVE_MM` を合わせる。**
+  ユニットテスト ([__tests__/print/printReserveTuning.test.js](__tests__/print/printReserveTuning.test.js))
+  が守れるのは「モバイル/PC分離・PCは用紙いっぱい寄り・vh不使用・正の mm」という構造だけ。
+  「2P空白/はみ出し → 値を大きく」「上詰め/余白過多 → 値を小さく」を実機で詰める。
   **`@page` の size は PC / モバイルで出し分ける (横印刷分割バグの根治・CRITICAL)**:
   モバイル (`isMobile` = `max-width:767px`) は `@page { size: auto; margin: 10mm 12mm }`
   ── 向きを OS 印刷シートで切り替える運用なので、`size` を mm 明示 (210mm 297mm=portrait)

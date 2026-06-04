@@ -5,15 +5,23 @@
  *   - <style id="print-orient">  ... @page (用紙サイズ・マージン)
  *   - <style id="print-layout">  ... 登録スケールグリッドのレイアウトと寸法
  *
- * ── 設計の核心 (iOS Safari 縦印刷で安定する実績ある方式 = dedecc4 復元) ──
- *   `.print-page-group` の高さは **`height: 100vh`** とする。
- *   印刷時 `1vh` = 印刷ページ高さの 1% なので `100vh` で正確に1ページ枠になる。
- *   **iOS が @page margin を無視/変更しても、vh は実際の印刷ページに追従する**ため、
- *   「ページぴったり/オーバーフロー」が起きず空白ページが出ない。
- *
- *   過去に mm 固定 height へ変更したところ、iOS の AirPrint 物理余白を CSS 側で
- *   手動補正する必要が生じ、補正値が機種差に追いつかず縦印刷で2P目空白が再発した。
- *   vh はページ追従なので、この補正自体が不要 = mm 固定には戻さない。
+ * ── 設計の核心 (高さに vh も用紙ぴったりの mm も使わない) ──
+ *   印刷の高さ指定は試行錯誤の末、次の3つ全てを避ける結論に至った:
+ *     ❌ `.print-page-group { height: 100vh }` …iOS Safari は印刷時 vh を「画面の
+ *        viewport 高さ」で解決することがあり、スマホ(縦持ち)で横用紙を印刷すると
+ *        100vh が縦持ち viewport 高さ(大)になり横用紙を超えて2P目空白が出る。
+ *     ❌ `height: <用紙ぴったりの mm>` …iOS は @page margin の上に端末物理余白を
+ *        さらに確保するため、幾何学的な印刷可能高さぴったりだと枠が用紙を超えて空白。
+ *     ❌ `height: auto` (高さ無し) …空白は出ないがカードが上詰めになり、ページを
+ *        均等分割して各セルに1枚ずつ配置できない。
+ *   → **結論**: `.print-page-inner` に **用紙高から大きめ(50mm)予約した控えめ mm 高さ**
+ *      (usableH) を与え、それを grid **`minmax(0,1fr)`** で cols×rows 均等分割する。
+ *      ・控えめ mm なのでどの向き/機種でも用紙を超えない (2P目空白を出さない)
+ *      ・1fr 均等分割なので各セルに1枚ずつ均等配置される (上詰めにならない)
+ *      ・vh を使わないので iOS の vh-in-print 問題に影響されない
+ *      `.print-page-group` 自体は height 無し(auto) で inner を包むだけ。
+ *      ※ usableH の予約量(現50mm)は iOS 実機の印刷可能高さに依存する調整値。
+ *        2P空白が出るなら予約を増やす / 余白が多すぎるなら減らす。**実機確認が必要**。
  *
  *   その他の要点:
  *   - `@page` は PC / モバイルで size を出し分ける (詳細は buildPrintCss 内コメント)。
@@ -22,13 +30,12 @@
  *     PC は `size: <mm>` で向きボタンの指定を用紙に効かせる。**どちらの分岐も @page は
  *     単一ブロック**。@page を orientation media query で複数に分けるのは厳禁
  *     (モバイル Safari が複数 @page を処理できず印刷崩壊する → 3f4c03b で実証・revert)。
- *     margin があっても 100vh はページ追従なので干渉しない。
  *   - 改ページは隣接兄弟 `.print-page-group + .print-page-group` の
  *     `page-break-before: always` のみ (page-break-after は Safari で最終ページ後に
  *     余分な空白ページを作るため不使用)。
- *   - grid 行/列は **`minmax(0, 1fr)`** — `1fr` (=minmax(auto,1fr)) は子の min-content で
- *     行が膨張して2P目空白になる Safari バグの典型原因。子は overflow:hidden で切る。
- *   - マスクで縦長になった指板は `svg.fb` の `max-height: <セル高さ相当>vh` で枠内に収める
+ *   - grid 行/列は **`minmax(0, 1fr)`** — 素の `1fr` (=minmax(auto,1fr)) は子の
+ *     min-content で行が膨張して2P目空白になる Safari バグの典型原因。子は overflow:hidden。
+ *   - マスクで縦長になった指板は `svg.fb` の `max-height: <mm>` で枠内に収める
  *     (preserveAspectRatio="xMidYMid meet" で縦長は横が縮みフィット)。
  *
  *  画面用 `#savedGrid.screen-grid` ルールが詳細度 (1,1,0) で当たるため、印刷用の

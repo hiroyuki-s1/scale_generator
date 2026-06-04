@@ -1,12 +1,12 @@
 /**
- * 「お気に入りへ追加」ボタンの表示と各プラットフォーム挙動を実ブラウザで確認。
+ * 「アプリとして追加」ボタンの表示と各プラットフォーム挙動を実ブラウザで確認。
  *
  * シナリオ:
  *  - PC Chromium: ボタンが存在し、クリックでブックマーク案内モーダルが開く
  *  - Android Chromium: ボタンが存在し、beforeinstallprompt が無いとフォールバックモーダル
  *  - iOS WebKit: ボタンクリックで「ホーム画面に追加」手順モーダル
  *
- * フッタ並びも検証: お気に入りへ追加 → ご意見・バグ報告 → 作者：シモーネ
+ * フッタ並びも検証: アプリとして追加 → ご意見・バグ報告 → 作者：シモーネ
  */
 const { chromium, webkit } = require('playwright');
 const fs = require('fs');
@@ -44,7 +44,7 @@ async function checkFooterOrder(page) {
 }
 
 async function run() {
-  console.log('🦏 お気に入りへ追加 — 実ブラウザ検証\n');
+  console.log('🦏 アプリとして追加 — 実ブラウザ検証\n');
   const reports = [];
   let allPass = true;
 

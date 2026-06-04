@@ -1,5 +1,5 @@
 /**
- * 「お気に入りへ追加」(ホーム画面に追加) ボタンの制御。
+ * 「アプリとして追加」(ホーム画面に追加) ボタンの制御。
  *
  * プラットフォーム別:
  *   - Android Chrome/Edge: `beforeinstallprompt` を捕まえてボタンタップで
@@ -117,7 +117,7 @@ function fillModal(modal, platform) {
 }
 
 /**
- * 「お気に入りへ追加」ボタン + モーダルを初期化する。
+ * 「アプリとして追加」ボタン + モーダルを初期化する。
  * @param {{platform?:ReturnType<typeof detectPlatform>}} [opts]
  */
 export function initInstallPrompt(opts = {}) {

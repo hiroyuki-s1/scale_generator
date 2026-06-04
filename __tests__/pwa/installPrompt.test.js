@@ -58,7 +58,7 @@ describe('detectPlatform', () => {
 
 function buildDom() {
   document.body.innerHTML = `
-    <button id="installBtn">お気に入りへ追加</button>
+    <button id="installBtn">アプリとして追加</button>
     <div id="installModal" class="hidden">
       <div class="install-modal-inner">
         <div class="install-modal-body">

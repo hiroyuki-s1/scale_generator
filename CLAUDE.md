@@ -122,44 +122,45 @@ main.js → orchestrates all
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
   改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
   `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
-  各グループは **`height: 100vh` (=1ページ枠) + `overflow: hidden` +
+  各グループは **`@media print and (orientation: …)` 内で mm 指定した
+  `height`** (landscape 204mm / portrait 291mm) + `overflow: hidden` +
   `break-inside: avoid`** で1ページに収め、内側 `.print-page-inner` を
-  **`grid-template-rows: repeat(rows, 1fr)`** で均等分割する (ユーザー提案の
-  「ページ枠を先に作り中に指板を入れる」設計)。`100vh` は印刷時ページ高さに
-  追従するため、iOS が `@page margin` を無視して余白を変えてもオーバーフロー
-  しない。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
+  **`grid-template-rows/columns: repeat(n, minmax(0, 1fr))`** で均等分割する。
+  寸法ロジックは [src/print/printCss.js](src/print/printCss.js) の
+  `deriveOrientationDims()` に集約。iOS Safari で動かなかった失敗パターン
+  (絶対に戻さない):
   - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
   - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
   - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
-  - ❌ グループ高さ mm 固定 = ページ高さ「ぴったり/近い」→ 丸め誤差や iOS の
-    余白で次ページに押し出され空白。mm 固定はやめ、**`height: 100vh` で
-    ページに追従**させる ([src/print/printCss.js](src/print/printCss.js))。
   - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
-    作る既知バグ (これが「2P目空白」の主因だった)。`page-break-after` は一切使わず、
-    **隣接兄弟セレクタの `page-break-before`** で2番目以降のグループ前だけに改ページを入れる
-    (最後のグループの後ろには改ページが入らない)。
-  - ❌ **モバイルで `@page { size: 210mm 297mm }` 固定** → iOS の印刷シートで
-    「横」に切り替えると、@page 指定高さ(297mm)と実用紙高さ(210mm)がズレ、
-    `100vh` が 297mm 基準のまま横用紙からはみ出して2P目空白。**モバイルは
-    `@page { size: auto }`** で用紙の向きに `100vh` を追従させる
-    ([src/print/printCss.js](src/print/printCss.js) の `isMobile` 分岐)。
-    PC は向きボタンを効かせるため mm 固定のまま。
-  - ❌ **`body` のデフォルト margin(8px) + `@page margin`** → `height:100vh` の
-    グループと合算して印刷領域を超え、特に高さの低い**横用紙(210mm)で2P目空白**。
-    対策: **`@page { margin: 0 }`** にして `100vh` = 用紙全体に一致させ、用紙端の
-    余白は `.print-page-group` の `padding: 8mm 10mm` + `box-sizing: border-box`
-    で確保する。`html, body` と全コンテナ (`.app-body`/`#panelSaved`/
-    `.saved-section`/`#savedGrid`) の `margin`/`padding` も `0` にする
-    (iOS は body margin を印刷で残すため)。
-  - **マスクで縦長になった指板のはみ出し**: `svg.fb` に `max-height:(88/rows)vh`
-    を直接指定 (flex は SVG 高さが 0 に潰れる)。`height:auto + max-height(vh) +
-    display:block`、`preserveAspectRatio="xMidYMid meet"` で縦長は横が縮みフィット。
-  - 検証: `npm run e2e:pdf` 系 (`e2e/print-pdf-check.cjs` = 縦長はみ出し、
-    `e2e/print-ls-clean.cjs` = 横印刷の2×2配置を横viewportで位置測定) で確認。
-    `page.pdf()` は実レンダリングするが Playwright `emulateMedia` は SVG 高さを
-    0 と誤測定するので、印刷の見た目検証は必ず PDF で行う。
-    `__tests__/print/printCss.matrix.test.js` が「隣接兄弟 page-break-before」
-    「svg.fb の max-height vh」等を不変条件で守る。
+    作る既知バグ。`page-break-after` は一切使わず、**隣接兄弟セレクタの
+    `page-break-before`** で2番目以降のグループ前だけに改ページを入れる。
+  - ❌ **`height: 100vh`** → iOS Safari は print で `vh` を「印刷ページ高さ」では
+    なく「ビューポート高さ」基準で解決する不定性があり、横用紙で portrait
+    viewport(297mm) を返してはみ出し2P空白。**`vh` は一切使わず**、向き依存の
+    寸法 (グループ height・svg max-height) は **`@media print and
+    (orientation: landscape|portrait)` ブロックに mm で定義**する
+    (モバイルは両 orientation を出力 = OS シート切替に追従、PC は orientation
+    引数で単一ブロック = viewport-vs-@page 食い違いを回避)。
+  - ❌ **グループ高さ = 用紙ぴったり (`calc(pageHmm - 1px)`)** → プリンタ物理余白や
+    丸めで**最下行が用紙下端を数mm超えて切れる**。`deriveOrientationDims` の
+    **`SAFETY_MM = 6`** で用紙より小さく (204mm / 291mm) し、はみ出しと
+    次ページ溢れ(空白)の両方を防ぐ。
+  - ❌ **grid `1fr`** → Safari で子の min-content に押されて行が膨張し2P空白。
+    **`minmax(0, 1fr)`** で強制均等分割し、子は `overflow: hidden` で切る。
+  - ❌ **`body` margin(8px) + `@page margin`** → グループ高さと合算して用紙を超え
+    横用紙で2P空白。**`@page { margin: 0 }`** + グループ `padding: 8mm 10mm`
+    (`box-sizing: border-box`) で用紙端余白を確保。`html, body` と全コンテナ
+    (`.app-body`/`#panelSaved`/`.saved-section`/`#savedGrid`) の margin/padding も 0。
+  - **マスクで縦長になった指板**: `svg.fb` に `max-height: <cellHmm-7>mm` を
+    orientation block 側で指定。`preserveAspectRatio="xMidYMid meet"` で
+    縦長は横が縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
+  - 検証: **ユニット** `__tests__/print/printCss.matrix.test.js` が「グループ高さ
+    < 用紙 - 5mm」「中身がグループ内に収まる」「vh 不使用」「minmax(0,1fr)」
+    「隣接兄弟 page-break-before」を不変条件で守る。**実 PDF** は
+    `node e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し検出、要 dev server)、
+    `e2e/print-ls-clean.cjs` (横2×2の配置を横viewportで位置測定)。
+    Playwright `emulateMedia` は SVG 高さを 0 と誤測定するため、見た目は必ず PDF で。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

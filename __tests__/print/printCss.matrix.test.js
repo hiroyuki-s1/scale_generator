@@ -175,3 +175,57 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
     }
   }
 });
+
+// ── 最下行はみ出し再発防止: グループ高さの安全マージン不変条件 ──────────────
+// pull 実装で calc(pageHmm - 1px) (= 用紙ほぼ同寸) だったため、プリンタ物理余白や
+// サブピクセル丸めで最下行カードが用紙下端を数mm超えて切れていた。
+// グループ高さを用紙より十分 (>= 5mm) 小さくすることで、はみ出しと
+// 次ページ溢れ(空白ページ)の両方を防ぐ。値リテラル(204/291)のマッチだけだと
+// 「なぜその値か」が守られないため、用紙との差を不変条件として検証する。
+describe('印刷グループ高さ — 用紙との安全マージン (最下行はみ出し再発防止)', () => {
+  const SAFE_MIN_MM = 5;     // 用紙との最小マージン
+  const padV = 8, gapMm = 3; // printCss.js と一致させる
+  for (const [cols, rows] of LAYOUT_PRESETS) {
+    for (const orientation of ORIENTATIONS) {
+      const pageH = orientation === 'landscape' ? 210 : 297;
+
+      it(`${orientation} ${cols}×${rows}: グループ高さ(mm)が用紙より ${SAFE_MIN_MM}mm 以上小さい`, () => {
+        // PC は単一 @media print ブロックの .print-page-group height(mm)
+        const { layout } = buildPrintCss({ orientation, cols, rows });
+        const m = layout.match(/\.print-page-group\s*\{[^}]*height:\s*([\d.]+)mm/);
+        expect(m).not.toBeNull();
+        const groupH = parseFloat(m[1]);
+        expect(groupH).toBeLessThan(pageH);
+        expect(pageH - groupH).toBeGreaterThanOrEqual(SAFE_MIN_MM);
+      });
+
+      it(`${orientation} ${cols}×${rows}: グループ内の中身(行×cellH + gap + padding)がグループ高さに収まる`, () => {
+        const { layout } = buildPrintCss({ orientation, cols, rows });
+        const m = layout.match(/\.print-page-group\s*\{[^}]*height:\s*([\d.]+)mm/);
+        const groupH = parseFloat(m[1]);
+        // cellHmm = (groupH - 2*padV - gap*(rows-1)) / rows なので、
+        // 逆算した中身合計はグループ高さ以下でなければならない (= はみ出さない)
+        const cellH = (groupH - 2 * padV - gapMm * (rows - 1)) / rows;
+        expect(cellH).toBeGreaterThan(0);
+        const content = cellH * rows + gapMm * (rows - 1) + 2 * padV;
+        expect(content).toBeLessThanOrEqual(groupH + 0.01); // 丸め許容
+      });
+    }
+  }
+});
+
+// vh は二度と使わない (iOS Safari の vh 不定性で2P目空白が再発するため)
+describe('印刷CSS — vh 不使用の不変条件 (iOS 2P空白 再発防止)', () => {
+  for (const [cols, rows] of LAYOUT_PRESETS) {
+    for (const orientation of ORIENTATIONS) {
+      it(`${orientation} ${cols}×${rows}: 生成CSSに 100vh / max-height vh が一切ない`, () => {
+        const pc = buildPrintCss({ orientation, cols, rows }).layout;
+        const mo = buildPrintCss({ orientation, cols, rows, isMobile: true }).layout;
+        for (const css of [pc, mo]) {
+          expect(css).not.toMatch(/height:\s*100vh/);
+          expect(css).not.toMatch(/max-height:\s*[\d.]+vh/);
+        }
+      });
+    }
+  }
+});

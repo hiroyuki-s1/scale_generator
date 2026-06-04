@@ -25,6 +25,8 @@ import {
   applyFretboardDiff,
   maskViewBox,
   setMaskOverlayVisible,
+  bakePrintTitle,
+  removePrintTitle,
 } from './ui/fretboardSvg.js';
 import { renderLegend } from './ui/legend.js';
 
@@ -553,6 +555,7 @@ function restorePrintState() {
   store.get().saved.forEach(snap => {
     const svg = document.getElementById('sv' + snap.id);
     if (!svg) return;
+    removePrintTitle(svg);
     const original = printOriginalViewBox.get(svg);
     if (original) {
       svg.setAttribute('viewBox', original);
@@ -578,15 +581,18 @@ window.addEventListener('beforeprint', () => {
     store.get().saved.forEach(snap => {
       const svg = document.getElementById('sv' + snap.id);
       if (!svg) return;
-      const vb = maskViewBox(snap.mask);
-      if (!vb) return;
       // 既に元の値を保存済み (afterprint 未発火で再度 beforeprint が来た場合) は
-      // 上書きしない。上書きするとマスク済み viewBox を「元の値」として保存してしまう。
+      // 上書きしない。上書きするとマスク/タイトル済み viewBox を「元の値」として
+      // 保存してしまう。
       if (!printOriginalViewBox.has(svg)) {
         printOriginalViewBox.set(svg, svg.getAttribute('viewBox'));
       }
-      svg.setAttribute('viewBox', vb);
+      // マスク有効ならクロップ viewBox、無ければ全体。そこへタイトル帯を上に足す。
+      const base = maskViewBox(snap.mask) || `0 0 ${SVG.W} ${SVG.H}`;
       setMaskOverlayVisible(svg, false);
+      // スケール名を SVG 内上部へ焼き込み、1枚の画像にする (印刷分割の根治)。
+      const printVb = bakePrintTitle(svg, localizeTitle(snap.title), base);
+      svg.setAttribute('viewBox', printVb);
     });
   } catch (err) {
     restorePrintState();

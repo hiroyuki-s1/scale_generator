@@ -261,3 +261,58 @@ export function setMaskOverlayVisible(svgEl, visible) {
   });
 }
 
+const PRINT_TITLE_CLASS = 'fb-print-title';
+// タイトル帯の高さ = 指板表示高さ(viewBox の h)に対する比率。
+// 帯を上に足すぶん、固定セル内では指板が少し縮小して見える (= ユーザー要望
+// 「スケールを少し縮小して上部に文字」)。
+const PRINT_TITLE_BAND_RATIO = 0.30;
+
+/**
+ * 印刷用にスケール名を SVG 内の上部へ焼き込む (スケール名＋指板で1枚の画像にする)。
+ *
+ * 仕組み: 指板は動かさず、viewBox の上端をタイトル帯ぶんだけ上へ広げ、その帯に
+ *   タイトル text を1つ置く。これで「タイトルと指板が必ず同じ1枚の SVG 画像」になり、
+ *   印刷でタイトルだけ別ページに割れる/別要素が min-content 膨張で崩れる、が起きない。
+ *   帯は指板の「上」なのでドットや指板と重ならない (かぶらない)。
+ *
+ * @param {SVGElement} svgEl
+ * @param {string} title          表示するタイトル (ローカライズ済み文字列)
+ * @param {string} baseViewBox    帯を足す前の viewBox 文字列 "minX minY w h"
+ * @returns {string} 帯を加えた新しい viewBox 文字列 (呼び出し側が setAttribute する)
+ */
+export function bakePrintTitle(svgEl, title, baseViewBox) {
+  removePrintTitle(svgEl);
+  const [minX, minY, w, h] = baseViewBox.split(/\s+/).map(Number);
+  if (![minX, minY, w, h].every(Number.isFinite)) return baseViewBox;
+
+  const band   = Math.round(h * PRINT_TITLE_BAND_RATIO);
+  const newMinY = minY - band;
+  const newH    = h + band;
+  const fontSize = Math.round(band * 0.56);
+
+  // 帯の白背景 (透明だと用紙では白だが、画面プレビュー時の見た目を安定させる)
+  svgEl.appendChild(el('rect', {
+    class: PRINT_TITLE_CLASS,
+    x: minX, y: newMinY, width: w, height: band, fill: '#ffffff',
+  }));
+  // タイトル本体 — 帯の中央。指板(y >= minY)とは重ならない。
+  svgEl.appendChild(el('text', {
+    class: PRINT_TITLE_CLASS,
+    x: minX + w / 2,
+    y: newMinY + band * 0.60,
+    'text-anchor': 'middle',
+    'dominant-baseline': 'middle',
+    fill: '#1c1c1c',
+    'font-size': String(fontSize),
+    'font-weight': '700',
+    'font-family': "'Space Grotesk', Inter, system-ui, sans-serif",
+  }, title));
+
+  return `${minX} ${newMinY} ${w} ${newH}`;
+}
+
+/** 焼き込んだ印刷タイトルを除去する (afterprint で画面表示へ戻すとき)。 */
+export function removePrintTitle(svgEl) {
+  svgEl.querySelectorAll('.' + PRINT_TITLE_CLASS).forEach(e => e.remove());
+}
+

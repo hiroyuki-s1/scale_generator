@@ -113,10 +113,14 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     padding: 0;
   }
   .fb-header, .saved-card-header { margin-bottom: 1mm; }
-  .fb-title, .saved-title-input, .saved-print-title {
+  .fb-title, .saved-title-input {
     font-size: ${titlePt}pt !important;
     line-height: 1.2;
   }
+  /* スケール名は SVG 内の上部へ焼き込む (bakePrintTitle) ので、別要素の
+     HTML タイトルは印刷では非表示にする。これでタイトルと指板が必ず1枚の
+     画像になり、別ページに割れたり min-content 膨張で崩れたりしない。 */
+  .saved-print-title { display: none !important; }
   .fb-wrap, .saved-card .fb-wrap {
     overflow: hidden !important;
     text-align: center !important;

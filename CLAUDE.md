@@ -117,6 +117,15 @@ main.js → orchestrates all
   向き UI は隠して常に縦 (portrait) 固定。横印刷は OS の印刷シートで切替運用。
 - **エディタ指板の自動ズーム**: `MOBILE_ZOOM_BREAKPOINT` 以下でマスク範囲/指板中心を
   基準に viewBox を絞る。resize/回転でも再計算。
+- **印刷時のタイトルは SVG 内へ焼き込む (分割崩れ対策)**: 印刷ではスケール名を
+  HTML の別要素 (`.saved-print-title`) で指板の上に出すのをやめ、`beforeprint` で
+  各指板 SVG の viewBox 上端をタイトル帯ぶん広げて `<text>` を焼き込む
+  ([src/ui/fretboardSvg.js](src/ui/fretboardSvg.js) の `bakePrintTitle`/`removePrintTitle`、
+  呼び出しは [src/main.js](src/main.js) の beforeprint/restorePrintState)。
+  → **スケール名＋指板が必ず1枚の SVG 画像**になり、タイトルだけ別ページに割れる/
+  別要素の min-content 膨張でセルが伸びて空白ページが出る、を構造的に排除する。
+  帯は指板の「上」なのでドットと重ならない。`.saved-print-title` は印刷で
+  `display:none` (二重表示防止、printCss でテスト固定)。afterprint で除去し画面表示へ戻す。
 - **印刷の改ページ (iOS Safari 最重要・何度もハマった)**: 複数ページ印刷は
   `beforeprint` で `cols×rows` 枚ずつ `.print-page-group` (block div) にまとめ、
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。

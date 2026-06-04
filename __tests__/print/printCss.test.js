@@ -48,6 +48,13 @@ describe('buildPrintCss — layout cols/gap', () => {
     const { layout } = buildPrintCss(DEFAULT);
     expect(layout).toContain('gap: 3mm !important');
   });
+  // スケール名は SVG 内へ焼き込む (bakePrintTitle) ため、HTML の .saved-print-title は
+  // 印刷で非表示。これを表示に戻すとタイトルが二重 (SVG内 + HTML) になり、別要素ぶん
+  // レイアウトが膨張して印刷崩れの原因になる → 必ず display:none を維持する。
+  it('.saved-print-title は印刷で display:none (SVG 焼き込みと二重表示しない)', () => {
+    const { layout } = buildPrintCss(DEFAULT);
+    expect(layout).toMatch(/\.saved-print-title\s*\{[^}]*display:\s*none\s*!important/);
+  });
   it('#savedGrid is block; grid layout is in .print-page-inner', () => {
     const { layout } = buildPrintCss(DEFAULT);
     expect(layout).toMatch(/#savedGrid\s*\{[^}]*display:\s*block/);

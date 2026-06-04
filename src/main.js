@@ -33,9 +33,12 @@ const appVerEl = document.getElementById('appVer');
 if (appVerEl) {
   appVerEl.textContent = typeof __VERSION__ !== 'undefined' ? `v${__VERSION__}` : '';
 }
-const buildVerEl = document.getElementById('buildVer');
-if (buildVerEl) {
-  buildVerEl.textContent = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+const commitText = typeof __COMMIT__ !== 'undefined' ? __COMMIT__ : '';
+// ヘッダ (PC 表示) とフッタ (スマホ表示) の両方にコミットハッシュを反映する。
+// 表示の出し分けは CSS (max-width:767px) で行う。
+for (const id of ['buildVer', 'buildVerFooter']) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = commitText;
 }
 
 // ── 初回起動時のベータ版告知 ─────────────────────────────────────────

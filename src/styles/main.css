@@ -94,23 +94,24 @@ body {
   font-family: 'Courier New', monospace; flex-shrink: 0; opacity: .7;
   letter-spacing: .3px;
 }
-/* スマホはコミットハッシュをヘッダから外し、画面右下に固定表示する。
-   (ヘッダの詰まりを解消しつつ、どのビルドか実機で常に確認できる) */
+/* フッタ版コミットハッシュ — PC では使わない (ヘッダの #buildVer を表示)。 */
+.build-ver-footer { display: none; }
+
+/* スマホはコミットハッシュをヘッダから外し、ページフッター (.editor-footer) の
+   一番下に表示する。(ヘッダの詰まりを解消しつつ、どのビルドか実機で常に確認できる) */
 @media (max-width: 767px) {
-  .build-ver {
-    position: fixed;
-    bottom: 3px;
-    right: 6px;
-    z-index: 50;
+  .header .build-ver { display: none; }   /* ヘッダ版は隠す */
+  .build-ver-footer {
+    display: block;
+    flex-basis: 100%;   /* フッタ flex の最終行を独立させ、リンクの下に回す */
+    text-align: center;
+    margin: 2px 0 0;
     font-size: 8px;
     opacity: .55;
-    margin: 0;
-    pointer-events: none; /* タップ操作の邪魔をしない */
   }
 }
-/* 印刷時は非表示 (position:fixed は親 .header の display:none を貫通することが
-   あるため明示的に消す)。 */
-@media print { .build-ver { display: none !important; } }
+/* 印刷時は非表示。 */
+@media print { .build-ver, .build-ver-footer { display: none !important; } }
 
 .hdr-group {
   display: flex;

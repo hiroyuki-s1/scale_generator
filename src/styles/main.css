@@ -581,18 +581,23 @@ body {
 }
 
 /* ── お気に入り追加ガイドモーダル ────────────────────────────────────── */
+/* 中央配置は alphaNotice と同じ transform 方式に統一。display:flex 親 +
+   width:100%(content-box) だと iOS で padding/border 分はみ出すバグがあったため。 */
 .install-modal {
   position: fixed; inset: 0;
   z-index: 260;
-  display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,.45);
-  padding: 16px;
 }
 .install-modal.hidden { display: none; }
 .install-modal-inner {
-  width: min(520px, 100%);
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
   overflow-y: auto;
   background: var(--surface);
   border: 2px solid var(--accent);

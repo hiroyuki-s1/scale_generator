@@ -1229,17 +1229,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
     page-break-before: always !important;
   }
 
-  /* スケール名は指板の上にシンプルに印字 */
-  .saved-print-title {
-    display: block !important;
-    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-    font-size: 9pt;
-    font-weight: 600;
-    color: #18170f;
-    letter-spacing: .5px;
-    margin: 0 0 3px 2px;
-    line-height: 1.2;
-  }
+  /* スケール名は指板 SVG 内へ焼き込む (bakePrintTitle) ため、HTML の別タイトルは
+     印刷では非表示。表示に戻すとタイトルが二重 (SVG内＋HTML) になる。 */
+  .saved-print-title { display: none !important; }
 }
 
 /* ANIMATIONS */

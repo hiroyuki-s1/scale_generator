@@ -288,7 +288,8 @@ export function bakePrintTitle(svgEl, title, baseViewBox) {
   const band   = Math.round(h * PRINT_TITLE_BAND_RATIO);
   const newMinY = minY - band;
   const newH    = h + band;
-  const fontSize = Math.round(band * 0.56);
+  // 高さ基準の上限フォント。最終的には幅にも収まるよう下で自動縮小する。
+  let fontSize = Math.round(band * 0.62);
 
   // 帯の白背景 (透明だと用紙では白だが、画面プレビュー時の見た目を安定させる)
   svgEl.appendChild(el('rect', {
@@ -296,17 +297,28 @@ export function bakePrintTitle(svgEl, title, baseViewBox) {
     x: minX, y: newMinY, width: w, height: band, fill: '#ffffff',
   }));
   // タイトル本体 — 帯の中央。指板(y >= minY)とは重ならない。
-  svgEl.appendChild(el('text', {
+  const t = el('text', {
     class: PRINT_TITLE_CLASS,
     x: minX + w / 2,
-    y: newMinY + band * 0.60,
+    y: newMinY + band * 0.58,
     'text-anchor': 'middle',
     'dominant-baseline': 'middle',
     fill: '#1c1c1c',
     'font-size': String(fontSize),
     'font-weight': '700',
     'font-family': "'Space Grotesk', Inter, system-ui, sans-serif",
-  }, title));
+  }, title);
+  svgEl.appendChild(t);
+
+  // 幅に合わせてフォントを自動縮小し、スケール名の全文が必ず収まるようにする。
+  // 帯の利用可能幅 (左右に少し余白) を超える分だけ、実測長に比例して縮める。
+  const avail = w * 0.92;
+  let measured = 0;
+  try { measured = t.getComputedTextLength(); } catch { measured = 0; }
+  if (measured > avail && avail > 0) {
+    fontSize = Math.max(7, Math.floor(fontSize * (avail / measured)));
+    t.setAttribute('font-size', String(fontSize));
+  }
 
   return `${minX} ${newMinY} ${w} ${newH}`;
 }

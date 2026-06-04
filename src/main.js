@@ -544,7 +544,13 @@ function syncPrintDialog() {
 // ── 印刷前後処理 ──────────────────────────────────────────────────────
 const printOriginalViewBox = new WeakMap();
 let printTabWasHidden = false; // beforeprint でパネルを切り替えたか記憶
+let printOriginalDocTitle = null; // 印刷中だけ document.title を退避 (印刷ヘッダーに出る <title> を消す)
 function restorePrintState() {
+  // 退避した document.title を戻す (印刷後)
+  if (printOriginalDocTitle !== null) {
+    document.title = printOriginalDocTitle;
+    printOriginalDocTitle = null;
+  }
   if (printTabWasHidden) {
     panelSaved.classList.add('hidden');
     panelEditor.classList.remove('hidden');
@@ -567,6 +573,10 @@ function restorePrintState() {
 
 window.addEventListener('beforeprint', () => {
   try {
+    // 印刷ヘッダー(ブラウザの「ヘッダーとフッター」)に出る <title> を一時的に消す。
+    // 空文字 '' は一部ブラウザで URL にフォールバックするのでスペースにする。
+    printOriginalDocTitle = document.title;
+    document.title = ' ';
     // エディタータブ表示中でも登録スケールを印刷できるよう一時的にパネルを切り替える
     if (panelSaved.classList.contains('hidden')) {
       panelSaved.classList.remove('hidden');

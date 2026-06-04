@@ -190,6 +190,14 @@ main.js → orchestrates all
 - **base path は環境変数で自動切替** ([vite.config.js](vite.config.js)):
   GitHub Actions (Pages ミラー) では `/scale_generator/`、本番 (Cloudflare) は `/`
 - ビルド時に `__COMMIT__` (git short hash) / `__VERSION__` (package.json) を define 注入
+- **Service Worker のキャッシュは自動採番 (更新不達の再発防止)**: `public/sw.js` の
+  `VERSION = '__SW_VERSION__'` を、ビルド時に [vite.config.js](vite.config.js) の
+  `swVersionInjectPlugin` が `<pkg version>-<commit hash>` へ置換する。push のたびに
+  キャッシュ名が変わり、SW が更新され activate で旧キャッシュが破棄される
+  (手動で VERSION を上げる必要なし)。**消えるのは Cache API のアセットキャッシュのみ**。
+  ユーザーの登録スケールは `localStorage('sg.v1.state')` で別管理なので消えない
+  (SW から localStorage は触れない)。不変条件は
+  [__tests__/pwa/sw.test.js](__tests__/pwa/sw.test.js) で固定。
 - **Cloudflare Pages** (本番): プロジェクト `kami-scale-trainer`。デプロイ手順は
   [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) 参照。Build: `npm run build` / Output: `dist` /
   Node: `.node-version` (=20) / `GITHUB_ACTIONS` 未設定で `base:'/'`

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -12,6 +12,43 @@ const commitHash = (() => {
   catch { return 'unknown'; }
 })();
 
+// Service Worker のキャッシュ名に使うバージョン文字列。
+// **コミットごとに必ず変わる**ので、push → デプロイのたびに SW のキャッシュ名が
+// 変わり、旧 SW が更新され activate で旧キャッシュが破棄される (古いキャッシュが
+// 端末に残り続ける問題の再発防止)。
+// ※ これは Cache API (アセットの一時キャッシュ) のバージョン。ユーザーの登録スケールは
+//    localStorage('sg.v1.state') に保存されており Cache API とは別物なので、
+//    キャッシュ破棄で登録スケールが消えることはない。
+const swVersion = `${pkg.version}-${commitHash}`;
+
+// public/sw.js 内のプレースホルダ '__SW_VERSION__' を swVersion に置換する。
+//   - build: dist/sw.js を書き換え (closeBundle)
+//   - dev:   /sw.js リクエストを横取りして置換して返す (configureServer)
+function swVersionInjectPlugin() {
+  const swSrcPath = join(__dirname, 'public', 'sw.js');
+  const replace = (src, suffix = '') => src.replace(/__SW_VERSION__/g, swVersion + suffix);
+  return {
+    name: 'sw-version-inject',
+    apply: () => true,
+    closeBundle() {
+      const swOutPath = join(__dirname, 'dist', 'sw.js');
+      if (!existsSync(swOutPath)) return;
+      writeFileSync(swOutPath, replace(readFileSync(swOutPath, 'utf8')));
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || '').split('?')[0];
+        if (path === '/sw.js') {
+          res.setHeader('Content-Type', 'application/javascript');
+          res.end(replace(readFileSync(swSrcPath, 'utf8'), '-dev'));
+          return;
+        }
+        next();
+      });
+    },
+  };
+}
+
 // GitHub Actions (Pages ミラー) では /scale_generator/、本番 (Cloudflare Pages) では /
 const base = process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/';
 
@@ -19,6 +56,7 @@ export default defineConfig({
   root: join(__dirname, 'src'),
   publicDir: join(__dirname, 'public'),
   base,
+  plugins: [swVersionInjectPlugin()],
   build: {
     outDir: join(__dirname, 'dist'),
     emptyOutDir: true,

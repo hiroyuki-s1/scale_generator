@@ -15,6 +15,9 @@ dist-ssr
 # e2e generated reports
 e2e-results/
 
+# release artifacts (build 成果物 / git archive 出力)
+releases/
+
 # Scratch / test files in project root
 *.irealb
 *.jpg

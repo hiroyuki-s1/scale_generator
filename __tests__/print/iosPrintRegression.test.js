@@ -37,15 +37,25 @@ for (const [cols, rows] of LAYOUT_PRESETS) {
 }
 const pg = (css) => css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
 
-describe('iOS印刷 再発防止 ① グループ高さは height:100vh (mm固定は縦印刷2P空白の元凶)', () => {
-  // 履歴: height を mm 固定にしたところ、iOS 実機 AirPrint の物理余白(機種差10〜16mm)を
-  //   CSS で補正しきれず縦印刷で2P空白が再発。100vh は印刷ページに追従し補正不要。
+describe('iOS印刷 再発防止 ① グループ高さは指定しない (auto)。vh も mm 固定もしない', () => {
+  // 履歴 (横印刷2P空白の根治):
+  //   `.print-page-group { height: 100vh }` にしていたが、スマホ(縦持ち)で横用紙を
+  //   印刷すると iOS Safari が 100vh を「縦持ち viewport の高さ」で解決し、横用紙の
+  //   印刷可能高さを大幅に超えて2P目が空白になった (横だけ壊れる)。
+  //   一方 height を mm 固定にすると、今度は AirPrint 物理余白の機種差で縦印刷が
+  //   オーバーフローした。
+  //   → 結論: 枠に height を与えず auto にし、中身(指板)を mm 実寸 (svgMaxMm) で
+  //      安全マージン込みに縛る。枠は中身ぶんの高さになり、viewport/用紙の食い違いに
+  //      影響されず必ず1ページに収まる。
   for (const c of ALL) {
-    it(`${c.label}: .print-page-group が height:100vh`, () => {
-      expect(pg(c.layout)).toMatch(/height:\s*100vh\s*!important/);
-    });
-    it(`${c.label}: mm 固定 height を持たない (二度と mm に戻さない)`, () => {
+    it(`${c.label}: .print-page-group に height を指定しない (auto)`, () => {
+      expect(pg(c.layout)).not.toMatch(/height:\s*100vh/);
       expect(pg(c.layout)).not.toMatch(/height:\s*[\d.]+mm/);
+      expect(pg(c.layout)).not.toMatch(/(^|[;{])\s*height:/);
+    });
+    it(`${c.label}: overflow:hidden + break-inside:avoid は維持`, () => {
+      expect(pg(c.layout)).toMatch(/overflow:\s*hidden/);
+      expect(pg(c.layout)).toMatch(/break-inside:\s*avoid/);
     });
   }
 });
@@ -136,33 +146,48 @@ describe('iOS印刷 再発防止 ③ 改ページは隣接兄弟 page-break-befo
   }
 });
 
-describe('iOS印刷 再発防止 ④ grid は minmax(0,1fr) (1fr は Safari 行膨張で2P空白)', () => {
-  // 履歴: 1fr (=minmax(auto,1fr)) は子の min-content に押されて行が膨張しページ超過。
-  //   minmax(0,1fr) で強制均等分割し、子は overflow:hidden で切る。
+describe('iOS印刷 再発防止 ④ grid 列は minmax(0,1fr)、行は auto (枠高さに依存させない)', () => {
+  // 履歴: 行を 1fr/minmax(0,1fr) にすると枠の高さ(以前は100vh)を分割する設計になり、
+  //   その枠高さが iOS 横印刷で破綻して2P空白になった。
+  //   → 行は auto にし、行高さ=中身(mm実寸の指板)で決める。列は従来どおり
+  //      minmax(0,1fr) で横を均等分割 (列は幅基準なので問題なし)。
   for (const c of ALL) {
-    it(`${c.label}: grid-template-columns/rows が minmax(0, 1fr)`, () => {
+    it(`${c.label}: grid-template-columns は minmax(0, 1fr)`, () => {
       expect(c.layout).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${c.cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
-      expect(c.layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${c.rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
     });
-    it(`${c.label}: grid に素の 1fr (minmax無し) を使わない`, () => {
-      // "repeat(N, 1fr)" のような minmax 無しの 1fr が無いこと
-      // (minmax(0, 1fr) 内の 1fr は誤検出しないよう repeat(数字, 1fr) のみ)
-      expect(c.layout).not.toMatch(/repeat\(\d+,\s*1fr\)/);
+    it(`${c.label}: grid-template-rows は auto (枠高さ依存の 1fr/minmax を使わない)`, () => {
+      expect(c.layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${c.rows},\\s*auto\\)`));
+    });
+    it(`${c.label}: .print-page-inner に height:100% を残さない (枠高さ依存の排除)`, () => {
+      const inner = c.layout.match(/\.print-page-inner\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(inner).not.toMatch(/height:\s*100%/);
     });
   }
 });
 
-describe('iOS印刷 再発防止 ⑤ svg.fb max-height は vh (マスク縦長の枠内収め)', () => {
-  // 履歴: マスクで縦長になった指板が枠を超えて切れる/溢れる。100vh 枠内の相対 vh で収める。
+describe('iOS印刷 再発防止 ⑤ svg.fb max-height は mm 実寸 (vh は iOS横印刷で破綻)', () => {
+  // 履歴: max-height を vh にしていたが、iOS の横印刷では vh が viewport(縦持ち)基準で
+  //   解決され用紙からはみ出した。mm 実寸 (印刷可能高さ÷行数 − 安全マージン) で縛る。
   for (const c of ALL) {
-    it(`${c.label}: svg.fb に max-height vh`, () => {
-      expect(c.layout).toMatch(/svg\.fb\s*\{[^}]*max-height:\s*[\d.]+vh/);
+    it(`${c.label}: svg.fb に max-height mm (vh ではない)`, () => {
+      const svg = c.layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(svg).toMatch(/max-height:\s*[\d.]+mm/);
+      expect(svg).not.toMatch(/max-height:\s*[\d.]+vh/);
     });
   }
-  it('行数が多いほど svg max-height(vh) が小さい (1セルが小さくなる)', () => {
-    const vhOf = (rows) => parseFloat(buildPrintCss({ orientation: 'portrait', cols: 2, rows }).layout.match(/max-height:\s*([\d.]+)vh/)[1]);
-    expect(vhOf(2)).toBeGreaterThan(vhOf(3));
-    expect(vhOf(3)).toBeGreaterThan(vhOf(5));
+  it('行数が多いほど svg max-height(mm) が小さい (1セルが小さくなる)', () => {
+    const mmOf = (rows) => parseFloat(buildPrintCss({ orientation: 'portrait', cols: 2, rows }).layout.match(/max-height:\s*([\d.]+)mm/)[1]);
+    expect(mmOf(2)).toBeGreaterThan(mmOf(3));
+    expect(mmOf(3)).toBeGreaterThan(mmOf(5));
+  });
+  it('全レイアウトで rows×svgMaxMm + gap が印刷可能高さ未満 (1ページに必ず収まる)', () => {
+    // 横:190mm / 縦:277mm の印刷可能高さに対し、行合計が必ず収まること (=2P空白を出さない)
+    for (const c of ALL) {
+      const svgMm = parseFloat(c.layout.match(/max-height:\s*([\d.]+)mm/)[1]);
+      const printableH = c.orientation === 'landscape' ? 190 : 277;
+      const total = c.rows * (svgMm + 4 /*card padding/border*/) + 3 * (c.rows - 1);
+      expect(total).toBeLessThan(printableH);
+    }
   });
 });
 

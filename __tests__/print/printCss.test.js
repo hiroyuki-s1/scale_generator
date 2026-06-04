@@ -63,11 +63,11 @@ describe('buildPrintCss — layout cols/gap', () => {
   });
 });
 
-describe('buildPrintCss — ページ枠 height:100vh (iOS ページ追従)', () => {
-  it('.print-page-group は height:100vh (mm固定にしない)', () => {
+describe('buildPrintCss — 枠 height auto / 指板 mm (vh は iOS横印刷で破綻)', () => {
+  it('.print-page-group に height を指定しない (vh も mm も)', () => {
     const { layout } = buildPrintCss(DEFAULT);
     const pg = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-    expect(pg).toMatch(/height:\s*100vh/);
+    expect(pg).not.toMatch(/height:\s*100vh/);
     expect(pg).not.toMatch(/height:\s*[\d.]+mm/);
   });
   it('改ページは隣接兄弟 page-break-before のみ (page-break-after 不使用)', () => {
@@ -76,29 +76,31 @@ describe('buildPrintCss — ページ枠 height:100vh (iOS ページ追従)', ()
     const pg = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
     expect(pg).not.toMatch(/page-break-after/);
   });
-  it('svg.fb に max-height vh (マスク縦長対策、行数で変わる)', () => {
-    const r2 = buildPrintCss({ ...DEFAULT, rows: 2 }).layout.match(/max-height:\s*([\d.]+)vh/)?.[1];
-    const r5 = buildPrintCss({ ...DEFAULT, rows: 5 }).layout.match(/max-height:\s*([\d.]+)vh/)?.[1];
+  it('svg.fb に max-height mm (vh ではない、行数で変わる)', () => {
+    const r2 = buildPrintCss({ ...DEFAULT, rows: 2 }).layout.match(/max-height:\s*([\d.]+)mm/)?.[1];
+    const r5 = buildPrintCss({ ...DEFAULT, rows: 5 }).layout.match(/max-height:\s*([\d.]+)mm/)?.[1];
     expect(parseFloat(r2)).toBeGreaterThan(parseFloat(r5)); // 行数が多いほど1セルが小さい
+    expect(buildPrintCss(DEFAULT).layout).not.toMatch(/max-height:\s*[\d.]+vh/);
   });
 });
 
-describe('buildPrintCss — derived font sizes (cellH)', () => {
-  // cellH = (pageH - gapMm*(rows-1)) / rows, pageH = landscape:190 / portrait:277
-  // titlePt = clamp(5.5, 10, cellH / 9)
+describe('buildPrintCss — derived font sizes (cellMm)', () => {
+  // usableH = pageH - 16 (安全マージン), pageH = landscape:190 / portrait:277
+  // cellMm = max(18, (usableH - 3*(rows-1)) / rows); titlePt = clamp(5.5, 10, cellMm / 9)
   it('portrait rows=1: titlePt clamp 上限 10.0pt', () => {
+    // usableH=261, cellMm=261 → 261/9=29 → clamp 10.0
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
     expect(layout).toMatch(/font-size:\s*10\.0pt/);
   });
-  it('portrait rows=5: cellH=53.0 → titlePt 5.9', () => {
-    // (277 - 3*4)/5 = 53.0; 53.0/9 = 5.89 → 5.9
+  it('portrait rows=5: cellMm≈49.8 → titlePt clamp 下限 5.5', () => {
+    // (261 - 3*4)/5 = 49.8; 49.8/9 = 5.53 → 5.5
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toMatch(/font-size:\s*5\.9pt/);
+    expect(layout).toMatch(/font-size:\s*5\.5pt/);
   });
-  it('landscape rows=3: cellH=61.33 → titlePt 6.8', () => {
-    // (190 - 3*2)/3 = 61.33; 61.33/9 = 6.81 → 6.8
+  it('landscape rows=3: cellMm=56 → titlePt 6.2', () => {
+    // usableH=174; (174 - 3*2)/3 = 56; 56/9 = 6.22 → 6.2
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toMatch(/font-size:\s*6\.8pt/);
+    expect(layout).toMatch(/font-size:\s*6\.2pt/);
   });
 });
 

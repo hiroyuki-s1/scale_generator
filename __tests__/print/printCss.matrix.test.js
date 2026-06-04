@@ -52,12 +52,11 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン, 100v
         expect(orient).toMatch(/margin:\s*10mm\s+12mm/);
       });
 
-      // ── ページ枠 height:100vh ──────────────────────────────────────
-      it(`[${label}] .print-page-group が height:100vh (印刷ページに追従)`, () => {
-        expect(pgBlock).toMatch(/height:\s*100vh/);
-      });
-
-      it(`[${label}] .print-page-group に mm 固定 height が無い (100vh のみ)`, () => {
+      // ── ページ枠 height は指定しない (auto) ────────────────────────
+      it(`[${label}] .print-page-group に height を指定しない (vh も mm も)`, () => {
+        // 100vh は iOS 横印刷で viewport(縦持ち)基準になり2P空白を出すため不可。
+        // mm 固定も物理余白の機種差で縦印刷が溢れるため不可。→ auto。
+        expect(pgBlock).not.toMatch(/height:\s*100vh/);
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
 
@@ -77,22 +76,24 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン, 100v
         expect(pgBlock).not.toMatch(/page-break-after/);
       });
 
-      // ── グリッド minmax(0,1fr) ──────────────────────────────────────
+      // ── グリッド: 列 minmax(0,1fr) / 行 auto ───────────────────────
       it(`[${label}] .print-page-inner: grid-template-columns = repeat(${cols}, minmax(0, 1fr))`, () => {
         expect(innerBlock).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
       });
 
-      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, minmax(0, 1fr))`, () => {
-        expect(innerBlock).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
+      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, auto)`, () => {
+        expect(innerBlock).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`));
       });
 
-      it(`[${label}] .print-page-inner が height:100%`, () => {
-        expect(innerBlock).toMatch(/height:\s*100%/);
+      it(`[${label}] .print-page-inner に height:100% を残さない (枠高さ依存の排除)`, () => {
+        expect(innerBlock).not.toMatch(/height:\s*100%/);
       });
 
-      // ── 指板 SVG (マスク縦長対策) ───────────────────────────────────
-      it(`[${label}] svg.fb に max-height vh (マスク縦長を1セルに収める)`, () => {
-        expect(layout).toMatch(/svg\.fb\s*\{[^}]*max-height:\s*[\d.]+vh/);
+      // ── 指板 SVG: max-height は mm 実寸 ─────────────────────────────
+      it(`[${label}] svg.fb に max-height mm (vh は iOS横印刷で破綻するため不可)`, () => {
+        const svg = layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(svg).toMatch(/max-height:\s*[\d.]+mm/);
+        expect(svg).not.toMatch(/max-height:\s*[\d.]+vh/);
       });
 
       it(`[${label}] svg.fb は height:auto + width:100% + display:block`, () => {
@@ -123,14 +124,18 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン, 100v
   }
 });
 
-// ── vh 不使用への退行を防ぐのではなく、100vh の維持を守る ─────────────────
-describe('印刷 height は 100vh で orientation 非依存 (iOS ページ追従)', () => {
+// ── 枠は height 指定なし(auto)、指板は mm 実寸。vh/100vh への退行を防ぐ ──────
+describe('印刷 枠は height auto / 指板 mm (vh は iOS横印刷で破綻)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`${cols}×${rows}: landscape も portrait も同じ height:100vh (mm固定にしない)`, () => {
+    it(`${cols}×${rows}: 枠に height 指定なし、svg は mm (landscape/portrait とも)`, () => {
       for (const o of ORIENTATIONS) {
-        const pg = pgBlockOf(buildPrintCss({ orientation: o, cols, rows }).layout);
-        expect(pg).toMatch(/height:\s*100vh/);
+        const { layout } = buildPrintCss({ orientation: o, cols, rows });
+        const pg = pgBlockOf(layout);
+        expect(pg).not.toMatch(/height:\s*100vh/);
         expect(pg).not.toMatch(/height:\s*[\d.]+mm/);
+        const svg = layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(svg).toMatch(/max-height:\s*[\d.]+mm/);
+        expect(svg).not.toMatch(/max-height:\s*[\d.]+vh/);
       }
     });
   }

@@ -138,20 +138,27 @@ describe('B: .print-page-group — dynamic CSS (printCss.js 生成、全18パタ
 // 100vh は印刷ページに追従するため iOS の物理余白補正が不要 (dedecc4 復元)。
 // 一時 mm 固定にしたが iOS 縦印刷で2P空白が再発したため戻した。
 
-describe('C: ページ枠 height:100vh + grid minmax(0, 1fr)', () => {
+describe('C: ページ枠 height は auto + 指板は mm 実寸 (vh/100vh は iOS横印刷で破綻)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`dynamic [${cols}×${rows}]: .print-page-group が height:100vh (mm固定にしない)`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-group に height を指定しない (vh も mm も)`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
       const pgBlock = css.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-      expect(pgBlock).toMatch(/height:\s*100vh/);
+      expect(pgBlock).not.toMatch(/height:\s*100vh/);
       expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
     });
 
-    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を auto で配置`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
       expect(css).toMatch(
-        new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
+        new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`)
       );
+    });
+
+    it(`dynamic [${cols}×${rows}]: svg.fb の max-height は mm 実寸`, () => {
+      const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
+      const svg = css.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(svg).toMatch(/max-height:\s*[\d.]+mm/);
+      expect(svg).not.toMatch(/max-height:\s*[\d.]+vh/);
     });
   }
 });

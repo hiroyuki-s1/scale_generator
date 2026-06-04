@@ -116,26 +116,28 @@ describe('calcMaskViewBox — 幾何学的正確性', () => {
 
 // ── layout × orientation の cellH 検証 ──────────────────────────────────
 
-describe('buildPrintCss — ページ枠 height:100vh + grid minmax(0, 1fr)', () => {
-  // 100vh は印刷ページに追従するため iOS の物理余白補正が不要 (dedecc4 復元)。
-  // grid minmax(0,1fr) で Safari の min-content 行膨張 (2P空白の典型) を防ぐ。
+describe('buildPrintCss — 枠 height auto + 行 auto + 指板 mm 実寸', () => {
+  // 横印刷で 100vh が iOS の縦持ち viewport 基準になり2P空白を出したため、枠に height を
+  // 与えず、指板を mm 実寸 (印刷可能高さ÷行数−安全マージン) で縛って1ページに収める。
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {
-      it(`${orientation} ${cols}×${rows}: .print-page-group が height:100vh (mm固定にしない)`, () => {
+      it(`${orientation} ${cols}×${rows}: .print-page-group に height を指定しない (vh も mm も)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         const pgBlock = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-        expect(pgBlock).toMatch(/height:\s*100vh/);
+        expect(pgBlock).not.toMatch(/height:\s*100vh/);
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
-      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {
+      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を auto で配置`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         expect(layout).toMatch(
-          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
+          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`)
         );
       });
-      it(`${orientation} ${cols}×${rows}: svg.fb に max-height vh (マスク縦長対策)`, () => {
+      it(`${orientation} ${cols}×${rows}: svg.fb に max-height mm (vh ではない)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
-        expect(layout).toMatch(/svg\.fb\s*\{[^}]*max-height:\s*[\d.]+vh/);
+        const svg = layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(svg).toMatch(/max-height:\s*[\d.]+mm/);
+        expect(svg).not.toMatch(/max-height:\s*[\d.]+vh/);
       });
     }
   }

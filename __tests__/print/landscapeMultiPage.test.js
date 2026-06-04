@@ -40,20 +40,23 @@ describe('複数ページ: calcPageGroupSizes の整合性 (全パターン)', (
 
 describe('横向き印刷 CSS は height:100vh (iOS ページ追従)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`[${cols}×${rows}] landscape: .print-page-group height:100vh (PC=mm / モバイル=auto, どちらも単一@page)`, () => {
+    it(`[${cols}×${rows}] landscape: 枠は height 指定なし(auto) / 指板は mm / @page は PC=mm・モバイル=auto`, () => {
       const pc  = buildPrintCss({ orientation: 'landscape', cols, rows });
       const mob = buildPrintCss({ orientation: 'landscape', cols, rows, isMobile: true });
       expect(pc.orient).toContain('size: 297mm 210mm');   // PC は向き明示 mm
       expect(mob.orient).toContain('size: auto');          // モバイルは OS 用紙向きに追従
       const pg = pc.layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
-      expect(pg).toMatch(/height:\s*100vh/);
-      expect(pg).not.toMatch(/height:\s*[\d.]+mm/); // mm 固定に戻さない
+      // 横印刷で 100vh が iOS の縦持ち viewport 基準になり2P空白を出した → height を与えない
+      expect(pg).not.toMatch(/height:\s*100vh/);
+      expect(pg).not.toMatch(/height:\s*[\d.]+mm/);
+      const svg = pc.layout.match(/svg\.fb\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(svg).toMatch(/max-height:\s*[\d.]+mm/); // 指板は mm 実寸で縛る
     });
 
-    it(`[${cols}×${rows}] grid 行/列が minmax(0, 1fr) (Safari 行膨張回避)`, () => {
+    it(`[${cols}×${rows}] grid 列は minmax(0,1fr)・行は auto`, () => {
       const { layout } = buildPrintCss({ orientation: 'landscape', cols, rows });
       expect(layout).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
-      expect(layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
+      expect(layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`));
     });
   }
 });

@@ -131,10 +131,14 @@ main.js → orchestrates all
   内側の `.print-page-inner` (grid) でレイアウトする ([src/print/pageGroup.js](src/print/pageGroup.js))。
   改ページは **隣接兄弟 `.print-page-group + .print-page-group` への
   `page-break-before: always`** (= 2番目以降のグループの「前」で改ページ) で行う。
-  各グループは **`height: 100vh`** (= 印刷ページに追従する1ページ枠) +
-  `overflow: hidden` + `break-inside: avoid` で1ページに収め、内側
-  `.print-page-inner` を **`grid-template-rows/columns: repeat(n, minmax(0, 1fr))`**
-  で均等分割する。
+  各グループは **height を指定せず (auto)** + `overflow: hidden` + `break-inside: avoid`。
+  内側 `.print-page-inner` は **列 `repeat(cols, minmax(0,1fr))` / 行 `repeat(rows, auto)`**。
+  指板 SVG は **`max-height: <印刷可能高さ ÷ 行数 − 安全マージン> mm` の実寸**で縛る。
+  → 枠は中身(mm実寸の指板)ぶんの高さになり、**1ページを物理的に超えられない**。
+  **★ 以前は `height: 100vh` を使っていたが、スマホ(縦持ち)で横用紙を印刷すると
+  iOS Safari が 100vh を「縦持ち viewport の高さ」で解決し、横用紙の印刷可能高さを
+  大幅に超えて2P目空白を出した (横だけ壊れる)。vh は用紙でなく viewport 基準になり得る
+  ので印刷の高さに使わない。** 安全マージン (現 16mm) で AirPrint 物理余白の機種差も吸収。
   **`@page` の size は PC / モバイルで出し分ける (横印刷分割バグの根治・CRITICAL)**:
   モバイル (`isMobile` = `max-width:767px`) は `@page { size: auto; margin: 10mm 12mm }`
   ── 向きを OS 印刷シートで切り替える運用なので、`size` を mm 明示 (210mm 297mm=portrait)
@@ -145,38 +149,42 @@ main.js → orchestrates all
   query で @page を2つ出すのは厳禁 (モバイル Safari が複数 @page を処理できず印刷崩壊。
   3f4c03b で実証・revert)。分岐は JS の `isMobile` で行い出力 @page は常に1つ
   ([src/print/printCss.js](src/print/printCss.js))。
-  **重要 (試行錯誤の結論)**: 一時 `height` を mm 固定にしたが、iOS 実機の AirPrint
-  物理余白を CSS 側で補正しきれず**縦印刷で2P目空白が再発**した。`100vh` は
-  印刷ページ高さに追従するため物理余白の手動補正が不要で、これが iOS で安定する
-  (= dedecc4 の実装。ユーザー証言「以前は縦が動いていた」が決め手)。**mm 固定 height
-  には二度と戻さない**。iOS Safari で動かなかった失敗パターン (絶対に戻さない):
+  **重要 (試行錯誤の結論)**: 高さの持たせ方を 2 回間違えた。
+  ①`height: mm 固定` → AirPrint 物理余白の機種差で**縦印刷**が溢れた。
+  ②`height: 100vh` → スマホ横用紙で vh が縦持ち viewport 基準になり**横印刷**で2P空白。
+  → **結論: 枠に height を与えず (auto)、指板を mm 実寸 + 安全マージンで縛る**。
+  枠＝中身ぶんの高さなので用紙/viewport の食い違いに影響されず1ページに収まる。
+  iOS Safari で動かなかった失敗パターン (絶対に戻さない):
   - ❌ CSS Grid 直下への `break-after: page` → iOS で2P目空白
   - ❌ 空の改ページ用 div + `page-break-before` → div 自体が1P消費し空白
   - ❌ `#panelSaved` が `display:flex` → flex 内の page-break は iOS で無視。**block 必須**
   - ❌ **`page-break-after: always`** → Safari は最終ページの後に**余分な空白ページ**を
     作る既知バグ。`page-break-after` は一切使わず、**隣接兄弟セレクタの
     `page-break-before`** で2番目以降のグループ前だけに改ページを入れる。
-  - ❌ **mm 固定 height** → iOS 実機の AirPrint 物理余白(機種差 10〜16mm)を CSS 側で
-    手動補正する必要が生じ、補正値が機種差に追いつかず**縦印刷で2P空白が再発**。
-    `100vh` ならページ追従で補正不要。`@page margin` も 0/auto にせず `10mm 12mm` を
-    明示 (margin:0 は iOS が用紙端まで描画して物理余白で溢れる)。
-  - ❌ **grid `1fr`** → Safari で子の min-content に押されて行が膨張し2P空白。
-    **`minmax(0, 1fr)`** で強制均等分割し、子は `overflow: hidden` で切る。
-  - **マスクで縦長になった指板**: `svg.fb` に `max-height: (92/rows)vh` を指定
-    (100vh 枠の中の1セル相当)。`preserveAspectRatio="xMidYMid meet"` で縦長は横が
-    縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
-  - **再発防止テスト (最重要)**: [__tests__/print/iosPrintRegression.test.js](__tests__/print/iosPrintRegression.test.js)
-    が「実機 iPhone で縦横とも動いた構成」を7項目の不変条件で固定している
-    (①height:100vh ②@page margin 10mm 12mm ②b @page 単一ブロック ②c size は
-    モバイル=auto/PC=明示mm ③隣接兄弟 page-break-before ④minmax(0,1fr)
-    ⑤svg max-height vh ⑥#panelSaved block ⑦group block+overflow:hidden)。
-    **このファイルが赤くなったら iOS 印刷を壊した可能性が高い** — 値を変える前に
-    「本当に iOS 実機で確認したか」を必ず自問すること。
-  - 検証: **①ユニット** 上記 iosPrintRegression + printCss.matrix。**②実 PDF**
-    `node e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し検出、要 dev server)。
-    **③WebKit (iOS Safariエンジン)** は `e2e/setup-webkit-libs.sh` で起動用ライブラリを
-    sudo 無し導入できるが、headless は emulateMedia('print') と SVG/filter でクラッシュし、
-    100vh の印刷時実値も測れない (viewport基準になる) ため、**iOS 印刷の最終確認は実機必須**。
+  - ❌ **`height: 100vh` (枠)** → スマホ縦持ちで横用紙印刷時、iOS が 100vh を縦持ち
+    viewport 基準で解決し横用紙の印刷可能高さを超える → **横印刷で2P目空白**。印刷の
+    高さに vh を使わない (svg max-height も vh 不可)。
+  - ❌ **mm 固定 height (枠)** → AirPrint 物理余白(機種差 10〜16mm)を補正しきれず
+    **縦印刷で2P空白**。枠の高さを固定値で持たせること自体が危険 → 枠は auto。
+  - ⭕ **枠 auto + 指板 `max-height: (printableH/rows − 安全16mm) mm`** → 行合計が必ず
+    印刷可能高さ未満になり、どの向きでも2P目空白を出さない。`@page margin` は
+    `10mm 12mm` を明示 (margin:0 は iOS が用紙端まで描画して物理余白で溢れる)。
+  - ❌ **grid 行 `1fr`/`minmax(0,1fr)`** → 枠の高さ依存になり、その枠高さが iOS 横印刷で
+    破綻した。**行は `auto`** (中身=mm実寸の指板の高さ)。列は `minmax(0,1fr)` でOK(幅基準)。
+  - **マスクで縦長になった指板**: `svg.fb` に `max-height: <mm>` を指定。
+    `preserveAspectRatio="xMidYMid meet"` で縦長は横が縮みフィット
+    (flex は SVG 高さが 0 に潰れるので使わない)。
+  - **再発防止テスト**: [__tests__/print/iosPrintRegression.test.js](__tests__/print/iosPrintRegression.test.js)
+    が不変条件を固定 (①枠 height 指定なし/auto ②@page margin 10mm 12mm ②b @page 単一
+    ②c size モバイル=auto/PC=明示mm ③隣接兄弟 page-break-before ④列 minmax(0,1fr)/行 auto
+    ⑤svg max-height **mm** + rows×svgMm が印刷可能高さ未満 ⑥#panelSaved block
+    ⑦group block+overflow:hidden)。
+    **⚠️ ただしこれらは CSS 文字列の検査であり、iOS 実機の印刷描画は検証できない。**
+    値を変えたら**必ず iOS 実機で印刷確認**すること (headless では再現不可)。
+  - 検証: **①ユニット** iosPrintRegression + printCss.matrix。**②実 PDF (PCのみ信頼可)**
+    `node e2e/layout-matrix-pdf.cjs` (PC viewport で全9レイアウト)。
+    **③iOS 印刷は headless 再現不可** — WebKit は print でクラッシュ、page.pdf は
+    モバイル viewport で 100vh/vh が viewport 基準になり実機と異なる。**最終確認は実機必須**。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

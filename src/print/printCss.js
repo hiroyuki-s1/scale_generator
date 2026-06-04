@@ -65,14 +65,17 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
-  const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm) — フォント計算用
+  const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm)
   const gapMm  = 3;
-  // フォントサイズ計算用の 1 セルあたり目安高さ (mm)。レイアウト自体は grid 1fr 均等分割。
-  const cellH  = (pageH - gapMm * (rows - 1)) / rows;
-  const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
-  // マスク縦長指板を1セルに収めるための max-height。100vh をセル数で割った相対値。
-  // タイトル/border 分の余裕として 92/rows (vh) を上限にする。
-  const svgMaxVh = (92 / rows).toFixed(2);
+  // iOS AirPrint 物理余白の機種差 + カード余白を吸収する安全マージン。
+  // これを引いた高さを「実際に使える高さ」とし、必ず1ページに収めて2P目空白を防ぐ。
+  const SAFETY_MM = 16;
+  const usableH = pageH - SAFETY_MM;
+  // 1 セル(指板1枚)の高さ上限を mm 実寸で決める (vh を使わない — 後述)。
+  const cellMm  = Math.max(18, (usableH - gapMm * (rows - 1)) / rows);
+  const titlePt = clamp(5.5, 10, cellMm / 9).toFixed(1);
+  // svg(タイトル焼き込み済み)の高さ上限。カード枠の padding/border ぶん少し引く。
+  const svgMaxMm = Math.max(14, cellMm - 4).toFixed(1);
 
   const layout = `
 @media print {
@@ -81,10 +84,14 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     display: block !important;
     gap: 0 !important;
   }
-  /* ページ枠 — 1グループ = 1ページ。height:100vh が印刷ページに追従する。 */
+  /* ページ枠 — 1グループ = 1ページ。
+     ★ height は指定しない (auto)。以前は height:100vh としていたが、スマホ(縦持ち)で
+       横用紙を印刷すると iOS Safari が 100vh を「縦持ち viewport の高さ」で解決し、
+       横用紙の印刷可能高さを大幅に超えて2P目空白が出た (横だけ壊れる原因)。
+       枠を中身ぶんの高さ(auto)にし、中の指板を mm 実寸 (svgMaxMm) で縛ることで、
+       viewport と用紙の食い違いに影響されず必ず1ページに収める。 */
   .print-page-group {
     display: block !important;
-    height: 100vh !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -93,14 +100,13 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     break-before: page !important;
     page-break-before: always !important;
   }
-  /* ページ枠の中を cols×rows の grid で均等分割。minmax(0,1fr) で Safari の
-     min-content 膨張 (2P目空白の典型原因) を防ぐ。 */
+  /* ページ枠の中を cols×rows の grid に配置。行は auto (中身=mm実寸の指板の高さ)。
+     vh/1fr のような「枠の高さ依存」を排除し、用紙との食い違いで膨張しないようにする。 */
   .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, minmax(0, 1fr)) !important;
-    grid-template-rows:    repeat(${rows}, minmax(0, 1fr)) !important;
+    grid-template-rows:    repeat(${rows}, auto) !important;
     gap: ${gapMm}mm !important;
-    height: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
@@ -130,14 +136,15 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     box-shadow: none !important;
     box-sizing: border-box !important;
   }
-  /* 指板 SVG: マスクで縦長になっても max-height(vh) で1セルに収める。
-     preserveAspectRatio="xMidYMid meet" なので縦長は横が縮みフィット。 */
+  /* 指板 SVG (タイトル焼き込み済み): 高さ上限を mm 実寸で指定する。
+     vh だと iOS の横印刷で viewport 基準になり用紙からはみ出す (2P目空白の原因)
+     ため mm にする。preserveAspectRatio="xMidYMid meet" なので縦長は横が縮みフィット。 */
   svg.fb {
     min-width: 0 !important;
     width: 100% !important;
     height: auto !important;
     max-width: 100% !important;
-    max-height: ${svgMaxVh}vh !important;
+    max-height: ${svgMaxMm}mm !important;
     display: block !important;
     margin: 0 auto !important;
   }

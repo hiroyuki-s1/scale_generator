@@ -65,16 +65,21 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
-  const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm)
   const gapMm  = 3;
-  // iOS AirPrint 物理余白の機種差 + カード余白を吸収する安全マージン。
-  // これを引いた高さを「実際に使える高さ」とし、必ず1ページに収めて2P目空白を防ぐ。
-  const SAFETY_MM = 16;
-  const usableH = pageH - SAFETY_MM;
-  // 1 セル(指板1枚)の高さ上限を mm 実寸で決める (vh を使わない — 後述)。
+  // ── グリッド高さの算出 (2P目空白を出さないための核心) ────────────────────
+  // 用紙の高さ (A4: landscape=短辺210mm / portrait=長辺297mm)。
+  const sheetH = isLand ? 210 : 297;
+  // iOS は `@page margin` に加えて端末側の物理余白をさらに確保するため、幾何学的な
+  // 印刷可能高さ (sheet − @page margin) より「実際に使える高さ」はかなり小さい。
+  // 控えめすぎる予約 (以前は @page margin 20mm + 16mm=計36mm) では横印刷で枠が用紙を
+  // 超え2P目空白が再発した。→ 用紙高から **50mm** を予約 (@page上下20mm + iOS物理余白の
+  // 機種差ぶんを多めに) し、どの向き/機種でも用紙を超えないようにする。
+  const RESERVE_MM = 50;
+  const usableH = sheetH - RESERVE_MM; // landscape 160mm / portrait 247mm
+  // 1 セル(指板1枚)の高さ。usableH を行数で均等分割した値。
   const cellMm  = Math.max(18, (usableH - gapMm * (rows - 1)) / rows);
   const titlePt = clamp(5.5, 10, cellMm / 9).toFixed(1);
-  // svg(タイトル焼き込み済み)の高さ上限。カード枠の padding/border ぶん少し引く。
+  // svg(タイトル焼き込み済み)の高さ上限。セルの padding/border ぶん少し引く。
   const svgMaxMm = Math.max(14, cellMm - 4).toFixed(1);
 
   const layout = `
@@ -97,12 +102,12 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     page-break-before: always !important;
   }
   /* ★ レイアウトの核心 (空白バグと上詰めの両方を解決):
-     高さを **用紙より控えめな mm 実寸 (usableH)** で持ち、それを cols×rows の grid で
-     **均等分割 (minmax(0,1fr))** する。これで各セルに1枚ずつ・ページに均等配置される
-     (上詰めにならない)。
+     高さを **用紙高から 50mm 予約した控えめ mm 実寸 (usableH)** で持ち、それを cols×rows
+     の grid で **均等分割 (minmax(0,1fr))** する。各セルに1枚ずつ・ページに均等配置され
+     (上詰めにならない)、かつ控えめ高さなので用紙を超えず2P空白も出ない。
      - vh は使わない: iOS 横印刷で viewport(縦持ち)基準になり用紙を超え2P空白が出る。
-     - 用紙ぴったりの mm でもなく「控えめ(printable − 安全16mm)」: AirPrint 物理余白の
-       機種差を吸収し、どの向き/機種でも1ページを超えない。
+     - 「控えめ(用紙高 − 50mm)」: iOS は @page margin の上に端末物理余白を足すため、
+       幾何学的な印刷可能高さより小さくしないと枠が用紙を超える。50mm 予約で吸収。
      - 行は minmax(0,1fr): 素の 1fr だと Safari の min-content 膨張で行が伸び2P空白。 */
   .print-page-inner {
     display: grid !important;

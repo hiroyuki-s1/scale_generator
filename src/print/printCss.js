@@ -51,16 +51,23 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
  * @returns {{pageHmm:number, cellHmm:number, titlePt:string, svgMaxMm:string}}
  */
 function deriveOrientationDims(isLand, rows) {
-  // ページ枠の padding 8mm/上下 + gap 3mm で内側を rows 等分する
   const pageHmm = isLand ? 210 : 297;
+  // グループ高さは用紙より SAFETY_MM 小さくする (CRITICAL):
+  //   calc(pageHmm - 1px) では用紙とほぼ同寸のため、プリンタの物理余白や
+  //   サブピクセル丸めで最下行が用紙下端を数mm超えて切れる (実 PDF で観測)。
+  //   6mm 引いてグループを用紙より確実に小さくし、はみ出しを防ぐ。
+  //   (用紙より小さいので次ページに溢れる空白ページも当然出ない)
+  const SAFETY_MM = 6;
+  const groupHmm  = pageHmm - SAFETY_MM;
+  // ページ枠の padding 8mm/上下 + gap 3mm で内側を rows 等分する
   const padV    = 8;
   const gapMm   = 3;
-  const cellHmm = (pageHmm - 2 * padV - gapMm * (rows - 1)) / rows;
+  const cellHmm = (groupHmm - 2 * padV - gapMm * (rows - 1)) / rows;
   // タイトル + fb-wrap border/padding 等のヘッダ系で約 7mm 確保
   const reserveMm = 7;
   const svgMaxMm  = Math.max(10, cellHmm - reserveMm).toFixed(1);
   const titlePt   = clamp(5.5, 10, cellHmm / 9).toFixed(1);
-  return { pageHmm, cellHmm, titlePt, svgMaxMm };
+  return { pageHmm, groupHmm, cellHmm, titlePt, svgMaxMm };
 }
 
 /**
@@ -170,7 +177,7 @@ ${isMobile ? `
 /* ── モバイル: OS 印刷シートで向き切替できるため orientation 別ブロック ──
    horizontal: height calc(...-1px) は丸めで次ページに溢れるエッジケース防止。 */
 @media print and (orientation: landscape) {
-  .print-page-group { height: calc(${land.pageHmm}mm - 1px) !important; }
+  .print-page-group { height: ${land.groupHmm}mm !important; }
   .fb-title, .saved-title-input, .saved-print-title {
     font-size: ${land.titlePt}pt !important;
     line-height: 1.2;
@@ -178,7 +185,7 @@ ${isMobile ? `
   svg.fb { max-height: ${land.svgMaxMm}mm !important; }
 }
 @media print and (orientation: portrait) {
-  .print-page-group { height: calc(${port.pageHmm}mm - 1px) !important; }
+  .print-page-group { height: ${port.groupHmm}mm !important; }
   .fb-title, .saved-title-input, .saved-print-title {
     font-size: ${port.titlePt}pt !important;
     line-height: 1.2;
@@ -190,7 +197,7 @@ ${isMobile ? `
    viewport-vs-@page の orientation 食い違いで誤ったブロックが当たり、
    グループが用紙より低くなって下端が空白になる問題を防ぐ。 */
 @media print {
-  .print-page-group { height: calc(${(orientation === 'landscape' ? land : port).pageHmm}mm - 1px) !important; }
+  .print-page-group { height: ${(orientation === 'landscape' ? land : port).groupHmm}mm !important; }
   .fb-title, .saved-title-input, .saved-print-title {
     font-size: ${(orientation === 'landscape' ? land : port).titlePt}pt !important;
     line-height: 1.2;

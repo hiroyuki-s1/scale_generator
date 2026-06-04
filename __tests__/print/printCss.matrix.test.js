@@ -75,22 +75,23 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(pgBlock).not.toMatch(/height:\s*100vh/);
       });
 
-      const pageMm = orientation === 'landscape' ? 210 : 297;
-      it(`[${label}] PC: 単一 @media print に .print-page-group height = calc(${pageMm}mm - 1px) (orientation 引数固定)`, () => {
+      // グループ高さは用紙より SAFETY_MM(6mm) 小さい (最下行はみ出し防止)
+      const groupMm = orientation === 'landscape' ? 204 : 297 - 6;
+      it(`[${label}] PC: 単一 @media print に .print-page-group height = ${groupMm}mm (orientation 引数固定)`, () => {
         expect(layout).toMatch(
-          new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*calc\\(${pageMm}mm\\s*-\\s*1px\\)`)
+          new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*${groupMm}mm`)
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: landscape) で height = calc(210mm - 1px)`, () => {
+      it(`[${label}] mobile: @media print and (orientation: landscape) で height = 204mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(210mm\s*-\s*1px\)/
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*204mm/
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: portrait) で height = calc(297mm - 1px)`, () => {
+      it(`[${label}] mobile: @media print and (orientation: portrait) で height = 291mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*calc\(297mm\s*-\s*1px\)/
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*291mm/
         );
       });
 
@@ -100,8 +101,8 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
       });
 
       it(`[${label}] PC: 反対 orientation の mm 値が混入しない (viewport-vs-@page 食い違い防止)`, () => {
-        const oppositeMm = orientation === 'landscape' ? 297 : 210;
-        expect(layout).not.toMatch(new RegExp(`calc\\(${oppositeMm}mm\\s*-\\s*1px\\)`));
+        const oppositeMm = orientation === 'landscape' ? 291 : 204;
+        expect(layout).not.toMatch(new RegExp(`height:\\s*${oppositeMm}mm`));
       });
 
       // ── 改ページ (隣接兄弟 page-break-before — Safari 空白ページバグ回避) ──

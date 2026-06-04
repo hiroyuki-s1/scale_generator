@@ -444,7 +444,7 @@ fbFullscreenClose.addEventListener('click', e => { e.stopPropagation(); closeFbF
 let fsPrevState      = null;
 let fsPrevInstrument = null;
 
-export function openFbFullscreen(state, displayTitle) {
+function openFbFullscreen(state, displayTitle) {
   const instrument = state.instrument || 'guitar';
   if (instrument !== fsPrevInstrument) {
     drawFretboardBase(fbFullscreenSvg, instrument);

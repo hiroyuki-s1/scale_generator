@@ -75,7 +75,7 @@ describe('calcPageGroupSizes — 不変条件', () => {
 
       it(`[${label}] 各グループが perPage 以下`, () => {
         const sizes = calcPageGroupSizes(total, perPage);
-        sizes.forEach((s, i) => {
+        sizes.forEach((s) => {
           expect(s).toBeGreaterThan(0);
           expect(s).toBeLessThanOrEqual(perPage);
         });

@@ -289,6 +289,19 @@ describe('sanitizeStoredState — robustness against bad input', () => {
     expect(() => sanitizeStoredState(undefined)).not.toThrow();
   });
 
+  it('saved のタイトルは60文字に切り詰める (印刷レイアウト崩れ防止)', () => {
+    const longTitle = 'あ'.repeat(200);
+    const s = sanitizeStoredState({
+      saved: [{ id: 1, title: longTitle, rootIndex: 0, activeDegrees: [0], presetName: 'major', mode: 'scale', mask: { enabled: false, min: 1, max: 15 }, degreeColors: [], instrument: 'guitar' }],
+    });
+    expect(s.saved[0].title.length).toBe(60);
+    // 通常長のタイトルはそのまま
+    const s2 = sanitizeStoredState({
+      saved: [{ id: 2, title: 'C メジャー', rootIndex: 0, activeDegrees: [0], presetName: 'major', mode: 'scale', mask: { enabled: false, min: 1, max: 15 }, degreeColors: [], instrument: 'guitar' }],
+    });
+    expect(s2.saved[0].title).toBe('C メジャー');
+  });
+
   it('migrates presetName: Major → Ionian, Natural Minor → Aeolian', () => {
     const s = sanitizeStoredState({
       edit: { presetName: 'Major' },

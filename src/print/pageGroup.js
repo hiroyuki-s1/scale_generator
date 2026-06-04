@@ -3,11 +3,13 @@
  *
  * 改ページ戦略 (試行錯誤の記録):
  *   × CSS Grid の break-after:page     → iOS Safari で動作しない
- *   × .print-page-break (page-break-before:always) → break要素自体が1P消費して空白ページが発生
- *   ○ .print-page-group を block div にして page-break-after:always
- *     → block div への page-break-after は全ブラウザで確実に動作する
- *     → 最終グループは :last-child で auto にして末尾の空白ページを防ぐ
+ *   × 空の .print-page-break + page-break-before → break要素自体が1P消費して空白ページが発生
+ *   × .print-page-group に page-break-after:always → Safari が最終ページ後に余分な空白ページを作る
+ *   ○ .print-page-group を block div にまとめ、**2番目以降のグループの「前」**に
+ *     隣接兄弟セレクタ `.print-page-group + .print-page-group { page-break-before: always }`
+ *     で改ページする (printCss.js が出力)。page-break-after は一切使わない。
  *     → グリッドレイアウトは内側の .print-page-inner で担う
+ *   (詳細は CLAUDE.md の印刷セクション参照)
  */
 
 /**
@@ -29,7 +31,7 @@ export function calcPageGroupSizes(total, perPage) {
  * #savedGrid 直下の .saved-card を cols×rows 枚ずつ .print-page-group にまとめる。
  *
  * 構造:
- *   .print-page-group (block, page-break-after:always)
+ *   .print-page-group (block; 2番目以降は page-break-before:always で改ページ)
  *     .print-page-inner (grid, cols × rows レイアウト)
  *       .saved-card × N
  *

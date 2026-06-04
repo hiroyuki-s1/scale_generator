@@ -11,39 +11,6 @@ const LABELS = {
   bass:   'Bass',
 };
 
-// SVG icon paths — simplified silhouettes
-const GUITAR_ICON = `<svg viewBox="0 0 36 90" fill="currentColor" aria-hidden="true">
-  <!-- Headstock -->
-  <rect x="13" y="0" width="10" height="7" rx="3"/>
-  <!-- Nut + neck -->
-  <rect x="15.5" y="5" width="5" height="24" rx="1"/>
-  <!-- Body: upper bout -->
-  <ellipse cx="18" cy="36" rx="12" ry="10"/>
-  <!-- Body: lower bout -->
-  <ellipse cx="18" cy="56" rx="14" ry="15"/>
-  <!-- Sound hole -->
-  <circle cx="18" cy="56" r="5.5" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
-  <!-- Tuning pegs (3 each side) -->
-  <circle cx="11" cy="2" r="1.8"/><circle cx="11" cy="7" r="1.8"/><circle cx="11" cy="12" r="1.8"/>
-  <circle cx="25" cy="2" r="1.8"/><circle cx="25" cy="7" r="1.8"/><circle cx="25" cy="12" r="1.8"/>
-</svg>`;
-
-const BASS_ICON = `<svg viewBox="0 0 36 100" fill="currentColor" aria-hidden="true">
-  <!-- Headstock (4 pegs) -->
-  <rect x="13" y="0" width="10" height="7" rx="3"/>
-  <!-- Nut + neck (longer than guitar) -->
-  <rect x="15.5" y="5" width="5" height="34" rx="1"/>
-  <!-- Body: upper bout -->
-  <ellipse cx="18" cy="48" rx="12" ry="10"/>
-  <!-- Body: lower bout -->
-  <ellipse cx="18" cy="68" rx="14" ry="16"/>
-  <!-- Sound hole -->
-  <ellipse cx="18" cy="70" rx="5" ry="5.5" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
-  <!-- 4 tuning pegs -->
-  <circle cx="11" cy="2" r="1.8"/><circle cx="11" cy="8" r="1.8"/>
-  <circle cx="25" cy="2" r="1.8"/><circle cx="25" cy="8" r="1.8"/>
-</svg>`;
-
 function renderBtnContent(instrument) {
   const label = instrument ? LABELS[instrument] : '：楽器';
   return `<span class="instr-btn-label">${label}</span>

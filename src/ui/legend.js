@@ -1,4 +1,4 @@
-import { DEGREES, NOTES, DEFAULT_COLORS } from '../domain/constants.js';
+import { DEGREES, DEFAULT_COLORS } from '../domain/constants.js';
 
 export function renderLegend(container, scale) {
   const colors = scale.degreeColors || DEFAULT_COLORS;

@@ -1,0 +1,10 @@
+# Cloudflare Pages セキュリティヘッダー (本番)。
+# ビルド時に public/ → dist/ へコピーされ Cloudflare Pages が読む。
+# GitHub Pages ミラーはこのファイルを無視するため副作用なし。
+# ※ CSP は GA4 / Google Fonts の allowlist が必要で誤設定の事故が大きいので、
+#   まずは即時に安全な4ヘッダーのみ設定。CSP は別途検証してから追加する。
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

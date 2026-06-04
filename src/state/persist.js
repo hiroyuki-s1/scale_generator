@@ -5,6 +5,9 @@ import {
 
 const KEY = 'sg.v1.state';
 const DEBOUNCE_MS = 200;
+// スケール名の最大長 (index.html の input[maxlength] と一致させる)。
+// 異常に長いタイトルで印刷レイアウト/SVG 焼き込みが崩れるのを境界で防ぐ。
+const MAX_TITLE_LEN = 60;
 
 // 旧プリセット名 → 現行名のマイグレーション。Major / Natural Minor 等を
 // チャーチモード正式名に統一したため、古い保存データの presetName を
@@ -110,7 +113,7 @@ function sanitizeSaved(raw) {
     .map(s => ({
       ...sanitizeEdit(s),
       id: s.id,
-      title: typeof s.title === 'string' ? s.title : '無題',
+      title: typeof s.title === 'string' ? s.title.slice(0, MAX_TITLE_LEN) : '無題',
       // saved snapshot は楽器が必ず確定している必要がある
       instrument: sanitizeInstrument(s.instrument, 'guitar'),
     }));

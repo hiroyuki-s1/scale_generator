@@ -146,13 +146,17 @@ main.js → orchestrates all
   - **マスクで縦長になった指板**: `svg.fb` に `max-height: (92/rows)vh` を指定
     (100vh 枠の中の1セル相当)。`preserveAspectRatio="xMidYMid meet"` で縦長は横が
     縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
-  - 検証: **①ユニット** `__tests__/print/printCss.matrix.test.js` が「height:100vh
-    維持(mm固定にしない)」「minmax(0,1fr)」「隣接兄弟 page-break-before」
-    「svg max-height vh」を不変条件で守る。**②実 PDF** `node e2e/layout-matrix-pdf.cjs`
-    (全9レイアウトのはみ出し検出、要 dev server)。**③WebKit (iOS Safariエンジン)**
-    は `e2e/setup-webkit-libs.sh` で起動用ライブラリを sudo 無し導入できるが、
-    headless は emulateMedia('print') と SVG/filter でクラッシュし、100vh の印刷時
-    実値も測れない (viewport基準になる) ため、**iOS 印刷の最終確認は実機必須**。
+  - **再発防止テスト (最重要)**: [__tests__/print/iosPrintRegression.test.js](__tests__/print/iosPrintRegression.test.js)
+    が「実機 iPhone で縦横とも動いた構成」を7項目の不変条件で固定している
+    (①height:100vh ②@page margin 10mm 12mm ③隣接兄弟 page-break-before
+    ④minmax(0,1fr) ⑤svg max-height vh ⑥#panelSaved block ⑦group block+overflow:hidden)。
+    **このファイルが赤くなったら iOS 印刷を壊した可能性が高い** — 値を変える前に
+    「本当に iOS 実機で確認したか」を必ず自問すること。
+  - 検証: **①ユニット** 上記 iosPrintRegression + printCss.matrix。**②実 PDF**
+    `node e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し検出、要 dev server)。
+    **③WebKit (iOS Safariエンジン)** は `e2e/setup-webkit-libs.sh` で起動用ライブラリを
+    sudo 無し導入できるが、headless は emulateMedia('print') と SVG/filter でクラッシュし、
+    100vh の印刷時実値も測れない (viewport基準になる) ため、**iOS 印刷の最終確認は実機必須**。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

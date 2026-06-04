@@ -40,10 +40,12 @@ describe('複数ページ: calcPageGroupSizes の整合性 (全パターン)', (
 
 describe('横向き印刷 CSS は height:100vh (iOS ページ追従)', () => {
   for (const [cols, rows] of LAYOUT_PRESETS) {
-    it(`[${cols}×${rows}] landscape: @page landscape mm + .print-page-group height:100vh`, () => {
-      const { orient, layout } = buildPrintCss({ orientation: 'landscape', cols, rows });
-      expect(orient).toContain('size: 297mm 210mm');
-      const pg = layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
+    it(`[${cols}×${rows}] landscape: .print-page-group height:100vh (PC=mm / モバイル=auto, どちらも単一@page)`, () => {
+      const pc  = buildPrintCss({ orientation: 'landscape', cols, rows });
+      const mob = buildPrintCss({ orientation: 'landscape', cols, rows, isMobile: true });
+      expect(pc.orient).toContain('size: 297mm 210mm');   // PC は向き明示 mm
+      expect(mob.orient).toContain('size: auto');          // モバイルは OS 用紙向きに追従
+      const pg = pc.layout.match(/\.print-page-group\s*\{([^}]+)\}/)?.[1] ?? '';
       expect(pg).toMatch(/height:\s*100vh/);
       expect(pg).not.toMatch(/height:\s*[\d.]+mm/); // mm 固定に戻さない
     });

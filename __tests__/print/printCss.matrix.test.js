@@ -37,9 +37,15 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン, 100v
       const innerBlock = innerBlockOf(layout);
 
       // ── @page ──────────────────────────────────────────────────────
-      it(`[${label}] @page size が orientation に対応した mm 寸法`, () => {
+      it(`[${label}] PC は @page size が orientation に対応した mm 寸法`, () => {
         const expected = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
         expect(orient).toContain(expected);
+      });
+
+      it(`[${label}] モバイルは @page size: auto (OS 印刷シートの用紙向きに追従)`, () => {
+        const { orient: mob } = buildPrintCss({ orientation, cols, rows, isMobile: true });
+        expect(mob).toContain('size: auto');
+        expect(mob).not.toMatch(/size:\s*\d+mm\s+\d+mm/);
       });
 
       it(`[${label}] @page margin: 10mm 12mm (margin:0 は iOS で用紙端まで描画し2P空白)`, () => {

@@ -4,13 +4,22 @@ import { buildPrintCss } from '../../src/print/printCss.js';
 const DEFAULT = { orientation: 'landscape', cols: 2, rows: 3 };
 
 describe('buildPrintCss — orientation', () => {
-  it('landscape sets explicit landscape mm dimensions (297×210)', () => {
+  // PC (isMobile 既定 false) は向きボタンで確定するため @page size を mm 明示。
+  it('PC landscape sets explicit landscape mm dimensions (297×210)', () => {
     const { orient } = buildPrintCss(DEFAULT);
     expect(orient).toContain('size: 297mm 210mm');
   });
-  it('portrait sets explicit portrait mm dimensions (210×297)', () => {
+  it('PC portrait sets explicit portrait mm dimensions (210×297)', () => {
     const { orient } = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
     expect(orient).toContain('size: 210mm 297mm');
+  });
+  // モバイルは OS 印刷シートで向き切替 → size:auto で実用紙の向きに追従 (横印刷分割の根治)。
+  it('mobile uses @page size: auto (向き明示 mm に戻さない)', () => {
+    const land = buildPrintCss({ ...DEFAULT, isMobile: true });
+    const port = buildPrintCss({ ...DEFAULT, orientation: 'portrait', isMobile: true });
+    expect(land.orient).toContain('size: auto');
+    expect(land.orient).not.toMatch(/size:\s*\d+mm\s+\d+mm/);
+    expect(port.orient).toContain('size: auto');
   });
   it('@page margin は 10mm 12mm (margin:0 は iOS で用紙端まで描画し2P空白)', () => {
     // height:100vh は印刷ページに追従するので margin があっても干渉しない。

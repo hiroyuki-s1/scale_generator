@@ -16,9 +16,13 @@
  *   vh はページ追従なので、この補正自体が不要 = mm 固定には戻さない。
  *
  *   その他の要点:
- *   - `@page { size: <mm>; margin: 10mm 12mm }` — 向きは mm 明示。margin があっても
- *     100vh はページ追従なので干渉しない。モバイルの横印刷は OS 印刷シートで縦のまま
- *     運用する案内を印刷モーダルに表示している (CLAUDE.md 参照)。
+ *   - `@page` は PC / モバイルで size を出し分ける (詳細は buildPrintCss 内コメント)。
+ *     モバイルは `size: auto` で OS 印刷シートが選んだ用紙の向きに追従させる
+ *     (mm 明示で portrait 固定すると横用紙で「タイトル1P目・スケール2P目」に割れる)。
+ *     PC は `size: <mm>` で向きボタンの指定を用紙に効かせる。**どちらの分岐も @page は
+ *     単一ブロック**。@page を orientation media query で複数に分けるのは厳禁
+ *     (モバイル Safari が複数 @page を処理できず印刷崩壊する → 3f4c03b で実証・revert)。
+ *     margin があっても 100vh はページ追従なので干渉しない。
  *   - 改ページは隣接兄弟 `.print-page-group + .print-page-group` の
  *     `page-break-before: always` のみ (page-break-after は Safari で最終ページ後に
  *     余分な空白ページを作るため不使用)。
@@ -37,11 +41,28 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
  * @param {{orientation:'landscape'|'portrait', cols:number, rows:number, isMobile?:boolean}} layout
  * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
  */
-export function buildPrintCss({ orientation, cols, rows }) {
-  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくいので
-  // 明示的な mm 寸法で書く。最終的な向きは OS 印刷ダイアログでも上書き可能。
+export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
+  // @page size — PC とモバイルで出し分ける (どちらも必ず「単一」@page) (CRITICAL):
+  //
+  //   ■ モバイル (isMobile): `size: auto`
+  //     モバイルは向きを OS 印刷シートで切り替える運用 (アプリ側の向きUIは隠して縦固定)。
+  //     @page を mm 明示 (210mm 297mm=portrait) で固定すると、OS 印刷シートで横用紙を
+  //     選んだとき @page(縦) と実用紙(横) が衝突し、横印刷で「タイトルが1P目・スケールが
+  //     2P目」に分割される (ユーザー報告。mm 明示では再発)。size:auto なら OS 印刷シートが
+  //     選んだ用紙の向きに @page が追従し、100vh も実用紙に追従して1ページに収まる。
+  //
+  //   ■ PC (!isMobile): `size: <mm>` (orientation 引数で確定)
+  //     PC は印刷モーダルの向きボタンで orientation を確定する。mm 明示で用紙の向きを
+  //     固定でき、向きボタンが印刷プレビューにそのまま効く (de2f360 で対処済の挙動)。
+  //
+  //   ※ どちらの分岐も @page は **単一ブロック**。@page を orientation media query で
+  //     portrait/landscape 2つ出力するのは厳禁 (モバイル Safari が複数 @page を処理できず
+  //     印刷が完全崩壊する → 3f4c03b で実証・revert)。分岐は JS 側の isMobile で行い、
+  //     出力される @page は常に1つだけにする。
   const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
-  const orient = `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
+  const orient = isMobile
+    ? `@media print { @page { size: auto; margin: 10mm 12mm; } }`
+    : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm) — フォント計算用
@@ -130,7 +151,11 @@ export function initPrintCss(store) {
   const layoutEl = document.getElementById('print-layout');
 
   function update() {
-    const css = buildPrintCss(store.get().layout);
+    // モバイル (OS 印刷シートで向き切替) は @page size:auto で用紙向きに追従。
+    // 回転で max-width 判定が変わるため毎回評価する。
+    const isMobile = typeof window !== 'undefined'
+      && window.matchMedia('(max-width: 767px)').matches;
+    const css = buildPrintCss({ ...store.get().layout, isMobile });
     orientEl.textContent = css.orient;
     layoutEl.textContent = css.layout;
   }

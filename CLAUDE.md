@@ -125,7 +125,17 @@ main.js → orchestrates all
   各グループは **`height: 100vh`** (= 印刷ページに追従する1ページ枠) +
   `overflow: hidden` + `break-inside: avoid` で1ページに収め、内側
   `.print-page-inner` を **`grid-template-rows/columns: repeat(n, minmax(0, 1fr))`**
-  で均等分割する。`@page { size: <mm>; margin: 10mm 12mm }`。
+  で均等分割する。
+  **`@page` の size は PC / モバイルで出し分ける (横印刷分割バグの根治・CRITICAL)**:
+  モバイル (`isMobile` = `max-width:767px`) は `@page { size: auto; margin: 10mm 12mm }`
+  ── 向きを OS 印刷シートで切り替える運用なので、`size` を mm 明示 (210mm 297mm=portrait)
+  で固定すると、OS で横用紙を選んだとき @page(縦) と実用紙(横) が衝突し横印刷で
+  「タイトルが1P目・スケールが2P目」に分割される (ユーザー報告で再発)。`size: auto` なら
+  実用紙の向きに @page と `100vh` が追従する。PC は `@page { size: <mm> }` で向きボタンの
+  指定を用紙に効かせる。**どちらの分岐も @page は必ず単一ブロック** — orientation media
+  query で @page を2つ出すのは厳禁 (モバイル Safari が複数 @page を処理できず印刷崩壊。
+  3f4c03b で実証・revert)。分岐は JS の `isMobile` で行い出力 @page は常に1つ
+  ([src/print/printCss.js](src/print/printCss.js))。
   **重要 (試行錯誤の結論)**: 一時 `height` を mm 固定にしたが、iOS 実機の AirPrint
   物理余白を CSS 側で補正しきれず**縦印刷で2P目空白が再発**した。`100vh` は
   印刷ページ高さに追従するため物理余白の手動補正が不要で、これが iOS で安定する
@@ -148,8 +158,9 @@ main.js → orchestrates all
     縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
   - **再発防止テスト (最重要)**: [__tests__/print/iosPrintRegression.test.js](__tests__/print/iosPrintRegression.test.js)
     が「実機 iPhone で縦横とも動いた構成」を7項目の不変条件で固定している
-    (①height:100vh ②@page margin 10mm 12mm ③隣接兄弟 page-break-before
-    ④minmax(0,1fr) ⑤svg max-height vh ⑥#panelSaved block ⑦group block+overflow:hidden)。
+    (①height:100vh ②@page margin 10mm 12mm ②b @page 単一ブロック ②c size は
+    モバイル=auto/PC=明示mm ③隣接兄弟 page-break-before ④minmax(0,1fr)
+    ⑤svg max-height vh ⑥#panelSaved block ⑦group block+overflow:hidden)。
     **このファイルが赤くなったら iOS 印刷を壊した可能性が高い** — 値を変える前に
     「本当に iOS 実機で確認したか」を必ず自問すること。
   - 検証: **①ユニット** 上記 iosPrintRegression + printCss.matrix。**②実 PDF**

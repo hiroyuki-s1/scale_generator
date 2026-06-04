@@ -53,11 +53,17 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
 function deriveOrientationDims(isLand, rows) {
   const pageHmm = isLand ? 210 : 297;
   // グループ高さは用紙より SAFETY_MM 小さくする (CRITICAL):
-  //   calc(pageHmm - 1px) では用紙とほぼ同寸のため、プリンタの物理余白や
-  //   サブピクセル丸めで最下行が用紙下端を数mm超えて切れる (実 PDF で観測)。
-  //   6mm 引いてグループを用紙より確実に小さくし、はみ出しを防ぐ。
-  //   (用紙より小さいので次ページに溢れる空白ページも当然出ない)
-  const SAFETY_MM = 6;
+  //   実機 iOS Safari の印刷は AirPrint プリンタの物理印刷不可領域 (各辺 ~10mm)
+  //   を持つため、@page margin:0 でも実際の印刷可能高さは用紙より小さい。
+  //   グループがそれを超えると2ページ目に押し出され空白ページが出る
+  //   (WebKit headless は物理余白がないため CSS 上 291<297 で正常に見えるが、
+  //    実機で再発。前回 6mm では実機余白を吸収できなかった)。
+  //   上下各 ~10mm = 20mm の実機余白 + 丸め/padding 安全分を見て 22mm 引く。
+  //   実効の下端クリアランス = (用紙 - groupHmm) 22mm + padding-bottom 8mm = 30mm。
+  //   ⚠️ AirPrint の下辺物理余白は機種差が大きい (10〜16mm 程度)。SAFETY_MM=22 は
+  //      ~10mm 想定。下辺 15mm 超のプリンタで2P目空白が再発した場合は SAFETY_MM を
+  //      26〜28 に上げて再検証すること (WebKit 実測は e2e/webkit-2x2-check.cjs)。
+  const SAFETY_MM = 22;
   const groupHmm  = pageHmm - SAFETY_MM;
   // ページ枠の padding 8mm/上下 + gap 3mm で内側を rows 等分する
   const padV    = 8;

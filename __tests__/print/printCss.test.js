@@ -79,22 +79,22 @@ describe('buildPrintCss — fb-wrap padding override (secondary bug)', () => {
 
 describe('buildPrintCss — derived font sizes (cellH)', () => {
   // 計算式: cellH = (groupHmm - 2*padV - gapMm*(rows-1)) / rows
-  //   groupHmm = pageHmm - SAFETY(6mm) = landscape:204 / portrait:291
+  //   groupHmm = pageHmm - SAFETY(22mm) = landscape:188 / portrait:275
   //   padV=8mm, gapMm=3mm / titlePt = clamp(5.5, 10, cellH / 9)
   // PC は orientation 引数固定の単一ブロック、mobile は orientation media query 両方
   it('PC portrait rows=1: titlePt が clamp 上限 10.0pt', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
     expect(layout).toMatch(/font-size:\s*10\.0pt/);
   });
-  it('PC portrait rows=5: cellH=52.6 → titlePt 5.8', () => {
-    // (291 - 16 - 12)/5 = 52.6; 52.6/9 = 5.84 → 5.8
+  it('PC portrait rows=5: cellH=49.4 → titlePt clamp下限 5.5', () => {
+    // (275 - 16 - 12)/5 = 49.4; 49.4/9 = 5.49 → clamp 下限 5.5
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toMatch(/font-size:\s*5\.8pt/);
+    expect(layout).toMatch(/font-size:\s*5\.5pt/);
   });
-  it('PC landscape rows=3: cellH=60.67 → titlePt 6.7', () => {
-    // (204 - 16 - 6)/3 = 60.67; 60.67/9 = 6.74 → 6.7
+  it('PC landscape rows=3: cellH=55.33 → titlePt 6.1', () => {
+    // (188 - 16 - 6)/3 = 55.33; 55.33/9 = 6.15 → 6.1
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toMatch(/font-size:\s*6\.7pt/);
+    expect(layout).toMatch(/font-size:\s*6\.1pt/);
   });
   it('mobile: landscape と portrait の titlePt が異なる (両方の media query block 出力)', () => {
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3, isMobile: true });

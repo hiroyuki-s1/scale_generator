@@ -142,25 +142,31 @@ main.js → orchestrates all
     (orientation: landscape|portrait)` ブロックに mm で定義**する
     (モバイルは両 orientation を出力 = OS シート切替に追従、PC は orientation
     引数で単一ブロック = viewport-vs-@page 食い違いを回避)。
-  - ❌ **グループ高さ = 用紙ぴったり (`calc(pageHmm - 1px)`)** → プリンタ物理余白や
-    丸めで**最下行が用紙下端を数mm超えて切れる**。`deriveOrientationDims` の
-    **`SAFETY_MM = 6`** で用紙より小さく (204mm / 291mm) し、はみ出しと
-    次ページ溢れ(空白)の両方を防ぐ。
+  - ❌ **グループ高さ = 用紙ぴったり/近い** → **実機 iOS の AirPrint 物理印刷不可領域
+    (各辺 ~10mm)** で溢れ、PC PDF では見えない2P目空白が実機で出る (WebKit headless も
+    物理余白が無いので CSS 上 291<297 で正常に見え、見逃した)。`deriveOrientationDims`
+    の **`SAFETY_MM = 22`** で用紙より小さく (portrait 275mm / landscape 188mm) し、
+    実機の上下計 ~20mm 余白を吸収する。下辺余白の大きい機種で再発したら 26〜28 に上げる。
   - ❌ **grid `1fr`** → Safari で子の min-content に押されて行が膨張し2P空白。
     **`minmax(0, 1fr)`** で強制均等分割し、子は `overflow: hidden` で切る。
   - ❌ **`body` margin(8px) + `@page margin`** → グループ高さと合算して用紙を超え
     横用紙で2P空白。**`@page { margin: 0 }`** + グループ `padding: 8mm 10mm`
-    (`box-sizing: border-box`) で用紙端余白を確保。`html, body` と全コンテナ
+    (`box-sizing: border-box`)。`html, body` と全コンテナ
     (`.app-body`/`#panelSaved`/`.saved-section`/`#savedGrid`) の margin/padding も 0。
   - **マスクで縦長になった指板**: `svg.fb` に `max-height: <cellHmm-7>mm` を
     orientation block 側で指定。`preserveAspectRatio="xMidYMid meet"` で
     縦長は横が縮みフィット (flex は SVG 高さが 0 に潰れるので使わない)。
-  - 検証: **ユニット** `__tests__/print/printCss.matrix.test.js` が「グループ高さ
-    < 用紙 - 5mm」「中身がグループ内に収まる」「vh 不使用」「minmax(0,1fr)」
-    「隣接兄弟 page-break-before」を不変条件で守る。**実 PDF** は
-    `node e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し検出、要 dev server)、
-    `e2e/print-ls-clean.cjs` (横2×2の配置を横viewportで位置測定)。
-    Playwright `emulateMedia` は SVG 高さを 0 と誤測定するため、見た目は必ず PDF で。
+  - 検証 (3層): **①ユニット** `__tests__/print/printCss.matrix.test.js` が「グループ
+    高さ < 用紙 - 18mm」「中身がグループ内に収まる」「vh 不使用」「minmax(0,1fr)」
+    「隣接兄弟 page-break-before」を不変条件で守る。**②実 PDF** `node
+    e2e/layout-matrix-pdf.cjs` (全9レイアウトのはみ出し、要 dev server)。
+    **③WebKit実測 (iOS Safariエンジン)** `node e2e/webkit-2x2-check.cjs` で
+    グループ高さが「用紙 - 実機余白20mm」に収まるか実測。WebKit は
+    `e2e/setup-webkit-libs.sh` で起動用ライブラリを sudo 無し導入 (この環境は
+    playwright install-deps が使えないため)。WebKit headless は emulateMedia('print')
+    と SVG/filter 描画でクラッシュするので、ダミーカード注入 + @media print→all
+    書き換えで測定する。Playwright `emulateMedia` は SVG 高さを 0 と誤測定するため
+    見た目は必ず PDF で。
 
 ## Testing
 - TDD: write tests first (RED → GREEN → REFACTOR)

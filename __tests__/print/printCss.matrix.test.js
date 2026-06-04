@@ -75,23 +75,23 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
         expect(pgBlock).not.toMatch(/height:\s*100vh/);
       });
 
-      // グループ高さは用紙より SAFETY_MM(6mm) 小さい (最下行はみ出し防止)
-      const groupMm = orientation === 'landscape' ? 204 : 297 - 6;
+      // グループ高さは用紙より SAFETY_MM(22mm) 小さい (実機iOS物理余白の吸収)
+      const groupMm = orientation === 'landscape' ? 188 : 275;
       it(`[${label}] PC: 単一 @media print に .print-page-group height = ${groupMm}mm (orientation 引数固定)`, () => {
         expect(layout).toMatch(
           new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*${groupMm}mm`)
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: landscape) で height = 204mm`, () => {
+      it(`[${label}] mobile: @media print and (orientation: landscape) で height = 188mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*204mm/
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*188mm/
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: portrait) で height = 291mm`, () => {
+      it(`[${label}] mobile: @media print and (orientation: portrait) で height = 275mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*291mm/
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*275mm/
         );
       });
 
@@ -101,7 +101,7 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
       });
 
       it(`[${label}] PC: 反対 orientation の mm 値が混入しない (viewport-vs-@page 食い違い防止)`, () => {
-        const oppositeMm = orientation === 'landscape' ? 291 : 204;
+        const oppositeMm = orientation === 'landscape' ? 275 : 188;
         expect(layout).not.toMatch(new RegExp(`height:\\s*${oppositeMm}mm`));
       });
 
@@ -183,7 +183,7 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
 // 次ページ溢れ(空白ページ)の両方を防ぐ。値リテラル(204/291)のマッチだけだと
 // 「なぜその値か」が守られないため、用紙との差を不変条件として検証する。
 describe('印刷グループ高さ — 用紙との安全マージン (最下行はみ出し再発防止)', () => {
-  const SAFE_MIN_MM = 5;     // 用紙との最小マージン
+  const SAFE_MIN_MM = 18;     // 用紙との最小マージン
   const padV = 8, gapMm = 3; // printCss.js と一致させる
   for (const [cols, rows] of LAYOUT_PRESETS) {
     for (const orientation of ORIENTATIONS) {

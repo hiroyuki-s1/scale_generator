@@ -42,6 +42,28 @@
  *  grid-template-columns / gap / fb-wrap padding は `!important` で確実に勝たせる。
  */
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  ★★★ 印刷の調整パラメータ (ここだけ触ればOK) ★★★
+//
+//  印刷1ページの「実際に使える高さ」を、用紙高から何 mm 引くかの予約量。
+//  この値を引いた高さを1ページ枠とし、grid で cols×rows 均等分割して各セルに
+//  スケールを1枚ずつ置く。
+//
+//  iOS は印刷時に用紙の上下へ「見えない余白」を確保するため、用紙の幾何学サイズの
+//  ままだと枠が用紙を超え、2P目に空白やはみ出しが出る。それを吸収する予約量。
+//
+//   ・2P目に空白が出る / 下端がはみ出す → 数値を【大きく】する (枠が短くなる)
+//   ・下に余白が空きすぎる              → 数値を【小さく】する (枠が長くなる)
+//
+//  縦・横で別々に調整できる。用紙高: 縦(A4 portrait)=297mm / 横(A4 landscape)=210mm。
+//  実際の1ページ枠の高さ = 用紙高 − 下の予約値。
+//    例) 縦: 297 − 64 = 233mm が1ページ枠   /   横: 210 − 64 = 146mm が1ページ枠
+const PRINT_RESERVE_MM = {
+  portrait:  64,   // ← 縦印刷の予約量(mm)。縦で空白が出るなら増やす
+  landscape: 64,   // ← 横印刷の予約量(mm)。横ではみ出すなら増やす
+};
+// ═══════════════════════════════════════════════════════════════════════════
+
 const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
 
 /**
@@ -81,11 +103,9 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   // 控えめすぎる予約 (以前は @page margin 20mm + 16mm=計36mm) では横印刷で枠が用紙を
   // 超え2P目空白が再発した。→ 用紙高から **50mm** を予約 (@page上下20mm + iOS物理余白の
   // 機種差ぶんを多めに) し、どの向き/機種でも用紙を超えないようにする。
-  // 実機検証(2P空白/はみ出し)から逆算すると iOS の確保余白は約52mm。予約50mmでは
-  // 2mm 足りず縦横とも僅かにはみ出した。余裕をみて 64mm 予約する (約12mm のslack)。
-  // ※ それでもはみ出す/余白過多ならこの数値だけ調整する (実機依存の唯一の調整ノブ)。
-  const RESERVE_MM = 64;
-  const usableH = sheetH - RESERVE_MM; // landscape 146mm / portrait 233mm
+  // 予約量はファイル上部の PRINT_RESERVE_MM (縦/横で別々) を参照。調整はそこだけ。
+  const RESERVE_MM = isLand ? PRINT_RESERVE_MM.landscape : PRINT_RESERVE_MM.portrait;
+  const usableH = sheetH - RESERVE_MM; // 例: landscape 210-64=146mm / portrait 297-64=233mm
   // 1 セル(指板1枚)の高さ。usableH を行数で均等分割した値。
   const cellMm  = Math.max(18, (usableH - gapMm * (rows - 1)) / rows);
   const titlePt = clamp(5.5, 10, cellMm / 9).toFixed(1);

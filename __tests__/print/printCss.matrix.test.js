@@ -76,22 +76,22 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
       });
 
       // グループ高さは用紙より SAFETY_MM(22mm) 小さい (実機iOS物理余白の吸収)
-      const groupMm = orientation === 'landscape' ? 188 : 275;
+      const groupMm = orientation === 'landscape' ? 182 : 269;
       it(`[${label}] PC: 単一 @media print に .print-page-group height = ${groupMm}mm (orientation 引数固定)`, () => {
         expect(layout).toMatch(
           new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*${groupMm}mm`)
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: landscape) で height = 188mm`, () => {
+      it(`[${label}] mobile: @media print and (orientation: landscape) で height = 182mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*188mm/
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*182mm/
         );
       });
 
-      it(`[${label}] mobile: @media print and (orientation: portrait) で height = 275mm`, () => {
+      it(`[${label}] mobile: @media print and (orientation: portrait) で height = 269mm`, () => {
         expect(mobileOut.layout).toMatch(
-          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*275mm/
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*269mm/
         );
       });
 
@@ -101,7 +101,7 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン)', ()
       });
 
       it(`[${label}] PC: 反対 orientation の mm 値が混入しない (viewport-vs-@page 食い違い防止)`, () => {
-        const oppositeMm = orientation === 'landscape' ? 275 : 188;
+        const oppositeMm = orientation === 'landscape' ? 269 : 182;
         expect(layout).not.toMatch(new RegExp(`height:\\s*${oppositeMm}mm`));
       });
 

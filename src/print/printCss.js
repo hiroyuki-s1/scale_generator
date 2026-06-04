@@ -50,30 +50,36 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
  * @param {number}  rows
  * @returns {{pageHmm:number, cellHmm:number, titlePt:string, svgMaxMm:string}}
  */
+// @page margin (CRITICAL — iOS Safari 縦印刷 2P目空白の本丸):
+//   @page { margin: 0 } を iOS Safari は「用紙端まで描画」と解釈し、AirPrint の
+//   物理印刷不可領域や Safari デフォルト余白(片側 ~12.7mm)で最下部が溢れて
+//   2ページ目に押し出される。margin を物理余白「以上」に明示設定すると、
+//   コンテンツが余白の内側に確実に収まり溢れない。13mm は AirPrint 物理余白
+//   (~10mm) と Safari デフォルト(~12.7mm) の両方をカバーする値。
+const PAGE_MARGIN_MM = 13;
+
 function deriveOrientationDims(isLand, rows) {
   const pageHmm = isLand ? 210 : 297;
-  // グループ高さは用紙より SAFETY_MM 小さくする (CRITICAL):
-  //   実機 iOS Safari の印刷は AirPrint プリンタの物理印刷不可領域 (各辺 ~10mm)
-  //   を持つため、@page margin:0 でも実際の印刷可能高さは用紙より小さい。
-  //   グループがそれを超えると2ページ目に押し出され空白ページが出る
-  //   (WebKit headless は物理余白がないため CSS 上 291<297 で正常に見えるが、
-  //    実機で再発。前回 6mm では実機余白を吸収できなかった)。
-  //   上下各 ~10mm = 20mm の実機余白 + 丸め/padding 安全分を見て 22mm 引く。
-  //   実効の下端クリアランス = (用紙 - groupHmm) 22mm + padding-bottom 8mm = 30mm。
-  //   ⚠️ AirPrint の下辺物理余白は機種差が大きい (10〜16mm 程度)。SAFETY_MM=22 は
-  //      ~10mm 想定。下辺 15mm 超のプリンタで2P目空白が再発した場合は SAFETY_MM を
-  //      26〜28 に上げて再検証すること (WebKit 実測は e2e/webkit-2x2-check.cjs)。
-  const SAFETY_MM = 22;
-  const groupHmm  = pageHmm - SAFETY_MM;
-  // ページ枠の padding 8mm/上下 + gap 3mm で内側を rows 等分する
-  const padV    = 8;
+  // 印刷可能領域 (ページボックス) = 用紙 - @page margin×2。
+  const printableHmm = pageHmm - 2 * PAGE_MARGIN_MM; // portrait 271 / landscape 184
+  // グループ高さはページボックスより SAFETY_MM 小さく (丸め誤差の保険)。
+  //   二重の安全: ① @page margin で物理余白の内側にコンテンツを収める
+  //              ② グループをページボックスより更に小さくする
+  //   万一 Safari が @page margin を無視しても、グループは用紙より
+  //   2×13+2 = 28mm 小さい (portrait 269 / landscape 182) ので、
+  //   Safari デフォルト余白(上下 ~25mm)でも収まる。
+  const SAFETY_MM = 2;
+  const groupHmm  = printableHmm - SAFETY_MM; // portrait 269 / landscape 182
+  // @page margin で用紙端余白を確保済みなので、グループ内 padding は小さくてよい
+  const padV    = 3;
+  const padH    = 4;
   const gapMm   = 3;
   const cellHmm = (groupHmm - 2 * padV - gapMm * (rows - 1)) / rows;
   // タイトル + fb-wrap border/padding 等のヘッダ系で約 7mm 確保
   const reserveMm = 7;
   const svgMaxMm  = Math.max(10, cellHmm - reserveMm).toFixed(1);
   const titlePt   = clamp(5.5, 10, cellHmm / 9).toFixed(1);
-  return { pageHmm, groupHmm, cellHmm, titlePt, svgMaxMm };
+  return { pageHmm, groupHmm, cellHmm, titlePt, svgMaxMm, padV, padH };
 }
 
 /**
@@ -84,12 +90,13 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   // @page の用紙サイズ:
   //   - PC: 印刷モーダルの向きボタンを尊重するため明示 mm 指定
   //   - モバイル: OS 印刷シートで向きを切替できるため size:auto
-  // margin:0 にして用紙端の余白は .print-page-group の padding で確保する
-  // (これにより 100vh 系の vh-vs-page 不整合と完全に決別できる)
+  // margin は PAGE_MARGIN_MM(13mm) を明示設定する (CRITICAL):
+  //   margin:0 だと iOS Safari が用紙端まで描画し物理余白で2P目空白になる。
+  //   物理余白以上の margin を設定してコンテンツを余白の内側に収める。
   const sizeMm = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
   const orient = isMobile
-    ? `@media print { @page { size: auto; margin: 0; } }`
-    : `@media print { @page { size: ${sizeMm}; margin: 0; } }`;
+    ? `@media print { @page { size: auto; margin: ${PAGE_MARGIN_MM}mm; } }`
+    : `@media print { @page { size: ${sizeMm}; margin: ${PAGE_MARGIN_MM}mm; } }`;
 
   // 向き別寸法:
   //   - PC: orientation 引数で確定 (印刷モーダルで決まる)。@media (orientation:...) を
@@ -120,7 +127,7 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   .print-page-group {
     display: block !important;
     box-sizing: border-box !important;
-    padding: 8mm 10mm !important;
+    padding: ${port.padV}mm ${port.padH}mm !important;
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;

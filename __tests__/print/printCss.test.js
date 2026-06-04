@@ -14,16 +14,16 @@ describe('buildPrintCss — orientation', () => {
     const { orient } = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
     expect(orient).toContain('size: 210mm 297mm');
   });
-  it('orient string always contains @page and margin:0', () => {
-    // @page margin は 0。用紙端の余白は .print-page-group の padding で確保する
-    // (iOS は vh を用紙全体基準で計算することがあり、@page margin があると
-    //  100vh が margin 込みで印刷領域を超えて横用紙で空白ページが出るため)。
+  it('orient string always contains @page and margin:13mm (iOS 物理余白を内側に収める)', () => {
+    // @page margin:0 だと iOS Safari が用紙端まで描画し、AirPrint 物理余白
+    // (~10mm) や Safari デフォルト余白(~12.7mm)で最下部が溢れて2P目空白になる。
+    // 物理余白以上の 13mm を設定してコンテンツを余白の内側に確実に収める。
     const land = buildPrintCss(DEFAULT);
     const port = buildPrintCss({ ...DEFAULT, orientation: 'portrait' });
     expect(land.orient).toContain('@page');
-    expect(land.orient).toMatch(/margin:\s*0/);
+    expect(land.orient).toMatch(/margin:\s*13mm/);
     expect(port.orient).toContain('@page');
-    expect(port.orient).toMatch(/margin:\s*0/);
+    expect(port.orient).toMatch(/margin:\s*13mm/);
   });
 
   // iOS 横印刷の空白ページ対策: モバイルは @page size:auto で用紙の向きに追従させる
@@ -79,22 +79,22 @@ describe('buildPrintCss — fb-wrap padding override (secondary bug)', () => {
 
 describe('buildPrintCss — derived font sizes (cellH)', () => {
   // 計算式: cellH = (groupHmm - 2*padV - gapMm*(rows-1)) / rows
-  //   groupHmm = pageHmm - SAFETY(22mm) = landscape:188 / portrait:275
-  //   padV=8mm, gapMm=3mm / titlePt = clamp(5.5, 10, cellH / 9)
+  //   groupHmm = printableHmm - SAFETY = landscape:182 / portrait:269 (@page margin 13mm)
+  //   padV=3mm, gapMm=3mm / titlePt = clamp(5.5, 10, cellH / 9)
   // PC は orientation 引数固定の単一ブロック、mobile は orientation media query 両方
   it('PC portrait rows=1: titlePt が clamp 上限 10.0pt', () => {
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 1, rows: 1 });
     expect(layout).toMatch(/font-size:\s*10\.0pt/);
   });
-  it('PC portrait rows=5: cellH=49.4 → titlePt clamp下限 5.5', () => {
-    // (275 - 16 - 12)/5 = 49.4; 49.4/9 = 5.49 → clamp 下限 5.5
+  it('PC portrait rows=5: titlePt 5.6', () => {
+    // groupHmm=269, padV=3: cellH=(269-6-12)/5=50.2; 50.2/9=5.58 → 5.6
     const { layout } = buildPrintCss({ orientation: 'portrait', cols: 2, rows: 5 });
-    expect(layout).toMatch(/font-size:\s*5\.5pt/);
+    expect(layout).toMatch(/font-size:\s*5\.6pt/);
   });
-  it('PC landscape rows=3: cellH=55.33 → titlePt 6.1', () => {
-    // (188 - 16 - 6)/3 = 55.33; 55.33/9 = 6.15 → 6.1
+  it('PC landscape rows=3: titlePt 6.3', () => {
+    // groupHmm=182, padV=3: cellH=(182-6-6)/3=56.67; 56.67/9=6.30 → 6.3
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3 });
-    expect(layout).toMatch(/font-size:\s*6\.1pt/);
+    expect(layout).toMatch(/font-size:\s*6\.3pt/);
   });
   it('mobile: landscape と portrait の titlePt が異なる (両方の media query block 出力)', () => {
     const { layout } = buildPrintCss({ orientation: 'landscape', cols: 2, rows: 3, isMobile: true });

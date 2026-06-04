@@ -133,23 +133,23 @@ describe('buildPrintCss — ページ枠 mm + grid minmax(0, 1fr) (iOS Safari �
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
       // グループ高さは用紙より 6mm 小さい (最下行はみ出し防止)
-      const groupMm = orientation === 'landscape' ? 188 : 275;
+      const groupMm = orientation === 'landscape' ? 182 : 269;
       it(`PC ${orientation} ${cols}×${rows}: 単一 @media print に height = ${groupMm}mm`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         expect(layout).toMatch(
           new RegExp(`\\.print-page-group\\s*\\{[^}]*height:\\s*${groupMm}mm`)
         );
         // 反対 orientation の値が混入しないこと
-        const oppositeMm = orientation === 'landscape' ? 275 : 188;
+        const oppositeMm = orientation === 'landscape' ? 269 : 182;
         expect(layout).not.toMatch(new RegExp(`height:\\s*${oppositeMm}mm`));
       });
       it(`mobile ${orientation} ${cols}×${rows}: orientation media query で landscape=210mm / portrait=297mm 両方出力`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows, isMobile: true });
         expect(layout).toMatch(
-          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*188mm/
+          /@media print and \(orientation:\s*landscape\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*182mm/
         );
         expect(layout).toMatch(
-          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*275mm/
+          /@media print and \(orientation:\s*portrait\)[\s\S]*?\.print-page-group\s*\{[^}]*height:\s*269mm/
         );
       });
       it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を minmax(0, 1fr) で均等分割`, () => {

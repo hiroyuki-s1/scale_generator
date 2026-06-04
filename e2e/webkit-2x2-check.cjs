@@ -17,7 +17,7 @@
  * 使い方: dev server 起動後  node e2e/webkit-2x2-check.cjs
  */
 const PX = 96 / 25.4;
-const IOS_MARGIN_MM = 20; // 実機 iOS AirPrint の物理余白 (上下合計) の想定値
+const IOS_MARGIN_MM = 0; // @page margin を CSS で設定したので、グループ高さは用紙内に収まればよい(margin分はSafariが確保)
 
 let webkit;
 try { ({ webkit } = require('playwright')); } catch { console.log('playwright 未導入 — skip'); process.exit(0); }

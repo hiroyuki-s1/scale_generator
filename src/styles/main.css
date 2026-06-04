@@ -94,8 +94,16 @@ body {
   font-family: 'Courier New', monospace; flex-shrink: 0; opacity: .7;
   letter-spacing: .3px;
 }
-/* 狭幅ではコミットハッシュは隠す (アプリバージョンと ALPHA ピルは常時表示) */
-@media (max-width: 767px) { .build-ver { display: none; } }
+/* コミットハッシュはスマホでも表示する (どのビルドか実機で確認できるように)。
+   狭幅でヘッダが詰まらないよう、モバイルでは少し縮めて隠れにくくする。 */
+@media (max-width: 767px) {
+  .build-ver { font-size: 8px; margin-left: 2px; }
+}
+/* 極小幅 (iPhone SE 等 320px) は印刷ボタンがはみ出すので、コミット番号を優先して
+   app-ver(v1.0.0) の方を隠す (ユーザーが見たいのはどのビルドか = コミット番号)。 */
+@media (max-width: 360px) {
+  .app-ver { display: none; }
+}
 
 .hdr-group {
   display: flex;

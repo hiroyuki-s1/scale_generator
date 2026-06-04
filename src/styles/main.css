@@ -555,6 +555,118 @@ body {
   .feedback-link { font-size: 13px; padding: 9px 14px; }
 }
 
+/* お気に入りへ追加 (PWA インストール) ボタン — フッタ用、feedback-link と並ぶ */
+.install-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--text-2);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px; font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.install-link:hover {
+  background: var(--text-2);
+  color: var(--surface);
+  border-color: var(--text-2);
+}
+.install-link-icon { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .install-link { font-size: 13px; padding: 9px 14px; }
+}
+
+/* ── お気に入り追加ガイドモーダル ────────────────────────────────────── */
+.install-modal {
+  position: fixed; inset: 0;
+  z-index: 260;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.45);
+  padding: 16px;
+}
+.install-modal.hidden { display: none; }
+.install-modal-inner {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.12);
+  display: flex; gap: 14px;
+  padding: 20px 20px 18px;
+  animation: alphaNoticeIn .3s cubic-bezier(.22,1,.36,1) both;
+}
+.install-modal-icon {
+  width: 56px; height: 56px; flex-shrink: 0;
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.10);
+}
+.install-modal-icon img {
+  width: 100%; height: 100%; display: block;
+  object-fit: cover;
+  user-select: none; -webkit-user-drag: none;
+}
+.install-modal-body { flex: 1; min-width: 0; }
+.install-modal-title {
+  font-size: 16px; font-weight: 700; color: var(--text);
+  margin-bottom: 12px; letter-spacing: .2px;
+}
+.install-modal-text {
+  font-size: 13px; line-height: 1.65; color: var(--text-2);
+  margin-bottom: 8px;
+}
+.install-modal-text-sub { font-size: 12px; opacity: .82; }
+.install-modal-text strong { color: var(--accent); font-weight: 800; }
+.install-modal-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; line-height: 1.55; color: var(--text);
+  margin-bottom: 10px;
+}
+.install-modal-step strong { color: var(--accent); font-weight: 800; }
+.install-modal-step-num {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 700;
+  margin-top: 1px;
+}
+.install-modal-share-icon {
+  display: inline-flex; align-items: center;
+  vertical-align: middle;
+  padding: 2px 5px;
+  margin: 0 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--accent);
+  background: var(--bg);
+}
+.install-modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 14px; flex-wrap: wrap;
+}
+.install-modal-close {
+  padding: 8px 14px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  transition: background .12s;
+}
+.install-modal-close:hover { background: var(--bg); color: var(--text); }
+@media (max-width: 600px) {
+  .install-modal-inner { padding: 16px 16px 14px; gap: 12px; }
+  .install-modal-icon { width: 48px; height: 48px; border-radius: 10px; }
+  .install-modal-title { font-size: 15px; }
+}
+@media print { .install-modal, .install-link { display: none !important; } }
+
 /* 編集モード中は登録ボタンをオレンジに */
 .editor--edit-mode .btn-register { background: var(--accent); }
 .editor--edit-mode .btn-register:hover { background: #a0441a; }

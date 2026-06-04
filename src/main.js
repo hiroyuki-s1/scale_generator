@@ -20,6 +20,7 @@ import { initHeaderMenu }       from './ui/headerMenu.js';
 import { initPrintCss }                    from './print/printCss.js';
 import { wrapIntoPageGroups, unwrapPageGroups } from './print/pageGroup.js';
 import { initInstrumentPicker } from './ui/instrumentPicker.js';
+import { initInstallPrompt }    from './ui/installPrompt.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -385,6 +386,7 @@ initInstrumentPicker(
   document.getElementById('instrumentModal'),
   store,
 );
+initInstallPrompt();
 
 // ── タブナビゲーション ─────────────────────────────────────────────────
 const tabNav      = document.getElementById('tabNav');

@@ -214,6 +214,14 @@
   </div><!-- /editor -->
 
   <footer class="editor-footer">
+    <button type="button" class="install-link" id="installBtn">
+      <svg class="install-link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      お気に入りへ追加
+    </button>
     <a class="feedback-link" href="https://form.run/@yahoo-PGvf3JVZhPNCd0X4zuSo" target="_blank" rel="noopener noreferrer">
       <svg class="feedback-link-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
@@ -414,6 +422,23 @@
           フィードバックを送る
         </a>
         <button class="alpha-notice-close" id="alphaNoticeClose">了解しました</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ホーム画面追加ガイドモーダル (iOS Safari / Android Chrome ガイド) ── -->
+<div class="install-modal hidden" id="installModal" role="dialog" aria-modal="true" aria-labelledby="installModalTitle" data-nosnippet>
+  <div class="install-modal-inner">
+    <div class="install-modal-icon" aria-hidden="true">
+      <img src="%BASE_URL%icon-192.png" alt="" draggable="false">
+    </div>
+    <div class="install-modal-body">
+      <div class="install-modal-title" id="installModalTitle">ホーム画面に追加する</div>
+      <div class="install-modal-body-text"></div>
+      <div class="install-modal-actions">
+        <span class="install-modal-cta"></span>
+        <button type="button" class="install-modal-close">閉じる</button>
       </div>
     </div>
   </div>

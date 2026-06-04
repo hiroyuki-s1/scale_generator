@@ -1,7 +1,7 @@
 {
   "name": "scale-generator",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "ギター指板スケール可視化・印刷ツール (vanilla HTML/JS/CSS)",
   "scripts": {
@@ -19,6 +19,7 @@
     "@eslint/js": "^9.13.0",
     "eslint": "^9.13.0",
     "globals": "^15.11.0",
+    "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
     "vite": "^5.4.10",
     "vitest": "^2.1.4"

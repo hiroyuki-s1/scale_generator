@@ -146,20 +146,26 @@ describe('iOS印刷 再発防止 ③ 改ページは隣接兄弟 page-break-befo
   }
 });
 
-describe('iOS印刷 再発防止 ④ grid 列は minmax(0,1fr)、行は auto (枠高さに依存させない)', () => {
-  // 履歴: 行を 1fr/minmax(0,1fr) にすると枠の高さ(以前は100vh)を分割する設計になり、
-  //   その枠高さが iOS 横印刷で破綻して2P空白になった。
-  //   → 行は auto にし、行高さ=中身(mm実寸の指板)で決める。列は従来どおり
-  //      minmax(0,1fr) で横を均等分割 (列は幅基準なので問題なし)。
+describe('iOS印刷 再発防止 ④ 控えめ mm 高さを grid minmax(0,1fr) で均等分割 (上詰め禁止)', () => {
+  // 設計: .print-page-inner に「用紙より控えめな mm 実寸 (usableH)」の height を与え、
+  //   cols×rows を minmax(0,1fr) で均等分割する。これで各セルに1枚ずつ均等配置され
+  //   (上詰めにならない)、かつ控えめ mm + 安全マージンで物理余白の機種差を吸収し
+  //   2P空白も出ない。
+  //   - vh は使わない (iOS横印刷で viewport基準になり破綻)。
+  //   - 素の 1fr ではなく minmax(0,1fr) (Safari の min-content 行膨張による2P空白回避)。
   for (const c of ALL) {
     it(`${c.label}: grid-template-columns は minmax(0, 1fr)`, () => {
       expect(c.layout).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${c.cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
     });
-    it(`${c.label}: grid-template-rows は auto (枠高さ依存の 1fr/minmax を使わない)`, () => {
-      expect(c.layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${c.rows},\\s*auto\\)`));
+    it(`${c.label}: grid-template-rows は minmax(0, 1fr) (均等分割。素の1fr/autoにしない)`, () => {
+      expect(c.layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${c.rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
+      expect(c.layout).not.toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${c.rows},\\s*auto\\)`));
     });
-    it(`${c.label}: .print-page-inner に height:100% を残さない (枠高さ依存の排除)`, () => {
+    it(`${c.label}: .print-page-inner の height は mm 実寸 (vh/100vh/100% にしない)`, () => {
       const inner = c.layout.match(/\.print-page-inner\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(inner).toMatch(/height:\s*[\d.]+mm/);
+      expect(inner).not.toMatch(/height:\s*100vh/);
+      expect(inner).not.toMatch(/height:\s*[\d.]+vh/);
       expect(inner).not.toMatch(/height:\s*100%/);
     });
   }

@@ -53,10 +53,13 @@ describe('横向き印刷 CSS は height:100vh (iOS ページ追従)', () => {
       expect(svg).toMatch(/max-height:\s*[\d.]+mm/); // 指板は mm 実寸で縛る
     });
 
-    it(`[${cols}×${rows}] grid 列は minmax(0,1fr)・行は auto`, () => {
+    it(`[${cols}×${rows}] grid 列・行とも minmax(0,1fr) で均等分割 (inner は mm 高さ)`, () => {
       const { layout } = buildPrintCss({ orientation: 'landscape', cols, rows });
       expect(layout).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
-      expect(layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`));
+      expect(layout).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
+      const inner = layout.match(/\.print-page-inner\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(inner).toMatch(/height:\s*[\d.]+mm/);
+      expect(inner).not.toMatch(/height:\s*[\d.]+vh/);
     });
   }
 });

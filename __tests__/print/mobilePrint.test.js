@@ -147,11 +147,14 @@ describe('C: ページ枠 height は auto + 指板は mm 実寸 (vh/100vh は iO
       expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
     });
 
-    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を auto で配置`, () => {
+    it(`dynamic [${cols}×${rows}]: .print-page-inner が ${rows} 行を minmax(0,1fr) で均等分割 + mm高さ`, () => {
       const { layout: css } = buildPrintCss({ orientation: 'portrait', cols, rows });
       expect(css).toMatch(
-        new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`)
+        new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
       );
+      const inner = css.match(/\.print-page-inner\s*\{([^}]+)\}/)?.[1] ?? '';
+      expect(inner).toMatch(/height:\s*[\d.]+mm/);    // 均等分割の土台は mm 実寸
+      expect(inner).not.toMatch(/height:\s*[\d.]+vh/);
     });
 
     it(`dynamic [${cols}×${rows}]: svg.fb の max-height は mm 実寸`, () => {

@@ -127,11 +127,13 @@ describe('buildPrintCss — 枠 height auto + 行 auto + 指板 mm 実寸', () =
         expect(pgBlock).not.toMatch(/height:\s*100vh/);
         expect(pgBlock).not.toMatch(/height:\s*[\d.]+mm/);
       });
-      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を auto で配置`, () => {
+      it(`${orientation} ${cols}×${rows}: .print-page-inner が ${rows} 行を minmax(0,1fr) で均等分割 + mm高さ`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });
         expect(layout).toMatch(
-          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`)
+          new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`)
         );
+        const inner = layout.match(/\.print-page-inner\s*\{([^}]+)\}/)?.[1] ?? '';
+        expect(inner).toMatch(/height:\s*[\d.]+mm/);
       });
       it(`${orientation} ${cols}×${rows}: svg.fb に max-height mm (vh ではない)`, () => {
         const { layout } = buildPrintCss({ orientation, cols, rows });

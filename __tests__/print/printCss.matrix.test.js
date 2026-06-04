@@ -81,12 +81,14 @@ describe('buildPrintCss — 全 layout×orientation 行列 (18パターン, 100v
         expect(innerBlock).toMatch(new RegExp(`grid-template-columns:\\s*repeat\\(${cols},\\s*minmax\\(0,\\s*1fr\\)\\)`));
       });
 
-      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, auto)`, () => {
-        expect(innerBlock).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*auto\\)`));
+      it(`[${label}] .print-page-inner: grid-template-rows = repeat(${rows}, minmax(0, 1fr))`, () => {
+        expect(innerBlock).toMatch(new RegExp(`grid-template-rows:\\s*repeat\\(${rows},\\s*minmax\\(0,\\s*1fr\\)\\)`));
       });
 
-      it(`[${label}] .print-page-inner に height:100% を残さない (枠高さ依存の排除)`, () => {
+      it(`[${label}] .print-page-inner の height は mm 実寸 (vh/100%/100vh にしない)`, () => {
+        expect(innerBlock).toMatch(/height:\s*[\d.]+mm/);
         expect(innerBlock).not.toMatch(/height:\s*100%/);
+        expect(innerBlock).not.toMatch(/height:\s*[\d.]+vh/);
       });
 
       // ── 指板 SVG: max-height は mm 実寸 ─────────────────────────────

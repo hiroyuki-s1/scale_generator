@@ -84,12 +84,8 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     display: block !important;
     gap: 0 !important;
   }
-  /* ページ枠 — 1グループ = 1ページ。
-     ★ height は指定しない (auto)。以前は height:100vh としていたが、スマホ(縦持ち)で
-       横用紙を印刷すると iOS Safari が 100vh を「縦持ち viewport の高さ」で解決し、
-       横用紙の印刷可能高さを大幅に超えて2P目空白が出た (横だけ壊れる原因)。
-       枠を中身ぶんの高さ(auto)にし、中の指板を mm 実寸 (svgMaxMm) で縛ることで、
-       viewport と用紙の食い違いに影響されず必ず1ページに収める。 */
+  /* ページ枠 — 1グループ = 1ページ。枠自体に height は与えない (auto)。
+     高さは内側 .print-page-inner が mm 実寸で持つ (下記)。 */
   .print-page-group {
     display: block !important;
     overflow: hidden !important;
@@ -100,13 +96,20 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
     break-before: page !important;
     page-break-before: always !important;
   }
-  /* ページ枠の中を cols×rows の grid に配置。行は auto (中身=mm実寸の指板の高さ)。
-     vh/1fr のような「枠の高さ依存」を排除し、用紙との食い違いで膨張しないようにする。 */
+  /* ★ レイアウトの核心 (空白バグと上詰めの両方を解決):
+     高さを **用紙より控えめな mm 実寸 (usableH)** で持ち、それを cols×rows の grid で
+     **均等分割 (minmax(0,1fr))** する。これで各セルに1枚ずつ・ページに均等配置される
+     (上詰めにならない)。
+     - vh は使わない: iOS 横印刷で viewport(縦持ち)基準になり用紙を超え2P空白が出る。
+     - 用紙ぴったりの mm でもなく「控えめ(printable − 安全16mm)」: AirPrint 物理余白の
+       機種差を吸収し、どの向き/機種でも1ページを超えない。
+     - 行は minmax(0,1fr): 素の 1fr だと Safari の min-content 膨張で行が伸び2P空白。 */
   .print-page-inner {
     display: grid !important;
     grid-template-columns: repeat(${cols}, minmax(0, 1fr)) !important;
-    grid-template-rows:    repeat(${rows}, auto) !important;
+    grid-template-rows:    repeat(${rows}, minmax(0, 1fr)) !important;
     gap: ${gapMm}mm !important;
+    height: ${usableH}mm !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }

@@ -37,21 +37,11 @@ const clamp = (lo, hi, v) => Math.max(lo, Math.min(hi, v));
  * @param {{orientation:'landscape'|'portrait', cols:number, rows:number, isMobile?:boolean}} layout
  * @returns {{orient:string, layout:string}} 各 <style> に流し込む CSS 文字列
  */
-export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
-  // @page の向き指定 — PC とモバイルで出し分ける (CRITICAL):
-  //   - モバイル: 向きを OS 印刷シートで切り替えるため、orientation media query で
-  //     portrait/landscape 両方の @page を出力し実用紙の向きに追従させる。これを
-  //     しないと横印刷でタイトルとスケールが別ページに分割される。
-  //   - PC: orientation は印刷モーダルの向きボタンで確定 (引数で渡る)。単一ブロックで
-  //     出力する。PC の viewport は横長 (例 1280×800) が多く、orientation media query
-  //     を使うと viewport 基準で landscape と誤評価され、portrait 印刷なのに @page
-  //     landscape(横) が当たって用紙からはみ出す (de2f360 で対処した食い違い)。
-  const size = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
-  const orient = isMobile
-    ? `
-@media print and (orientation: portrait)  { @page { size: 210mm 297mm; margin: 10mm 12mm; } }
-@media print and (orientation: landscape) { @page { size: 297mm 210mm; margin: 10mm 12mm; } }`
-    : `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
+export function buildPrintCss({ orientation, cols, rows }) {
+  // `size: A4 landscape` 表記はモバイル Safari / Android Chrome で respect されにくいので
+  // 明示的な mm 寸法で書く。最終的な向きは OS 印刷ダイアログでも上書き可能。
+  const size   = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
+  const orient = `@media print { @page { size: ${size}; margin: 10mm 12mm; } }`;
 
   const isLand = orientation === 'landscape';
   const pageH  = isLand ? 190 : 277; // @page margin 内の印刷可能高さ (mm) — フォント計算用
@@ -60,8 +50,8 @@ export function buildPrintCss({ orientation, cols, rows, isMobile = false }) {
   const cellH  = (pageH - gapMm * (rows - 1)) / rows;
   const titlePt = clamp(5.5, 10, cellH / 9).toFixed(1);
   // マスク縦長指板を1セルに収めるための max-height。100vh をセル数で割った相対値。
-  // タイトル/border 分の余裕として 88/rows (vh) を上限にする (横用紙でタイトルと指板が別ページに割れないように 92→88)。
-  const svgMaxVh = (88 / rows).toFixed(2);
+  // タイトル/border 分の余裕として 92/rows (vh) を上限にする。
+  const svgMaxVh = (92 / rows).toFixed(2);
 
   const layout = `
 @media print {
@@ -140,11 +130,7 @@ export function initPrintCss(store) {
   const layoutEl = document.getElementById('print-layout');
 
   function update() {
-    // モバイル (OS 印刷シートで向き切替) は @page を orientation media query で
-    // 両方出力。回転で変わるため毎回判定する。
-    const isMobile = typeof window !== 'undefined'
-      && window.matchMedia('(max-width: 767px)').matches;
-    const css = buildPrintCss({ ...store.get().layout, isMobile });
+    const css = buildPrintCss(store.get().layout);
     orientEl.textContent = css.orient;
     layoutEl.textContent = css.layout;
   }

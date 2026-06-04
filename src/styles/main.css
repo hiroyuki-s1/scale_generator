@@ -94,16 +94,23 @@ body {
   font-family: 'Courier New', monospace; flex-shrink: 0; opacity: .7;
   letter-spacing: .3px;
 }
-/* コミットハッシュはスマホでも表示する (どのビルドか実機で確認できるように)。
-   狭幅でヘッダが詰まらないよう、モバイルでは少し縮めて隠れにくくする。 */
+/* スマホはコミットハッシュをヘッダから外し、画面右下に固定表示する。
+   (ヘッダの詰まりを解消しつつ、どのビルドか実機で常に確認できる) */
 @media (max-width: 767px) {
-  .build-ver { font-size: 8px; margin-left: 2px; }
+  .build-ver {
+    position: fixed;
+    bottom: 3px;
+    right: 6px;
+    z-index: 50;
+    font-size: 8px;
+    opacity: .55;
+    margin: 0;
+    pointer-events: none; /* タップ操作の邪魔をしない */
+  }
 }
-/* 極小幅 (iPhone SE 等 320px) は印刷ボタンがはみ出すので、コミット番号を優先して
-   app-ver(v1.0.0) の方を隠す (ユーザーが見たいのはどのビルドか = コミット番号)。 */
-@media (max-width: 360px) {
-  .app-ver { display: none; }
-}
+/* 印刷時は非表示 (position:fixed は親 .header の display:none を貫通することが
+   あるため明示的に消す)。 */
+@media print { .build-ver { display: none !important; } }
 
 .hdr-group {
   display: flex;

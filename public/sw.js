@@ -9,7 +9,7 @@
  *
  * キャッシュ名の VERSION を上げると旧キャッシュは activate 時に破棄される。
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `kst-${VERSION}`;
 
 self.addEventListener('install', () => {

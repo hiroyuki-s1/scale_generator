@@ -75,6 +75,11 @@ body {
   flex-shrink: 0; letter-spacing: .3px; margin-right: 4px;
 }
 /* ベータ版ピル — オレンジで目立たせる */
+.more-item--info {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  font-size: 11px; color: var(--text-3); border-top: 1px dashed var(--border);
+}
+.more-item-info-text { font-size: 11px; line-height: 1.4; }
 .alpha-pill {
   display: inline-block;
   background: var(--accent);
@@ -208,6 +213,10 @@ body {
 .btn-login:hover { background: var(--accent); color: #fff; }
 .auth-user-btn { display: flex; align-items: center; }
 .auth-disabled { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+/* 極端に狭い画面 (iPhone SE 等) では「ログイン利用不可」表示を隠してヘッダがはみ出すのを防ぐ */
+@media (max-width: 360px) {
+  .auth-disabled { display: none; }
+}
 
 /* ── ソングファイル上部: タイトル入力 + クラウド保存 ── */
 .songfile-top { max-width: 760px; margin: 12px auto 4px; display: flex; gap: 8px; align-items: center; }
@@ -318,7 +327,7 @@ body {
   font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
 }
 .share-copy:hover { background: var(--accent); color: #fff; }
-.share-expiry { font-size: 11px; color: var(--text-3); margin: 8px 0 0; }
+.share-expiry, .share-hint { font-size: 11px; color: var(--text-3); margin: 8px 0 0; }
 .share-receive-input {
   width: 100%; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px;
   background: var(--bg); color: var(--text); font-size: 13px; font-family: monospace; box-sizing: border-box;
@@ -394,7 +403,40 @@ body {
 }
 
 /* ── Release notes list ─────────────────────────────────────────── */
-.release-notes-list { display: flex; flex-direction: column; gap: 14px; padding: 4px 2px; }
+/* ── ソングブック読込プレビュー ── */
+.songbook-preview-meta { padding: 10px 22px 4px; font-size: 12px; color: var(--text-3); }
+.songbook-preview-list {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 22px 22px;
+  overflow-y: auto; max-height: 60vh;
+}
+.songbook-preview-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface-2);
+}
+.songbook-preview-num {
+  flex: 0 0 26px; font-size: 12px; color: var(--text-3); font-weight: 700;
+  text-align: center;
+}
+.songbook-preview-name { flex: 1 1 auto; font-size: 14px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.songbook-preview-sub { flex: 0 0 auto; font-size: 11px; color: var(--text-3); padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.songbook-preview-empty { padding: 24px; color: var(--text-3); text-align: center; font-size: 13px; }
+@media (max-width: 480px) {
+  .songbook-preview-meta { padding: 10px 14px 4px; }
+  .songbook-preview-list { padding: 10px 14px 18px; }
+}
+.release-notes-list {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 20px 22px 22px;
+  overflow-y: auto;
+  max-height: 65vh;
+}
+@media (max-width: 480px) {
+  .release-notes-list { padding: 16px 14px 18px; max-height: 60vh; }
+  #releaseNotesModal .color-modal-box { margin: 16px; max-width: calc(100vw - 32px); }
+  #releaseNotesModal .color-modal-header { padding: 14px 16px 12px; }
+}
 .release-note-item { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .release-note-item:last-child { border-bottom: none; padding-bottom: 0; }
 .release-note-head {
@@ -1040,7 +1082,12 @@ body {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 /* ── 表示ポジション編集 ── */
-.posmode-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.mask-row.disabled-during-posmode { opacity: .4; pointer-events: none; filter: grayscale(.5); }
+button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
+.mask-and-pos-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mask-and-pos-row .mask-row { flex: 0 1 auto; }
+.mask-and-pos-row .posmode-row { flex: 1 1 auto; min-width: 0; }
+.posmode-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .posmode-toggle {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 8px;
@@ -1060,6 +1107,20 @@ body {
 /* posmode 中はドットがタップ対象だと分かるようカーソルを変える */
 .fb-wrap.posmode { cursor: crosshair; }
 .fb-wrap.posmode svg.fb { cursor: crosshair; }
+/* posmode 中は指板の枠が「編集中」だと分かるよう、ヘッダの edit-mode と同じ
+   shimmer + pulse アニメーションを付ける。 */
+.fb-wrap.posmode {
+  outline: 2px solid #ff7043;
+  outline-offset: 1px;
+  border-radius: 6px;
+  animation: edit-shimmer-bg 1.8s linear infinite,
+             edit-pulse 1.6s ease-in-out infinite;
+}
+@keyframes edit-shimmer-bg {
+  0%   { box-shadow: 0 0 0 0 rgba(255,112,67,0.55), inset 0 0 0 0 rgba(255,112,67,0); }
+  50%  { box-shadow: 0 0 0 4px rgba(255,112,67,0.18), inset 0 0 14px rgba(255,112,67,.10); }
+  100% { box-shadow: 0 0 0 0 rgba(255,112,67,0.55), inset 0 0 0 0 rgba(255,112,67,0); }
+}
 .deg-picker-btn {
   padding: 6px 12px; flex-shrink: 0;
   border: 1.5px solid var(--border); border-radius: 8px;
@@ -1540,6 +1601,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .app-body { overflow: visible !important; height: auto !important; display: block !important; margin: 0 !important; padding: 0 !important; }
   .saved-section { display: block !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
   .saved-section-hdr { display: none !important; }
+  /* ソングファイル上部のタイトル入力 + ソングブック保存ボタン (印刷では不要) */
+  .songfile-top, .songfile-cloud-bar { display: none !important; }
   /* 紛れ込み防止: 削除警告 dismiss 後に出る復元ボタン / 0件プレースホルダ */
   .saved-warn-restore { display: none !important; }
   #savedEmpty { display: none !important; }
@@ -1661,13 +1724,15 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   animation: dotExit .18s ease-in forwards !important;
 }
 /* 表示ポジション (docs/features/POSITION_VISIBILITY.md):
-     - スケールエディター + 全画面表示: 薄く表示 (非表示中だと分かる)
-     - ソングファイル(登録カード) + 印刷: 完全に除外 (薄い表示も不要)
+     - スケールエディタ + posmode 中: 薄く表示 (どこを非表示にしたか分かる)
+     - それ以外 (posmode OFF / 全画面 / 登録カード / 印刷): 完全に除外
    `.fb-dot` には `animation: dotPop .. both` が掛かっており、末尾キーフレーム
    の `opacity:1` がカスケード上で勝つため `!important` 必須。 */
-.fb-dot-hidden { opacity: .25 !important; }
-.saved-card .fb-dot-hidden { display: none !important; }
-@media print { .fb-dot-hidden { display: none !important; } }
+.fb-dot-hidden { display: none !important; }
+.fb-wrap.posmode .fb-dot-hidden {
+  display: inline !important;
+  opacity: .25 !important;
+}
 
 .deg-btn:active   { transform: scale(.92); }
 .hdr-btn:active   { transform: scale(.9); }

@@ -294,6 +294,15 @@ function setPosEditMode(on) {
   // (PC は元々十分大きいので何もしない)。横スクロール状態でもタップは
   // click として届く (touch-action: manipulation でタップ遅延も無し)。
   const isMobile = window.innerWidth <= MOBILE_ZOOM_BREAKPOINT;
+  // posmode 中はスケール設定/全体/マスク など編集を変えるボタンを無効化
+  // (誤操作で visiblePositions が再構築されてしまう/混乱するのを防ぐ)。
+  const degPickerBtn = document.getElementById('degPickerBtn');
+  const maskControl  = document.getElementById('maskControl');
+  if (degPickerBtn) degPickerBtn.disabled = on;
+  if (maskControl) {
+    maskControl.classList.toggle('disabled-during-posmode', on);
+    maskControl.querySelectorAll('button, input').forEach(el => { el.disabled = on; });
+  }
   if (on) {
     zoomBeforePosEdit = mobileZoomed;
     if (isMobile && !mobileZoomed) toggleMobileZoom();   // → 拡大表示

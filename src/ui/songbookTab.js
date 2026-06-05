@@ -186,23 +186,72 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
     }
   }
 
+  /** プレビューモーダルを開く。ユーザーが「読み込み」を押した時のみ実際に上書きする。 */
   async function loadBook(book) {
     if (offline()) return;
-    const ok = window.confirm(
-      `「${book.name}」を読み込みます。\n現在編集中のソングファイルは上書きされます。\nよろしいですか？`,
-    );
-    if (!ok) return;
+    let full;
     try {
-      // 取得成功を確定してからローカルを書き換える（途中失敗でデータ喪失しない）
-      const full = await getSongbook(book.public_id);
-      const savedArray = cloudToSongfile(full.scales);
-      onLoadSongbook(savedArray, book.name); // ソングファイル名にソングブック名を反映
-      showToast(`「${book.name}」を読み込みました`);
+      full = await getSongbook(book.public_id);
     } catch (e) {
-      console.error('ソングブック読み込みに失敗:', e);
+      console.error('ソングブック取得に失敗:', e);
       if (e.status === 404) { showToast('このソングブックは見つかりませんでした'); refresh(); }
       else showToast('読み込みに失敗しました');
+      return;
     }
+    const savedArray = cloudToSongfile(full.scales);
+    openPreview(book, savedArray);
+  }
+
+  function openPreview(book, savedArray) {
+    const modal   = document.getElementById('songbookPreviewModal');
+    const titleEl = document.getElementById('songbookPreviewTitle');
+    const metaEl  = document.getElementById('songbookPreviewMeta');
+    const listEl_ = document.getElementById('songbookPreviewList');
+    const loadBtn = document.getElementById('songbookPreviewLoadBtn');
+    const closeBtn = document.getElementById('songbookPreviewCloseBtn');
+    if (!modal || !titleEl || !listEl_) return;
+    titleEl.textContent = book.name;
+    if (metaEl) metaEl.textContent = `${savedArray.length}スケール ・ 最終更新 ${fmtDate(book.updated_at)}`;
+    listEl_.innerHTML = '';
+    if (savedArray.length === 0) {
+      const e = document.createElement('div');
+      e.className = 'songbook-preview-empty';
+      e.textContent = 'スケールが登録されていません。';
+      listEl_.appendChild(e);
+    } else {
+      savedArray.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'songbook-preview-row';
+        const num = document.createElement('span');
+        num.className = 'songbook-preview-num';
+        num.textContent = String(i + 1);
+        const name = document.createElement('span');
+        name.className = 'songbook-preview-name';
+        name.textContent = s.name || '(名称未設定)';
+        const sub = document.createElement('span');
+        sub.className = 'songbook-preview-sub';
+        const instr = s.instrument === 'bass' ? 'Bass' : 'Guitar';
+        sub.textContent = `${instr}`;
+        row.appendChild(num); row.appendChild(name); row.appendChild(sub);
+        listEl_.appendChild(row);
+      });
+    }
+    function close() { modal.classList.remove('show'); cleanup(); }
+    function load() {
+      onLoadSongbook(savedArray, book.name);
+      showToast(`「${book.name}」を読み込みました`);
+      close();
+    }
+    function cleanup() {
+      loadBtn?.removeEventListener('click', load);
+      closeBtn?.removeEventListener('click', close);
+      modal.removeEventListener('click', onBg);
+    }
+    function onBg(e) { if (e.target === modal) close(); }
+    loadBtn?.addEventListener('click', load);
+    closeBtn?.addEventListener('click', close);
+    modal.addEventListener('click', onBg);
+    modal.classList.add('show');
   }
 
   async function deleteBook(book, row) {

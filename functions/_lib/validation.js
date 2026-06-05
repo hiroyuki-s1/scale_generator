@@ -13,8 +13,8 @@ export const MAX_SCALES = 200;
 export const MAX_SCALES_JSON_BYTES = 500_000;
 export const MAX_SONGBOOKS = 50;
 export const MAX_SHARES = 100;
-/** 共有の既定有効期間: 90日（ms）。docs/features/SHARE.md。 */
-export const SHARE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+// 共有の有効期限は廃止 (migration 0003)。後方互換のため定数 export を残しているが
+// API では使用しない。
 
 const fail = (message) => ({ ok: false, error: 'invalid_body', message });
 

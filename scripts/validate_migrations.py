@@ -62,7 +62,7 @@ def main():
         return 1
     for m in migrations:
         try:
-            db.executescript(m.read_text())
+            db.executescript(m.read_text(encoding='utf-8'))
             ok(f"apply {m.name}")
         except Exception as e:  # noqa: BLE001
             bad(f"apply {m.name}", e)
@@ -154,32 +154,38 @@ def main():
     expect_err(db, "user_settings NOT NULL settings",
                lambda d: d.execute("INSERT INTO user_settings(user_id,settings) VALUES('u2',NULL)"))
 
-    print("== 12. shares (0002) ==")
+    print("== 12. shares (0003: 期限廃止) ==")
     sobjs = dict(db.execute(
         "SELECT name,type FROM sqlite_master WHERE name LIKE 'shares%' OR name LIKE 'idx_shares%'").fetchall())
     ok("table shares") if sobjs.get("shares") == "table" else bad("table shares", sobjs.get("shares"))
     sddl = db.execute("SELECT sql FROM sqlite_master WHERE name='shares'").fetchone()
     ok("shares is STRICT") if sddl and "STRICT" in sddl[0].upper() else bad("shares is STRICT", "no STRICT")
-    (ok("index idx_shares_expires") if "idx_shares_expires" in sobjs
-     else bad("index idx_shares_expires", "missing"))
-    (ok("index idx_shares_user") if "idx_shares_user" in sobjs
+    # 期限廃止 (0003) で削除されたはずの索引・カラム
+    if "idx_shares_expires" in sobjs:
+        bad("idx_shares_expires removed by 0003", "still present")
+    else:
+        ok("idx_shares_expires removed by 0003")
+    if sddl and "expires_at" in sddl[0]:
+        bad("expires_at column removed by 0003", "still present")
+    else:
+        ok("expires_at column removed by 0003")
+    (ok("index idx_shares_user (user_id, created_at)") if "idx_shares_user" in sobjs
      else bad("index idx_shares_user", "missing"))
 
-    def sins(d, sid="sh1", user="u", name="My Share", c=T0, e=T0 + 1):
-        d.execute("INSERT INTO shares(share_id,user_id,name,scales,scale_count,created_at,expires_at)"
-                  " VALUES(?,?,?,?,?,?,?)", (sid, user, name, '{"v":1,"scales":[]}', 0, c, e))
+    def sins(d, sid="sh1", user="u", name="My Share", c=T0):
+        d.execute("INSERT INTO shares(share_id,user_id,name,scales,scale_count,created_at)"
+                  " VALUES(?,?,?,?,?,?)", (sid, user, name, '{"v":1,"scales":[]}', 0, c))
 
-    expect_ok(db, "insert valid share", lambda d: sins(d))
-    expect_err(db, "reject expires_at <= created_at", lambda d: sins(d, sid="sh_bad", c=T0, e=T0))
+    expect_ok(db, "insert valid share (no expires_at)", lambda d: sins(d))
     expect_err(db, "reject share name length 0", lambda d: sins(d, sid="sh_n0", name=""))
     expect_err(db, "reject duplicate share_id", lambda d: sins(d, sid="sh1", user="u2"))
     expect_err(db, "reject NULL share_id",
-               lambda d: d.execute("INSERT INTO shares(share_id,user_id,name,scales,created_at,expires_at)"
-                                   " VALUES(NULL,'u','N','{}',?,?)", (T0, T0 + 1)))
-    # "my shares" list: WHERE user_id=? AND expires_at>? uses idx_shares_user
+               lambda d: d.execute("INSERT INTO shares(share_id,user_id,name,scales,created_at)"
+                                   " VALUES(NULL,'u','N','{}',?)", (T0,)))
+    # "my shares" list: WHERE user_id=? ORDER BY created_at DESC uses idx_shares_user
     mplan = " | ".join(r[-1] for r in db.execute(
-        "EXPLAIN QUERY PLAN SELECT share_id,name,scale_count,created_at,expires_at FROM shares "
-        "WHERE user_id=? AND expires_at>? ORDER BY created_at DESC", ("u", T0)).fetchall())
+        "EXPLAIN QUERY PLAN SELECT share_id,name,scale_count,created_at FROM shares "
+        "WHERE user_id=? ORDER BY created_at DESC", ("u",)).fetchall())
     print("    MY-SHARES PLAN:", mplan)
     ok("my-shares uses idx_shares_user") if "idx_shares_user" in mplan else bad("my-shares uses idx_shares_user", mplan)
     # GET by share_id uses the unique index (seek, not scan)
@@ -187,11 +193,6 @@ def main():
         "EXPLAIN QUERY PLAN SELECT scales FROM shares WHERE share_id=?", ("sh1",)).fetchall())
     print("    GET PLAN:", gplan)
     ok("share GET uses index seek") if "SCAN shares" not in gplan else bad("share GET uses index seek", gplan)
-    # expiry cleanup uses idx_shares_expires
-    eplan = " | ".join(r[-1] for r in db.execute(
-        "EXPLAIN QUERY PLAN SELECT id FROM shares WHERE expires_at < ?", (T0 + 100,)).fetchall())
-    print("    CLEANUP PLAN:", eplan)
-    ok("expiry cleanup uses index") if "idx_shares_expires" in eplan else bad("expiry cleanup uses index", eplan)
 
     print(f"\n==== RESULT: {len(passed)} passed, {len(failed)} failed (SQLite {sqlite3.sqlite_version}) ====")
     return 1 if failed else 0

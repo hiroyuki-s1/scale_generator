@@ -9,14 +9,13 @@ import { json, unauthorized, notFound, internal } from '../../_lib/responses.js'
 
 export async function onRequestGet({ env, params }) {
   try {
-    const now = Date.now();
-    // expires_at <= now は即 404（バッチ削除の遅延に依存しない）。
+    // 期限廃止 (migration 0003): 共有は明示削除されない限り 404 にしない。
     const row = await env.DB.prepare(
-      `SELECT share_id, name, scales, schema_version, scale_count, created_at, expires_at
+      `SELECT share_id, name, scales, schema_version, scale_count, created_at
          FROM shares
-        WHERE share_id = ? AND expires_at > ?`,
-    ).bind(params.share_id, now).first();
-    if (!row) return notFound('この共有は存在しないか、有効期限が切れています');
+        WHERE share_id = ?`,
+    ).bind(params.share_id).first();
+    if (!row) return notFound('この共有は存在しません');
     let scales;
     try { scales = JSON.parse(row.scales); } catch { scales = null; }
     return json({ ...row, scales });

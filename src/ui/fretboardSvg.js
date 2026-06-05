@@ -63,16 +63,16 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
     fill: '#ffffff', rx: '3',
   }));
 
-  // Inlay dots (3,5,7,9,12,15,17,19,21)
+  // Inlay dots (3,5,7,9,12,15,17,19,21) — 濃いめにして視認性を上げる
   [3, 5, 7, 9, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('circle', {
-      cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 4, fill: 'rgba(80,55,20,.50)',
+      cx: fx(f), cy: SVG.MT + SVG.FBH / 2, r: 5, fill: 'rgba(60,40,15,.95)',
     }));
   });
   [SVG.MT + SVG.FBH / 3, SVG.MT + SVG.FBH * 2 / 3].forEach(cy => {
     if (12 < SVG.F0 || 12 > SVG.F1) return;
-    svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 4, fill: 'rgba(80,55,20,.50)' }));
+    svgEl.appendChild(el('circle', { cx: fx(12), cy, r: 5, fill: 'rgba(60,40,15,.95)' }));
   });
 
   // Nut bar — silver metallic bar
@@ -92,13 +92,14 @@ export function drawFretboardBase(svgEl, instrument = 'guitar') {
     }));
   }
 
-  // Fret position numbers — below fretboard box, small gap
-  const posY = SVG.MT + SVG.FBH + 12;
+  // Fret position numbers — below fretboard box. 視認性のため
+  // 文字サイズ 2 倍 + 位置少し下 + 濃い色 (ユーザー要望)。
+  const posY = SVG.MT + SVG.FBH + 26;
   [0, 3, 5, 7, 9, 12, 15, 17, 19, 21].forEach(f => {
     if (f < SVG.F0 || f > SVG.F1) return;
     svgEl.appendChild(el('text', {
       x: fx(f), y: posY, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      fill: '#8a8079', 'font-size': '12', 'font-family': 'monospace', 'font-weight': 'bold',
+      fill: '#3a342e', 'font-size': '24', 'font-family': 'monospace', 'font-weight': 'bold',
     }, String(f)));
   });
 
@@ -286,7 +287,11 @@ const PRINT_TITLE_CLASS = 'fb-print-title';
 // タイトル帯の高さ = 指板表示高さ(viewBox の h)に対する比率。
 // 帯を上に足すぶん、固定セル内では指板が少し縮小して見える (= ユーザー要望
 // 「スケールを少し縮小して上部に文字」)。
-const PRINT_TITLE_BAND_RATIO = 0.30;
+const PRINT_TITLE_BAND_RATIO = 0.22;
+// 印刷タイトルの文字サイズは固定 (ユーザー要望: 全レイアウトで一定サイズ)。
+// 単位は SVG user-space。20 程度がフレット番号 (font-size 24) より小ぶりで
+// 1〜6 枚どのレイアウトでも同じ文字サイズに見える。
+const PRINT_TITLE_FONT_SIZE = 32;
 
 /**
  * 印刷用にスケール名を SVG 内の上部へ焼き込む (スケール名＋指板で1枚の画像にする)。
@@ -309,8 +314,9 @@ export function bakePrintTitle(svgEl, title, baseViewBox) {
   const band   = Math.round(h * PRINT_TITLE_BAND_RATIO);
   const newMinY = minY - band;
   const newH    = h + band;
-  // 高さ基準の上限フォント。最終的には幅にも収まるよう下で自動縮小する。
-  let fontSize = Math.round(band * 0.62);
+  // 文字サイズは固定 (ユーザー要望: レイアウトに依らず一定)。
+  // 必要なら下で幅 (w) に収まるよう自動縮小する。
+  let fontSize = PRINT_TITLE_FONT_SIZE;
 
   // 帯の白背景 (透明だと用紙では白だが、画面プレビュー時の見た目を安定させる)
   svgEl.appendChild(el('rect', {

@@ -83,7 +83,6 @@
   </div>
   <div class="header-spacer"></div>
   <span class="app-ver" id="appVer"></span>
-  <span class="alpha-pill" aria-label="ベータ版" data-nosnippet>BETA</span>
   <span class="build-ver" id="buildVer"></span>
 
   <div class="layout-picker" id="layoutPicker">
@@ -141,6 +140,10 @@
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
       共有を管理
     </button>
+    <div class="more-item more-item--info" role="menuitem">
+      <span class="alpha-pill" aria-label="ベータ版" data-nosnippet>BETA</span>
+      <span class="more-item-info-text">アルファ版です。フィードバック歓迎。</span>
+    </div>
     <button class="more-item more-item--mobile more-item-danger" data-act="reset" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
       保存データをリセット
@@ -219,16 +222,6 @@
         </div>
       </div>
 
-      <!-- 表示ポジション編集 (異弦同音の表示/非表示) -->
-      <div class="posmode-row">
-        <button class="posmode-toggle" id="posModeBtn" aria-pressed="false" title="異弦同音のポジションを個別に表示/非表示">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="2.4"/><circle cx="12" cy="8" r="2.4" opacity=".35"/></svg>
-          ポジション編集
-        </button>
-        <button class="posmode-reset hidden" id="posResetBtn" title="全ポジションを表示に戻す">リセット</button>
-        <span class="posmode-hint hidden" id="posModeHint">ドットをタップで表示/非表示</span>
-      </div>
-
       <!-- 度数行: [スケール設定] [拡大/全体] [度数チップ] -->
       <div class="deg-display-row">
         <button class="deg-picker-btn" id="degPickerBtn">スケール設定  設定数：0</button>
@@ -236,10 +229,20 @@
         <div class="legend" id="legend"></div>
       </div>
 
-      <!-- フレット範囲 -->
+      <!-- フレット範囲 + ポジション編集 (右側はスペース有るので並列配置) -->
       <div class="mask-section">
         <div class="ctrl-label">フレット範囲</div>
-        <div class="mask-row" id="maskControl"></div>
+        <div class="mask-and-pos-row">
+          <div class="mask-row" id="maskControl"></div>
+          <div class="posmode-row">
+            <button class="posmode-toggle" id="posModeBtn" aria-pressed="false" title="異弦同音のポジションを個別に表示/非表示">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="2.4"/><circle cx="12" cy="8" r="2.4" opacity=".35"/></svg>
+              ポジション編集
+            </button>
+            <button class="posmode-reset hidden" id="posResetBtn" title="全ポジションを表示に戻す">リセット</button>
+            <span class="posmode-hint hidden" id="posModeHint">ドットをタップで表示/非表示</span>
+          </div>
+        </div>
       </div>
 
     </div><!-- /editor-fretboard -->
@@ -276,7 +279,7 @@
 <div class="tab-panel hidden" id="panelSaved">
   <!-- ソングファイル上部: タイトル(任意・いつでも編集可) + クラウド保存(ログイン時) -->
   <div class="songfile-top" id="songfileTop">
-    <input class="songfile-title-input" id="songfileTitleInput" placeholder="ソングファイル名（任意）" maxlength="100" autocomplete="off" spellcheck="false">
+    <input class="songfile-title-input" id="songfileTitleInput" placeholder="ソングファイル名" maxlength="100" autocomplete="off" spellcheck="false">
     <button class="btn-save-songbook" id="songbookSaveTopBtn" type="button" style="display:none">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
       ソングブックに保存
@@ -516,6 +519,21 @@
   </div>
 </div>
 
+<!-- ── ソングブック読込プレビューモーダル ──────────────────────────── -->
+<div class="modal-overlay" id="songbookPreviewModal" role="dialog" aria-modal="true" aria-labelledby="songbookPreviewTitle">
+  <div class="color-modal-box">
+    <div class="color-modal-header">
+      <div class="modal-title" id="songbookPreviewTitle">プレビュー</div>
+      <div class="modal-actions" style="margin-top:0; display:flex; gap:8px">
+        <button class="modal-confirm" id="songbookPreviewLoadBtn" type="button">読み込み</button>
+        <button class="modal-cancel" id="songbookPreviewCloseBtn" type="button">閉じる</button>
+      </div>
+    </div>
+    <div class="songbook-preview-meta" id="songbookPreviewMeta"></div>
+    <div class="songbook-preview-list" id="songbookPreviewList"></div>
+  </div>
+</div>
+
 <!-- ── 共有: 結果（URL/ID） ─────────────────────────────────────────── -->
 <div class="modal-overlay" id="shareResultModal" role="dialog" aria-modal="true" aria-labelledby="shareResultTitle">
   <div class="modal-box">
@@ -530,7 +548,7 @@
       <input class="share-row-input" id="shareIdInput" readonly>
       <button class="share-copy" data-copy="id" type="button">コピー</button>
     </div>
-    <p class="share-expiry" id="shareExpiry"></p>
+    <p class="share-hint">このURL/IDは取り消されるまで有効です。</p>
     <div class="modal-actions">
       <button class="modal-confirm" data-act="close" type="button">閉じる</button>
     </div>

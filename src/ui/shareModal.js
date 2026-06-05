@@ -46,11 +46,6 @@ export function initShareUi(store, onLoadSongbook) {
     return false;
   }
 
-  function daysLeft(expiresAt) {
-    const ms = expiresAt - Date.now();
-    return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
-  }
-
   async function copyText(text) {
     try { await navigator.clipboard.writeText(text); showToast('コピーしました'); }
     catch { showToast('コピーできませんでした。手動で選択してください'); }
@@ -60,13 +55,12 @@ export function initShareUi(store, onLoadSongbook) {
   async function shareSongbook(book) {
     if (offline()) return;
     try {
-      const res = await createShare(book.public_id); // { share_id, url, name, expires_at }
+      const res = await createShare(book.public_id); // { share_id, url, name }
       document.getElementById('shareResultTitle').textContent = `「${res.name || book.name}」を共有`;
       const urlInput = document.getElementById('shareUrlInput');
       const idInput  = document.getElementById('shareIdInput');
       urlInput.value = res.url || '';
       idInput.value  = res.share_id || '';
-      document.getElementById('shareExpiry').textContent = `※ このリンクは約${daysLeft(res.expires_at)}日後（90日）に失効します`;
       resultModal.querySelectorAll('.share-copy').forEach(btn => {
         btn.onclick = () => copyText(btn.dataset.copy === 'url' ? urlInput.value : idInput.value);
       });
@@ -163,8 +157,11 @@ export function initShareUi(store, onLoadSongbook) {
       row.className = 'share-manage-row';
       const info = document.createElement('div');
       info.className = 'share-manage-info';
+      const createdLabel = sh.created_at
+        ? new Date(sh.created_at).toLocaleDateString('ja-JP')
+        : '';
       info.innerHTML = `<div class="share-manage-name">${escapeHtml(sh.name)}</div>`
-        + `<div class="share-manage-meta">残り${daysLeft(sh.expires_at)}日 ・ ${sh.scale_count ?? 0}スケール</div>`;
+        + `<div class="share-manage-meta">${createdLabel ? createdLabel + ' ・ ' : ''}${sh.scale_count ?? 0}スケール</div>`;
       const btn = document.createElement('button');
       btn.className = 'btn-share-revoke';
       btn.textContent = '取り消し';

@@ -5,8 +5,18 @@
  * ソングブックを取得し、その時点のスナップショットを shares に複製（以後ソングブックを
  * 編集しても発行済み共有は変わらない＝凍結・AC-10）。share_id はサーバ生成・90日失効。
  */
+/**
+ * POST /api/shares — 共有の作成（ログイン必須）。仕様: docs/features/SHARE.md §5。
+ *
+ * 期限廃止後の新方針 (migration 0003):
+ *   ・共有は明示削除されるまで永続。expires_at は廃止。
+ *   ・上限は MAX_SHARES のみ (DB 圧迫対策)。
+ *   ・スナップショット方式は維持: 共有時点のソングブック内容を shares に複製し凍結する。
+ *
+ * クライアントは scales を再送せず `{ songbook_id }` のみ送る。
+ */
 import { requireUserId } from '../../_lib/auth.js';
-import { MAX_SHARES, SHARE_TTL_MS } from '../../_lib/validation.js';
+import { MAX_SHARES } from '../../_lib/validation.js';
 import { genShareId } from '../../_lib/ids.js';
 import { json, unauthorized, badRequest, notFound, internal } from '../../_lib/responses.js';
 
@@ -25,7 +35,6 @@ export async function onRequestPost({ request, env }) {
 
   try {
     const now = Date.now();
-    // スナップショット元のソングブック（所有者一致・未削除のみ）。
     const sb = await env.DB.prepare(
       `SELECT name, scales, scale_count, schema_version
          FROM songbooks
@@ -33,29 +42,26 @@ export async function onRequestPost({ request, env }) {
     ).bind(songbookId, userId).first();
     if (!sb) return notFound('ソングブックが見つかりません');
 
-    // 有効な共有数の上限チェック（idx_shares_user）。
     const countRow = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM shares WHERE user_id = ? AND expires_at > ?',
-    ).bind(userId, now).first();
+      'SELECT COUNT(*) AS n FROM shares WHERE user_id = ?',
+    ).bind(userId).first();
     if ((countRow?.n ?? 0) >= MAX_SHARES) {
-      return badRequest('共有の上限に達しました。古い共有が失効するまでお待ちください');
+      return badRequest('共有の上限に達しました。不要な共有を削除してください');
     }
 
-    const expiresAt = now + SHARE_TTL_MS;
     const origin = new URL(request.url).origin;
     for (let attempt = 0; attempt < MAX_INSERT_RETRY; attempt++) {
       const shareId = genShareId();
       try {
         await env.DB.prepare(
           `INSERT INTO shares
-             (share_id, user_id, name, scales, schema_version, scale_count, created_at, expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        ).bind(shareId, userId, sb.name, sb.scales, sb.schema_version, sb.scale_count, now, expiresAt).run();
+             (share_id, user_id, name, scales, schema_version, scale_count, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ).bind(shareId, userId, sb.name, sb.scales, sb.schema_version, sb.scale_count, now).run();
         return json({
           share_id: shareId,
           url: `${origin}/?share=${shareId}`,
           name: sb.name,
-          expires_at: expiresAt,
         }, 201);
       } catch (e) {
         if (String(e).includes('UNIQUE') && attempt < MAX_INSERT_RETRY - 1) continue;

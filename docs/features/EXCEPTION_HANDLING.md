@@ -92,9 +92,10 @@
 | ケース | 挙動 |
 |--------|------|
 | 全ポジション非表示 → 印刷で空指板 | 警告は出すが許容（ユーザー意図）。リセットで復帰可 |
-| `hiddenPositions` に不正キー（破損） | persist 読み込み時に `/^g\d+s\d+$/` でフィルタし不正キーを破棄 |
+| `visiblePositions` に不正キー（破損） | persist 読み込み時に `/^g\d+s\d+$/` でフィルタし不正キーを破棄 |
+| `visiblePositions` が配列でも null でもない不正値 | `null`（全表示・既定）にフォールバック |
 | 楽器切替でフレット数が変わった | 範囲外キーは描画時に無視（落とさない） |
-| Set のシリアライズ（localStorage/D1 は配列で持つ） | 保存時 `Array.from(set)`、読込時 `new Set(arr)`。型不整合は空 Set にフォールバック |
+| シリアライズ（localStorage/D1 は配列 or null で持つ） | 保存時 `visiblePositions ? Array.from(set) : null`、読込時 `Array.isArray(v) ? new Set(v) : null` |
 
 ---
 

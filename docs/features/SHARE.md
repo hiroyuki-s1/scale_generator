@@ -98,7 +98,7 @@ CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限
 ```
 
 `scales` の JSON 構造は [songbook/SCHEMA.md](../songbook/SCHEMA.md) と同一
-（`degree_colors` 12要素・`hidden_positions` の `g{fret}s{string}` を含む）。
+（`degree_colors` 12要素・`visible_positions`（表示する `g{fret}s{string}` の集合 or null）を含む）。
 
 ### share_id の生成
 

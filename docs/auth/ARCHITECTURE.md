@@ -145,13 +145,14 @@ npm run build && npx wrangler pages dev dist
 ### 8.2 ローカル D1
 
 ```bash
-# ローカルDBにスキーマを適用（--local でローカルのみ）
-npx wrangler d1 execute scale_generator_db --local \
-  --file ./migrations/0001_create_songbooks_and_settings.sql
+# ローカルDBにスキーマを適用（migrations フレームワーク。d1_migrations 表で適用済みを追跡）
+npx wrangler d1 migrations apply scale_generator_db --local
 ```
 
 - `wrangler.toml` に D1 バインディングを追加（`[[d1_databases]]`）
 - `--local` を付けるとローカル SQLite、付けないと本番 D1。**開発中は必ず `--local`**
+- マイグレーションは番号順（`migrations/000N_*.sql`）に未適用分だけ適用される。
+  D1 にロールバックは無いので、変更は**打ち消しマイグレーションを足す**前方運用にする
 
 ### 8.3 Clerk（dev インスタンス）
 

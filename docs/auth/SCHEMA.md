@@ -49,9 +49,12 @@ CREATE INDEX idx_scales_user_id ON scales (user_id, sort_order);
 ```sql
 CREATE TABLE user_settings (
   user_id  TEXT PRIMARY KEY,   -- Clerk の user ID
-  layout   TEXT NOT NULL       -- JSON 例: {"orientation":"landscape","cols":2,"rows":3}
-);
+  settings TEXT NOT NULL       -- 汎用 JSON 例: {"layout":{"orientation":"landscape","cols":2,"rows":3},"theme":"dark"}
+) STRICT;
 ```
+
+※ 列名は `layout` ではなく汎用の `settings`。レイアウト以外（テーマ・既定楽器・locale 等）も
+1列の JSON に入れられるようにしている（設定項目の追加でマイグレーション不要）。
 
 ---
 

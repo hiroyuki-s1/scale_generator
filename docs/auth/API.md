@@ -1,5 +1,47 @@
 # API 仕様
 
+> ⚠️ **`/api/scales`・`/api/settings`（個別スケール同期）は旧設計**。現行はソングブック方式
+> （[songbook/API.md](../songbook/API.md)）。スケール/ソングファイルは localStorage に置き、
+> D1 にはソングブックのスナップショットのみ保存する。以下のスケール系エンドポイントは
+> 「スケール個別同期」を再導入する場合の参考として残す。
+> **現行で必要なのは下記「Clerk Webhook（退会クリーンアップ）」と songbook/API.md。**
+
+---
+
+## Clerk Webhook（退会時クリーンアップ）
+
+ユーザーが Clerk アカウントを削除すると、D1 側の `user_id` 行が孤児として残る
+（D1 に users 表を持たないため CASCADE できない）。これを Clerk の Webhook で掃除する。
+
+### POST /api/webhooks/clerk
+
+- **認証**: JWT ではなく **Svix 署名**（`svix-id` / `svix-timestamp` / `svix-signature`
+  ヘッダー）を `CLERK_WEBHOOK_SIGNING_SECRET` で検証する。署名不一致は 400
+- **冪等**: 同じイベントが再送されても安全（既に削除済みなら 0 件削除で 200）
+- **処理**: `type === "user.deleted"` のとき、その `data.id`（= `user_id`）の行を
+  **物理削除**（退会＝データ消去なので論理削除ではなくハード DELETE）
+
+```sql
+DELETE FROM songbooks     WHERE user_id = ?;
+DELETE FROM user_settings WHERE user_id = ?;
+```
+
+**レスポンス** `200 OK`
+```json
+{ "ok": true, "deleted": { "songbooks": 3, "user_settings": 1 } }
+```
+
+| ステータス | 意味 |
+|-----------|------|
+| 200 | 処理成功（削除0件含む） |
+| 400 | 署名検証失敗・ペイロード不正 |
+| 500 | サーバーエラー |
+
+> ⚠️ 退会クリーンアップは取り消せない。Svix 署名検証を必ず通すこと（未署名の偽リクエストで
+> 他人のデータを消されないため）。`example.com` 等のテストイベントは無視する。
+
+---
+
 ## 共通
 
 - **Base URL**: `/api`

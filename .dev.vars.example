@@ -8,3 +8,7 @@
 # （実値の例: sk_test_ で始まる文字列。下はダミーなので必ず自分のキーに置き換える）
 CLERK_SECRET_KEY=YOUR_CLERK_SECRET_KEY_HERE
 CLERK_PUBLISHABLE_KEY=YOUR_CLERK_PUBLISHABLE_KEY_HERE
+
+# Clerk Webhook（退会クリーンアップ）の署名検証シークレット。
+# Clerk ダッシュボード > Webhooks > エンドポイント作成後に表示される Signing Secret。
+CLERK_WEBHOOK_SIGNING_SECRET=YOUR_CLERK_WEBHOOK_SIGNING_SECRET_HERE

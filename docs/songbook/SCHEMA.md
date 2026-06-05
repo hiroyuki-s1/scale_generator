@@ -19,18 +19,23 @@ CREATE TABLE songbooks (
   deleted_at     INTEGER,                    -- 論理削除（NULL=有効）
   CHECK (schema_version >= 1),
   CHECK (scale_count >= 0),
-  CHECK (length(name) BETWEEN 1 AND 100)
+  CHECK (length(name) BETWEEN 1 AND 100),
+  CHECK (updated_at >= created_at)
 ) STRICT;
 
--- 一覧用カバリングインデックス: 返す列まで含め、重い scales 行に触れず index-only で返す
+-- 一覧用カバリングインデックス（非部分・index-only）: 返す列までキーに含め、重い scales 行に触れない
 CREATE INDEX idx_songbooks_user_list
-  ON songbooks (user_id, updated_at DESC, public_id, name, scale_count, created_at)
-  WHERE deleted_at IS NULL;
+  ON songbooks (user_id, deleted_at, updated_at DESC, public_id, name, scale_count, created_at);
 ```
 
-> 一覧クエリは必ず `WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC` の形にする
-> （`deleted_at IS NULL` を省くと部分索引が使われない）。`EXPLAIN QUERY PLAN` で
-> `SEARCH ... USING INDEX idx_songbooks_user_list` を確認すること。
+> 一覧クエリは `WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC` の形にする。
+> `EXPLAIN QUERY PLAN` で **`USING COVERING INDEX idx_songbooks_user_list`** を確認すること
+> （`COVERING` が出れば基底行を読まない index-only scan）。
+>
+> ※ **部分索引にしない理由**: SQLite 3.37 系では部分索引 (`... WHERE deleted_at IS NULL`) が
+> カバリングとして使われず（rowid 経由で最大~100KB の `scales` 行を読みに行く）、最適化目的を
+> 達成できない。`deleted_at` を索引キー第2列に入れた**非部分**索引なら全バージョンで index-only。
+> ローカル検証は `python3` の `sqlite3`（3.37.2）で `EXPLAIN QUERY PLAN` を確認できる。
 
 ### カラムの意図（拡張性）
 

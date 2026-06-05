@@ -242,5 +242,6 @@ npm run dev      # Vite dev server (port 5173)
 npm run build    # dist/ production build
 npm run preview  # serve dist/ locally
 npm test         # Vitest once
+npm run test:db  # D1 マイグレーション検証 (python3 sqlite3: STRICT/CHECK/カバリング索引)
 npm run lint     # ESLint (src __tests__)
 ```

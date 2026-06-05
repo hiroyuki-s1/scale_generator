@@ -37,18 +37,20 @@ CREATE TABLE IF NOT EXISTS songbooks (
   deleted_at     INTEGER,                            -- 論理削除（NULL=有効・値あり=削除済み）
   CHECK (schema_version >= 1),
   CHECK (scale_count >= 0),
-  CHECK (length(name) BETWEEN 1 AND 100)
+  CHECK (length(name) BETWEEN 1 AND 100),
+  CHECK (updated_at >= created_at)            -- 時刻の整合（更新は作成以降）
 ) STRICT;
 
--- 一覧用カバリングインデックス（部分インデックス）。
+-- 一覧用カバリングインデックス（非部分・index-only scan）。
 --   WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC
---   で返す列（public_id/name/scale_count/created_at）まで索引に含め、
---   重い scales JSON を持つ基底行に触れず index-only scan で一覧を返す。
---   ※ 一覧クエリは必ず `deleted_at IS NULL` を明示すること（部分索引の発動条件）。
---   ※ user_id 左端プレフィックスで「件数カウント（50件上限チェック）」にも効く。
+--   返す列（public_id/name/scale_count/created_at）まで索引キーに含め、重い scales JSON を持つ
+--   基底行に一切触れず index-only で一覧を返す（EXPLAIN で USING COVERING INDEX を確認済み）。
+--   列順は「等値(user_id, deleted_at) → 整列(updated_at DESC) → カバー列」。
+--   ※ 部分索引 (... WHERE deleted_at IS NULL) は SQLite 3.37 系で COVERING にならない
+--     （rowid 経由で基底行を読みに行く）ため、deleted_at を索引キーに入れた非部分索引にする。
+--   ※ deleted_at を第2キーに置くことで「有効行への seek」と「件数カウント(50件上限)」の両方に効く。
 CREATE INDEX IF NOT EXISTS idx_songbooks_user_list
-  ON songbooks (user_id, updated_at DESC, public_id, name, scale_count, created_at)
-  WHERE deleted_at IS NULL;
+  ON songbooks (user_id, deleted_at, updated_at DESC, public_id, name, scale_count, created_at);
 -- ※ public_id は UNIQUE 制約により索引が自動作成される（単体取得 GET/PUT/DELETE /:public_id 用）。
 
 -- ユーザーごとの設定（印刷レイアウト・テーマ・既定楽器など汎用）。1ユーザー1行

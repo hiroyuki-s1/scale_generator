@@ -5,6 +5,11 @@
 # Clerk は本番とは別の Development instance のキーを使う。
 # 値は Clerk ダッシュボード > API Keys から取得する。
 
+# サーバ側 JWT 検証に必須（functions/_lib/auth.js が env.CLERK_ISSUER を読む）。
+# Clerk ダッシュボード > API Keys の「Frontend API URL」(= Issuer)。
+# JWKS は ${CLERK_ISSUER}/.well-known/jwks.json から取得する。
+CLERK_ISSUER=https://YOUR-APP.clerk.accounts.dev
+
 # （実値の例: sk_test_ で始まる文字列。下はダミーなので必ず自分のキーに置き換える）
 CLERK_SECRET_KEY=YOUR_CLERK_SECRET_KEY_HERE
 CLERK_PUBLISHABLE_KEY=YOUR_CLERK_PUBLISHABLE_KEY_HERE

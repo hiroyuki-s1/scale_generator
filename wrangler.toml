@@ -6,10 +6,10 @@ pages_build_output_dir = "dist"
 # ローカル開発は `wrangler pages dev` が自動でローカル SQLite を使う（本番DBに触れない）。
 #
 # 本番DBの作成は一度だけ:
-#   npx wrangler d1 create scale_generator_db
+#   npx wrangler d1 create kami_db
 # 出力された database_id を下の database_id に貼り付ける。
 # （database_name は任意の分かりやすい名前、database_id がバインディング先の実体）
 [[d1_databases]]
 binding = "DB"
-database_name = "scale_generator_db"
+database_name = "kami_db"
 database_id = "REPLACE_WITH_DATABASE_ID"   # `wrangler d1 create` 後に差し替え

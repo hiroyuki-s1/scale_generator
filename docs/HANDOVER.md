@@ -123,8 +123,8 @@
 - ※ これらは localStorage/クライアント完結。`src/` 内で完結。
 
 ### Phase 1: D1 セットアップ（基盤）— **マイグレーションは作成済み**
-1. `npx wrangler d1 create scale_generator_db` → 出力の `database_id` を [wrangler.toml](../wrangler.toml) に記入（現在プレースホルダ）。
-2. ローカル適用: `npx wrangler d1 migrations apply scale_generator_db --local`。
+1. `npx wrangler d1 create kami_db` → 出力の `database_id` を [wrangler.toml](../wrangler.toml) に記入（現在プレースホルダ）。
+2. ローカル適用: `npx wrangler d1 migrations apply kami_db --local`。
 3. 検証: `npm run test:db`（[scripts/validate_migrations.py](../scripts/validate_migrations.py)）。
 
 ### Phase 2: Clerk セットアップ（認証）
@@ -208,7 +208,7 @@ npm run test:db  # D1マイグレーション検証（python3 sqlite3）
 npm run lint     # ESLint（src __tests__）
 # クラウドAPIのローカル実行（Functions + ローカルD1）:
 npx wrangler pages dev -- npm run dev
-npx wrangler d1 migrations apply scale_generator_db --local
+npx wrangler d1 migrations apply kami_db --local
 ```
 
 ## 9. リポジトリ / デプロイ

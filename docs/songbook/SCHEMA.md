@@ -127,9 +127,9 @@ CREATE TABLE user_settings (
 
 ```bash
 # ローカル
-npx wrangler d1 migrations apply scale_generator_db --local
+npx wrangler d1 migrations apply kami_db --local
 # 本番（※本番反映は手動運用。docs/DEPLOYMENT.md に従う）
-npx wrangler d1 migrations apply scale_generator_db
+npx wrangler d1 migrations apply kami_db
 ```
 
 > D1 にロールバックは無い。スキーマ変更は**打ち消しマイグレーションを足す**前方運用。

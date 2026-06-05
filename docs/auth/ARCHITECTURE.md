@@ -146,7 +146,7 @@ npm run build && npx wrangler pages dev dist
 
 ```bash
 # ローカルDBにスキーマを適用（migrations フレームワーク。d1_migrations 表で適用済みを追跡）
-npx wrangler d1 migrations apply scale_generator_db --local
+npx wrangler d1 migrations apply kami_db --local
 ```
 
 - `wrangler.toml` に D1 バインディングを追加（`[[d1_databases]]`）

@@ -22,10 +22,15 @@ CREATE TABLE songbooks (
   CHECK (length(name) BETWEEN 1 AND 100)
 ) STRICT;
 
-CREATE INDEX idx_songbooks_user_active
-  ON songbooks (user_id, updated_at DESC)
+-- 一覧用カバリングインデックス: 返す列まで含め、重い scales 行に触れず index-only で返す
+CREATE INDEX idx_songbooks_user_list
+  ON songbooks (user_id, updated_at DESC, public_id, name, scale_count, created_at)
   WHERE deleted_at IS NULL;
 ```
+
+> 一覧クエリは必ず `WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC` の形にする
+> （`deleted_at IS NULL` を省くと部分索引が使われない）。`EXPLAIN QUERY PLAN` で
+> `SEARCH ... USING INDEX idx_songbooks_user_list` を確認すること。
 
 ### カラムの意図（拡張性）
 

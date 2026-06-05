@@ -40,11 +40,16 @@ CREATE TABLE IF NOT EXISTS songbooks (
   CHECK (length(name) BETWEEN 1 AND 100)
 ) STRICT;
 
--- 一覧は「有効な行のみ」を user_id で絞り更新日時の新しい順に並べる（部分インデックス）
-CREATE INDEX IF NOT EXISTS idx_songbooks_user_active
-  ON songbooks (user_id, updated_at DESC)
+-- 一覧用カバリングインデックス（部分インデックス）。
+--   WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC
+--   で返す列（public_id/name/scale_count/created_at）まで索引に含め、
+--   重い scales JSON を持つ基底行に触れず index-only scan で一覧を返す。
+--   ※ 一覧クエリは必ず `deleted_at IS NULL` を明示すること（部分索引の発動条件）。
+--   ※ user_id 左端プレフィックスで「件数カウント（50件上限チェック）」にも効く。
+CREATE INDEX IF NOT EXISTS idx_songbooks_user_list
+  ON songbooks (user_id, updated_at DESC, public_id, name, scale_count, created_at)
   WHERE deleted_at IS NULL;
--- ※ public_id は UNIQUE 制約により索引が自動作成されるため、別途インデックス不要。
+-- ※ public_id は UNIQUE 制約により索引が自動作成される（単体取得 GET/PUT/DELETE /:public_id 用）。
 
 -- ユーザーごとの設定（印刷レイアウト・テーマ・既定楽器など汎用）。1ユーザー1行
 CREATE TABLE IF NOT EXISTS user_settings (

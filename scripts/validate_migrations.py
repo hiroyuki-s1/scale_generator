@@ -165,16 +165,23 @@ def main():
     (ok("index idx_shares_user") if "idx_shares_user" in sobjs
      else bad("index idx_shares_user", "missing"))
 
-    def sins(d, sid="sh1", user="u", c=T0, e=T0 + 1):
-        d.execute("INSERT INTO shares(share_id,user_id,scales,scale_count,created_at,expires_at)"
-                  " VALUES(?,?,?,?,?,?)", (sid, user, '{"v":1,"scales":[]}', 0, c, e))
+    def sins(d, sid="sh1", user="u", name="My Share", c=T0, e=T0 + 1):
+        d.execute("INSERT INTO shares(share_id,user_id,name,scales,scale_count,created_at,expires_at)"
+                  " VALUES(?,?,?,?,?,?,?)", (sid, user, name, '{"v":1,"scales":[]}', 0, c, e))
 
     expect_ok(db, "insert valid share", lambda d: sins(d))
     expect_err(db, "reject expires_at <= created_at", lambda d: sins(d, sid="sh_bad", c=T0, e=T0))
+    expect_err(db, "reject share name length 0", lambda d: sins(d, sid="sh_n0", name=""))
     expect_err(db, "reject duplicate share_id", lambda d: sins(d, sid="sh1", user="u2"))
     expect_err(db, "reject NULL share_id",
-               lambda d: d.execute("INSERT INTO shares(share_id,user_id,scales,created_at,expires_at)"
-                                   " VALUES(NULL,'u','{}',?,?)", (T0, T0 + 1)))
+               lambda d: d.execute("INSERT INTO shares(share_id,user_id,name,scales,created_at,expires_at)"
+                                   " VALUES(NULL,'u','N','{}',?,?)", (T0, T0 + 1)))
+    # "my shares" list: WHERE user_id=? AND expires_at>? uses idx_shares_user
+    mplan = " | ".join(r[-1] for r in db.execute(
+        "EXPLAIN QUERY PLAN SELECT share_id,name,scale_count,created_at,expires_at FROM shares "
+        "WHERE user_id=? AND expires_at>? ORDER BY created_at DESC", ("u", T0)).fetchall())
+    print("    MY-SHARES PLAN:", mplan)
+    ok("my-shares uses idx_shares_user") if "idx_shares_user" in mplan else bad("my-shares uses idx_shares_user", mplan)
     # GET by share_id uses the unique index (seek, not scan)
     gplan = " | ".join(r[-1] for r in db.execute(
         "EXPLAIN QUERY PLAN SELECT scales FROM shares WHERE share_id=?", ("sh1",)).fetchall())

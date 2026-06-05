@@ -1,10 +1,16 @@
 # Cloudflare Pages セキュリティヘッダー (本番)。
 # ビルド時に public/ → dist/ へコピーされ Cloudflare Pages が読む。
 # GitHub Pages ミラーはこのファイルを無視するため副作用なし。
-# ※ CSP は GA4 / Google Fonts の allowlist が必要で誤設定の事故が大きいので、
-#   まずは即時に安全な4ヘッダーのみ設定。CSP は別途検証してから追加する。
+#
+# CSP は段階導入する: まず Report-Only で配信し、違反をブラウザコンソール/レポートで観察 →
+# 問題が無いことを確認してから `Content-Security-Policy`(強制) に昇格する。
+# Report-Only は何もブロックしないので現行サイト(GA4/Google Fonts)を壊さない。
+# ※ Clerk のドメインは dev(*.clerk.accounts.dev)/本番(clerk.<独自ドメイン>)で異なる。
+#   Clerk 統合時に公式 CSP ドキュメントで allowlist を必ず検証してから強制に切り替えること。
+# 詳細方針は docs/SECURITY.md 参照。
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: https://www.google-analytics.com https://*.clerk.com https://img.clerk.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.clerk.accounts.dev https://challenges.cloudflare.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://*.clerk.accounts.dev https://clerk-telemetry.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://challenges.cloudflare.com https://accounts.google.com https://*.clerk.accounts.dev; worker-src 'self'; manifest-src 'self'

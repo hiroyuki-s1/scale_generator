@@ -83,6 +83,23 @@ GET /api/shares/:id → 同じ確認ダイアログ → 読み込み
 
 ⚠️ どちらも**現在のソングファイルを失う破壊的操作**のため確認ダイアログ必須。
 
+### 3.3 共有の管理・取り消し（右上「…」→「共有を管理」／ログイン時）
+
+自分が作成した有効な共有を一覧し、不要なものを取り消す。
+
+```
+┌─────────────────────────────────────────┐
+│ 共有を管理                          [ × ] │
+├─────────────────────────────────────────┤
+│ Autumn Leaves   残り83日   [取り消し]    │
+│ Blue Bossa      残り12日   [取り消し]    │
+└─────────────────────────────────────────┘
+```
+
+- `GET /api/shares/mine` で一覧。各行に失効までの残り日数と「取り消し」ボタン。
+- 「取り消し」→ 確認 → `DELETE /api/shares/:share_id` → 一覧から除去（以後その URL/ID は 404）。
+- 誤共有・限定共有を 90日 を待たず撤回できる。
+
 ---
 
 ## 4. DB スキーマ
@@ -94,6 +111,7 @@ CREATE TABLE shares (
   id             INTEGER PRIMARY KEY,
   share_id       TEXT    NOT NULL UNIQUE,    -- 公開ID（推測不能の短い文字列）
   user_id        TEXT    NOT NULL,           -- 作成者 Clerk user ID（作成はログイン必須）
+  name           TEXT    NOT NULL,           -- 表示名（共有元ソングブック名のコピー・「自分の共有一覧」用）
   scales         TEXT    NOT NULL,           -- JSON snapshot（songbooks.scales と同形式・"v"内包）
   schema_version INTEGER NOT NULL DEFAULT 1,
   scale_count    INTEGER NOT NULL DEFAULT 0,
@@ -101,11 +119,12 @@ CREATE TABLE shares (
   expires_at     INTEGER NOT NULL,           -- 自動失効（created_at + 90日）
   CHECK (schema_version >= 1),
   CHECK (scale_count >= 0),
+  CHECK (length(name) BETWEEN 1 AND 100),
   CHECK (expires_at > created_at)
 ) STRICT;
 
 CREATE INDEX idx_shares_expires ON shares (expires_at);          -- 期限切れバッチ削除用
-CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限チェック用
+CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限チェック・自分の共有一覧用
 ```
 
 `scales` の JSON 構造は [songbook/SCHEMA.md](../songbook/SCHEMA.md) と同一
@@ -131,9 +150,9 @@ CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限
 ```json
 { "songbook_id": "<songbook の public_id>" }
 ```
-- サーバ処理: `SELECT scales, scale_count, schema_version FROM songbooks
+- サーバ処理: `SELECT name, scales, scale_count, schema_version FROM songbooks
   WHERE public_id = ? AND user_id = ? AND deleted_at IS NULL` で取得 →
-  新しい `share_id` と `expires_at`(=now+90日) で `shares` に INSERT
+  `name`（共有元の名前）ごとコピーし、新しい `share_id` と `expires_at`(=now+90日) で `shares` に INSERT
 - 1ユーザーの有効な共有数が上限（既定 100）に達していれば 400
 
 **レスポンス** `201 Created`
@@ -149,6 +168,37 @@ CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限
 |------|----|
 | 404 | 指定 `songbook_id` が存在しない/削除済み |
 | 403 | 他ユーザーのソングブックを指定 |
+
+### GET /api/shares/mine （自分の共有一覧・**認証必須**）
+
+ログインユーザーが作成した**有効な**共有の一覧（取り消し画面用）。
+
+**レスポンス** `200`
+```json
+{
+  "shares": [
+    { "share_id": "k7Qm2xR9pT", "name": "Autumn Leaves", "scale_count": 6,
+      "created_at": 1722000000000, "expires_at": 1730000000000 }
+  ]
+}
+```
+- `WHERE user_id = ? AND expires_at > now ORDER BY created_at DESC`（`idx_shares_user` 使用）
+- `scales` 本体は返さない（一覧では不要）
+
+### DELETE /api/shares/:share_id （取り消し・**認証必須**）
+
+自分が作成した共有を**即時失効（物理削除）**する。
+
+- `DELETE FROM shares WHERE share_id = ? AND user_id = ?`（他人の共有は消せない）
+- 取り消し後はその share_id の GET は 404 になる
+
+**レスポンス** `200 OK`
+```json
+{ "ok": true }
+```
+| HTTP | 例 |
+|------|----|
+| 404 | 自分の共有に該当 share_id が無い（既に失効/他人のもの） |
 
 ### GET /api/shares/:share_id （受け取り・**認証不要・公開**）
 
@@ -215,3 +265,5 @@ CREATE INDEX idx_shares_user    ON shares (user_id, expires_at); -- 作成上限
 | AC-08 | 失効/不正IDはエラー表示され、現在のソングファイルは保持される |
 | AC-09 | 読み込んだソングファイルに度数色・異弦同音の表示ポジションが反映される |
 | AC-10 | 共有後に元ソングブックを編集しても、発行済み共有の内容は変わらない（凍結） |
+| AC-11 | 「共有を管理」で自分の有効な共有が一覧表示される |
+| AC-12 | 「取り消し」で共有が即失効し、その URL/ID は 404 になる |

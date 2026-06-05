@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS shares (
   id             INTEGER PRIMARY KEY,                -- rowid（内部用）
   share_id       TEXT    NOT NULL UNIQUE,            -- 公開ID（URL/手入力用・推測不能の短い文字列）
   user_id        TEXT    NOT NULL,                   -- 作成者 Clerk user ID（作成はログイン必須）
+  name           TEXT    NOT NULL,                   -- 表示名（共有元ソングブック名のコピー・「自分の共有一覧」用）
   scales         TEXT    NOT NULL,                   -- JSON スナップショット（"v" 内包・songbooks.scales と同形式）
   schema_version INTEGER NOT NULL DEFAULT 1,         -- scales JSON のフォーマット版
   scale_count    INTEGER NOT NULL DEFAULT 0,         -- スケール枚数（表示用キャッシュ）
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS shares (
   expires_at     INTEGER NOT NULL,                   -- 自動失効時刻 (ms)。created_at + 既定90日
   CHECK (schema_version >= 1),
   CHECK (scale_count >= 0),
+  CHECK (length(name) BETWEEN 1 AND 100),
   CHECK (expires_at > created_at)
 ) STRICT;
 

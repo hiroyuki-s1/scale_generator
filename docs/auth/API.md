@@ -19,16 +19,19 @@
   ヘッダー）を `CLERK_WEBHOOK_SIGNING_SECRET` で検証する。署名不一致は 400
 - **冪等**: 同じイベントが再送されても安全（既に削除済みなら 0 件削除で 200）
 - **処理**: `type === "user.deleted"` のとき、その `data.id`（= `user_id`）の行を
-  **物理削除**（退会＝データ消去なので論理削除ではなくハード DELETE）
+  **全テーブルから物理削除**（退会＝データ消去なので論理削除ではなくハード DELETE）
 
 ```sql
 DELETE FROM songbooks     WHERE user_id = ?;
 DELETE FROM user_settings WHERE user_id = ?;
+DELETE FROM shares        WHERE user_id = ?;  -- 共有も本人が作ったものは消す
 ```
+
+※ `shares` は公開リンクだが、作成者の退会時は本人データとして削除する（残したい要件が出たら別途検討）。
 
 **レスポンス** `200 OK`
 ```json
-{ "ok": true, "deleted": { "songbooks": 3, "user_settings": 1 } }
+{ "ok": true, "deleted": { "songbooks": 3, "user_settings": 1, "shares": 2 } }
 ```
 
 | ステータス | 意味 |

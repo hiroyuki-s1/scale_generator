@@ -16,7 +16,7 @@ import sys
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIG = ROOT / "migrations" / "0001_create_songbooks_and_settings.sql"
+MIG_DIR = ROOT / "migrations"
 
 passed, failed = [], []
 
@@ -52,18 +52,22 @@ def main():
         print(f"SQLite {sqlite3.sqlite_version} is too old (need >= 3.37 for STRICT).")
         return 1
 
-    sql = MIG.read_text()
+    migrations = sorted(MIG_DIR.glob("*.sql"))
     db = sqlite3.connect(":memory:")
     db.execute("PRAGMA foreign_keys=ON;")
 
-    print("== 1. migration applies ==")
-    try:
-        db.executescript(sql)
-        ok("executescript(0001)")
-    except Exception as e:  # noqa: BLE001
-        bad("executescript(0001)", e)
-        print("FATAL: cannot continue")
+    print("== 1. migrations apply (in order) ==")
+    if not migrations:
+        bad("find migrations", "no *.sql in migrations/")
         return 1
+    for m in migrations:
+        try:
+            db.executescript(m.read_text())
+            ok(f"apply {m.name}")
+        except Exception as e:  # noqa: BLE001
+            bad(f"apply {m.name}", e)
+            print("FATAL: cannot continue")
+            return 1
 
     print("== 2. objects created + STRICT ==")
     objs = dict(db.execute(
@@ -149,6 +153,38 @@ def main():
                lambda d: d.execute("INSERT INTO user_settings(user_id,settings) VALUES('u','{}')"))
     expect_err(db, "user_settings NOT NULL settings",
                lambda d: d.execute("INSERT INTO user_settings(user_id,settings) VALUES('u2',NULL)"))
+
+    print("== 12. shares (0002) ==")
+    sobjs = dict(db.execute(
+        "SELECT name,type FROM sqlite_master WHERE name LIKE 'shares%' OR name LIKE 'idx_shares%'").fetchall())
+    ok("table shares") if sobjs.get("shares") == "table" else bad("table shares", sobjs.get("shares"))
+    sddl = db.execute("SELECT sql FROM sqlite_master WHERE name='shares'").fetchone()
+    ok("shares is STRICT") if sddl and "STRICT" in sddl[0].upper() else bad("shares is STRICT", "no STRICT")
+    (ok("index idx_shares_expires") if "idx_shares_expires" in sobjs
+     else bad("index idx_shares_expires", "missing"))
+    (ok("index idx_shares_user") if "idx_shares_user" in sobjs
+     else bad("index idx_shares_user", "missing"))
+
+    def sins(d, sid="sh1", user="u", c=T0, e=T0 + 1):
+        d.execute("INSERT INTO shares(share_id,user_id,scales,scale_count,created_at,expires_at)"
+                  " VALUES(?,?,?,?,?,?)", (sid, user, '{"v":1,"scales":[]}', 0, c, e))
+
+    expect_ok(db, "insert valid share", lambda d: sins(d))
+    expect_err(db, "reject expires_at <= created_at", lambda d: sins(d, sid="sh_bad", c=T0, e=T0))
+    expect_err(db, "reject duplicate share_id", lambda d: sins(d, sid="sh1", user="u2"))
+    expect_err(db, "reject NULL share_id",
+               lambda d: d.execute("INSERT INTO shares(share_id,user_id,scales,created_at,expires_at)"
+                                   " VALUES(NULL,'u','{}',?,?)", (T0, T0 + 1)))
+    # GET by share_id uses the unique index (seek, not scan)
+    gplan = " | ".join(r[-1] for r in db.execute(
+        "EXPLAIN QUERY PLAN SELECT scales FROM shares WHERE share_id=?", ("sh1",)).fetchall())
+    print("    GET PLAN:", gplan)
+    ok("share GET uses index seek") if "SCAN shares" not in gplan else bad("share GET uses index seek", gplan)
+    # expiry cleanup uses idx_shares_expires
+    eplan = " | ".join(r[-1] for r in db.execute(
+        "EXPLAIN QUERY PLAN SELECT id FROM shares WHERE expires_at < ?", (T0 + 100,)).fetchall())
+    print("    CLEANUP PLAN:", eplan)
+    ok("expiry cleanup uses index") if "idx_shares_expires" in eplan else bad("expiry cleanup uses index", eplan)
 
     print(f"\n==== RESULT: {len(passed)} passed, {len(failed)} failed (SQLite {sqlite3.sqlite_version}) ====")
     return 1 if failed else 0

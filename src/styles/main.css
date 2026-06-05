@@ -209,65 +209,88 @@ body {
 .auth-user-btn { display: flex; align-items: center; }
 .auth-disabled { font-size: 11px; color: var(--text-3); white-space: nowrap; }
 
-/* ── ソングファイル: 編集中スケールのプレビュー（SPEC §6） ── */
-.songfile-edit-preview {
-  max-width: 760px; margin: 8px auto 4px; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: 12px;
-  background: var(--surface); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.05));
+/* ── ソングファイル上部: ソングブックへ保存バー ── */
+.songfile-cloud-bar { max-width: 760px; margin: 10px auto 2px; display: flex; }
+.btn-save-songbook {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 16px; border: none; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), #7c5cff);
+  color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(124,92,255,.28); transition: transform .1s, box-shadow .12s, filter .12s;
 }
-.sfp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.sfp-label {
-  font-size: 10px; font-weight: 700; color: var(--accent);
-  background: var(--accent-dim); padding: 2px 8px; border-radius: 999px; flex-shrink: 0;
-}
-.sfp-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sfp-register {
-  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
-  padding: 6px 12px; border: none; border-radius: 8px;
-  background: #16a34a; color: #fff;
-  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background .12s;
-}
-.sfp-register:hover { background: #15803d; }
-.sfp-fb-wrap { max-height: 130px; overflow: hidden; }
-.sfp-fb-wrap svg.fb { max-height: 130px; }
+.btn-save-songbook:hover { filter: brightness(1.05); box-shadow: 0 4px 16px rgba(124,92,255,.38); }
+.btn-save-songbook:active { transform: scale(.98); }
 
 /* ── ソングブック（クラウド保存）タブ ── */
-.songbook-section { max-width: 760px; margin: 0 auto; padding: 16px 12px; }
-.songbook-locked { text-align: center; padding: 48px 16px; }
-.songbook-locked-icon { font-size: 40px; margin-bottom: 12px; }
-.songbook-locked-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-.songbook-locked-hint { font-size: 13px; color: var(--text-3); margin-bottom: 18px; line-height: 1.6; }
-.songbook-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.songbook-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.songbook-section { max-width: 760px; margin: 0 auto; padding: 18px 14px 40px; }
+
+/* ロック画面（未ログイン）— カード風に */
+.songbook-locked {
+  text-align: center; padding: 40px 24px; margin-top: 8px;
+  border: 1.5px dashed var(--border); border-radius: 18px;
+  background: linear-gradient(160deg, var(--surface), var(--bg));
+}
+.songbook-locked-icon {
+  width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 30px;
+  background: linear-gradient(135deg, var(--accent), #7c5cff); color: #fff;
+  box-shadow: 0 6px 18px rgba(124,92,255,.35);
+}
+.songbook-locked-title { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.songbook-locked-hint { font-size: 13px; color: var(--text-3); margin-bottom: 20px; line-height: 1.7; max-width: 420px; margin-left: auto; margin-right: auto; }
+
+/* ヘッダー */
+.songbook-hdr {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.songbook-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .02em; }
+.songbook-title::before { content: '🎶 '; }
 .btn-songbook-save {
-  padding: 8px 16px; border: 1.5px solid var(--accent); border-radius: 8px;
-  background: var(--accent-dim); color: var(--accent);
-  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+  display: flex; align-items: center; gap: 5px;
+  padding: 9px 16px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #7c5cff); color: #fff;
+  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(124,92,255,.3); transition: filter .12s, transform .1s, box-shadow .12s;
 }
-.btn-songbook-save:hover { background: var(--accent); color: #fff; }
-.btn-songbook-save:disabled { opacity: .5; cursor: default; }
-.songbook-list { display: flex; flex-direction: column; gap: 10px; }
+.btn-songbook-save:hover { filter: brightness(1.06); box-shadow: 0 4px 16px rgba(124,92,255,.42); }
+.btn-songbook-save:active { transform: scale(.97); }
+.btn-songbook-save:disabled { opacity: .5; cursor: default; box-shadow: none; }
+
+/* 一覧カード */
+.songbook-list { display: flex; flex-direction: column; gap: 12px; }
 .songbook-row {
-  display: flex; align-items: stretch; gap: 8px;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
-  overflow: hidden; transition: border-color .12s;
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+  overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  transition: transform .12s, box-shadow .12s, border-color .12s;
 }
-.songbook-row:hover { border-color: #c8bfb5; }
+.songbook-row:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.10); border-color: transparent; }
 .songbook-row-main {
-  flex: 1; text-align: left; border: none; background: transparent; cursor: pointer;
-  padding: 12px 14px; font-family: inherit;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;
+  text-align: left; border: none; background: transparent; cursor: pointer;
+  padding: 14px 16px; font-family: inherit; position: relative;
 }
-.songbook-row-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.songbook-row-meta { font-size: 11px; color: var(--text-3); }
+.songbook-row-main::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px;
+  border-radius: 0 4px 4px 0; background: linear-gradient(var(--accent), #7c5cff); opacity: 0; transition: opacity .12s;
+}
+.songbook-row:hover .songbook-row-main::before { opacity: 1; }
+.songbook-row-name {
+  font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.songbook-row-meta { font-size: 11.5px; color: var(--text-3); }
 .btn-songbook-share {
-  flex-shrink: 0; display: flex; align-items: center; gap: 4px;
-  padding: 0 12px; border: none; border-left: 1px solid var(--border);
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 0 14px; border: none; border-left: 1px solid var(--border);
   background: transparent; color: var(--accent);
-  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+  font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background .12s;
 }
 .btn-songbook-share:hover { background: var(--accent-dim); }
 .btn-songbook-del {
-  flex-shrink: 0; width: 44px; border: none; border-left: 1px solid var(--border);
+  flex-shrink: 0; width: 46px; border: none; border-left: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
   background: transparent; color: var(--text-3); cursor: pointer; transition: all .12s;
 }
 .btn-songbook-del:hover { background: #fff1f0; color: #dc2626; }

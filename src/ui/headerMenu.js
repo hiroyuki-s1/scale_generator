@@ -36,6 +36,7 @@ export function initHeaderMenu(store) {
     else if (act === 'orient-land') store.updateLayout({ orientation: 'landscape' });
     else if (act === 'orient-port') store.updateLayout({ orientation: 'portrait' });
     else if (act === 'reset')   resetBtn?.click();
+    else if (act === 'reload')  { location.reload(); return; }
     close();
   });
 

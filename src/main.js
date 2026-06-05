@@ -30,7 +30,6 @@ import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
 import { initCloud }             from './state/cloudSync.js';
 import { initSongbookTab }       from './ui/songbookTab.js';
-import { initEditPreview }       from './ui/editPreview.js';
 import { initShareUi }           from './ui/shareModal.js';
 import {
   drawFretboardBase,
@@ -281,6 +280,7 @@ const posModeBtn  = document.getElementById('posModeBtn');
 const posResetBtn = document.getElementById('posResetBtn');
 const posModeHint = document.getElementById('posModeHint');
 
+let zoomBeforePosEdit = null;
 function setPosEditMode(on) {
   posEditMode = on;
   posModeBtn?.classList.toggle('active', on);
@@ -288,6 +288,18 @@ function setPosEditMode(on) {
   posResetBtn?.classList.toggle('hidden', !on);
   posModeHint?.classList.toggle('hidden', !on);
   editFbWrapEl.classList.toggle('posmode', on);
+  // 拡大(横スクロール)表示はタップがスクロール扱いになり誤作動するので、
+  // posmode 中は一時的に全体表示へ切替え、抜けたら元に戻す。
+  const isMobile = window.innerWidth <= MOBILE_ZOOM_BREAKPOINT;
+  if (on) {
+    zoomBeforePosEdit = mobileZoomed;
+    if (isMobile && mobileZoomed) toggleMobileZoom();   // → 全体表示
+    if (fbZoomBtn) fbZoomBtn.disabled = true;
+  } else {
+    if (fbZoomBtn) fbZoomBtn.disabled = false;
+    if (isMobile && zoomBeforePosEdit && !mobileZoomed) toggleMobileZoom(); // 拡大へ戻す
+    zoomBeforePosEdit = null;
+  }
 }
 posModeBtn?.addEventListener('click', () => setPosEditMode(!posEditMode));
 posResetBtn?.addEventListener('click', () => {
@@ -517,13 +529,6 @@ initSongbookTab(store, applyCloudSongfile, (book) => shareUi.shareSongbook(book)
 // 起動時の共有URL（?share=<id>）受け取り
 shareUi.checkUrlParam();
 
-// ── ソングファイルタブ上部「編集中スケール」プレビュー（SPEC §6） ──────
-initEditPreview(
-  store,
-  () => titleInputEl.value || localizeTitle(buildTitle(store.get().edit)),
-  () => document.getElementById('registerBtn').click(),
-);
-
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────
 const savedBadgeEl    = document.getElementById('savedBadge');
@@ -626,8 +631,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !fbFullscreen.classList.contains('hidden')) closeFbFullscreen();
 });
 
-// 編集指板クリックで全画面
+// 編集指板クリックで全画面（ポジション編集モード中は無効＝誤爆で全画面が開かない）
 document.getElementById('editFbWrap').addEventListener('click', () => {
+  if (posEditMode) return;
   openFbFullscreen(store.get().edit, titleInputEl.value || buildTitle(store.get().edit));
 });
 

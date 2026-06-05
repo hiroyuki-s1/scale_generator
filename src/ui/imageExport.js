@@ -113,7 +113,8 @@ export async function exportScalePng(svg, snap, scale = IMAGE_EXPORT_SCALE) {
   const { xml, w, h } = serializeBoard(svg, snap);
   if (!xml) throw new Error('SVG のシリアライズに失敗しました');
   const png = await rasterizeToPng(xml, w, h, scale);
-  downloadBlob(png, `${sanitizeFilename(snap.title)}.png`);
+  // ファイル名は画面/画像に出る表示名（ローカライズ後）に合わせる。個別・一括とも同じ。
+  downloadBlob(png, `${sanitizeFilename(localizeTitle(snap.title))}.png`);
 }
 
 /**

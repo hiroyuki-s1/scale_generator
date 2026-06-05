@@ -23,6 +23,8 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
   const emptyEl  = document.getElementById('songbookEmpty');
   const saveBtn  = document.getElementById('songbookSaveBtn');
   const loginBtn = document.getElementById('songbookLoginBtn');
+  const cloudBar = document.getElementById('songfileCloudBar');       // ソングファイルタブ上部
+  const saveTopBtn = document.getElementById('songbookSaveTopBtn');
   if (!tabBtn || !locked || !main) return;
 
   let loggedIn = false;
@@ -30,12 +32,14 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
 
   loginBtn?.addEventListener('click', () => openSignIn());
   saveBtn?.addEventListener('click', saveCurrent);
+  saveTopBtn?.addEventListener('click', saveCurrent);
 
   onAuthChange(user => {
     const was = loggedIn;
     loggedIn = !!user;
-    // ソングブックタブはログイン時のみ表示
+    // ソングブックタブ / ソングファイル上部の保存バーはログイン時のみ表示
     tabBtn.style.display = loggedIn ? '' : 'none';
+    cloudBar?.classList.toggle('hidden', !loggedIn);
     locked.classList.toggle('hidden', loggedIn);
     main.classList.toggle('hidden', !loggedIn);
     if (loggedIn) {
@@ -133,7 +137,7 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
     info.title = 'タップで読み込み（現在のソングファイルは上書きされます）';
     const name = document.createElement('div');
     name.className = 'songbook-row-name';
-    name.textContent = `🎵 ${book.name}`;
+    name.textContent = book.name;
     const meta = document.createElement('div');
     meta.className = 'songbook-row-meta';
     meta.textContent = `${book.scale_count ?? 0}スケール ・ 最終更新 ${fmtDate(book.updated_at)}`;

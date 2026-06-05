@@ -209,6 +209,28 @@ body {
 .auth-user-btn { display: flex; align-items: center; }
 .auth-disabled { font-size: 11px; color: var(--text-3); white-space: nowrap; }
 
+/* ── ソングファイル: 編集中スケールのプレビュー（SPEC §6） ── */
+.songfile-edit-preview {
+  max-width: 760px; margin: 8px auto 4px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.05));
+}
+.sfp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sfp-label {
+  font-size: 10px; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim); padding: 2px 8px; border-radius: 999px; flex-shrink: 0;
+}
+.sfp-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sfp-register {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  padding: 6px 12px; border: none; border-radius: 8px;
+  background: #16a34a; color: #fff;
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background .12s;
+}
+.sfp-register:hover { background: #15803d; }
+.sfp-fb-wrap { max-height: 130px; overflow: hidden; }
+.sfp-fb-wrap svg.fb { max-height: 130px; }
+
 /* ── ソングブック（クラウド保存）タブ ── */
 .songbook-section { max-width: 760px; margin: 0 auto; padding: 16px 12px; }
 .songbook-locked { text-align: center; padding: 48px 16px; }

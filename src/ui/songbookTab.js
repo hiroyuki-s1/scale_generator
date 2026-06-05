@@ -26,18 +26,58 @@ export function initSongbookTab(store, onLoadSongbook) {
   if (!tabBtn || !locked || !main) return;
 
   let loggedIn = false;
+  const IMPORT_OFFERED_KEY = 'sg.v1.songbookImportOffered';
 
   loginBtn?.addEventListener('click', () => openSignIn());
   saveBtn?.addEventListener('click', saveCurrent);
 
   onAuthChange(user => {
+    const was = loggedIn;
     loggedIn = !!user;
     // ソングブックタブはログイン時のみ表示
     tabBtn.style.display = loggedIn ? '' : 'none';
     locked.classList.toggle('hidden', loggedIn);
     main.classList.toggle('hidden', !loggedIn);
-    if (loggedIn) refresh();
+    if (loggedIn) {
+      refresh();
+      if (!was) maybeOfferImport(); // 非ログイン→ログインの遷移時のみ
+    }
   });
+
+  // Phase 5（移行フロー）: 初回ログイン時、ローカルのソングファイルが残っていれば
+  // 一度だけ「ソングブックに保存しますか？」と促す（ログイン前の作業をクラウドへ）。
+  function markImportOffered() {
+    try { localStorage.setItem(IMPORT_OFFERED_KEY, '1'); } catch { /* private mode */ }
+  }
+  function maybeOfferImport() {
+    let already = false;
+    try { already = !!localStorage.getItem(IMPORT_OFFERED_KEY); } catch { /* noop */ }
+    if (already) return;
+    const count = store.get().saved.length;
+    if (count === 0) { markImportOffered(); return; }
+    // サインインモーダルが閉じる猶予を置いてから促す
+    setTimeout(async () => {
+      markImportOffered();
+      if (offline()) return;
+      const ok = window.confirm(
+        `ログイン前に作ったソングファイル（${count}スケール）をソングブックに保存しますか？\n`
+        + 'クラウドに残しておくと別の端末でも呼び出せます。',
+      );
+      if (!ok) return;
+      const name = window.prompt('ソングブック名を入力してください。', '');
+      if (name === null) return;
+      const t = name.trim();
+      if (t === '') { showToast('名前を入力してください'); return; }
+      try {
+        await createSongbook(t, store.get());
+        showToast('ソングブックに保存しました');
+        refresh();
+      } catch (e) {
+        console.error('初回取り込みの保存に失敗:', e);
+        showToast('保存に失敗しました');
+      }
+    }, 600);
+  }
 
   function offline() {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {

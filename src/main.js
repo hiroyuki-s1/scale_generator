@@ -30,6 +30,7 @@ import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
 import { initCloud }             from './state/cloudSync.js';
 import { initSongbookTab }       from './ui/songbookTab.js';
+import { initEditPreview }       from './ui/editPreview.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -510,6 +511,13 @@ initSongbookTab(store, (savedArray) => {
   store.set(s => ({ ...s, saved: savedArray }));
   tabNav.querySelector('[data-tab="saved"]')?.click();
 });
+
+// ── ソングファイルタブ上部「編集中スケール」プレビュー（SPEC §6） ──────
+initEditPreview(
+  store,
+  () => titleInputEl.value || localizeTitle(buildTitle(store.get().edit)),
+  () => document.getElementById('registerBtn').click(),
+);
 
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────

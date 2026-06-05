@@ -29,6 +29,7 @@ import { exportAllScalesPng }    from './ui/imageExport.js';
 import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
 import { initCloud }             from './state/cloudSync.js';
+import { initSongbookTab }       from './ui/songbookTab.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -485,19 +486,29 @@ initCloud();
 const tabNav      = document.getElementById('tabNav');
 const panelEditor = document.getElementById('panelEditor');
 const panelSaved  = document.getElementById('panelSaved');
+const panelSongbook = document.getElementById('panelSongbook');
+const panelsByTab = { editor: panelEditor, saved: panelSaved, songbook: panelSongbook };
 tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
     tabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
-    const goingSaved = btn.dataset.tab === 'saved';
-    panelEditor.classList.toggle('hidden', goingSaved);
-    panelSaved.classList.toggle('hidden', !goingSaved);
-    if (!goingSaved) savedTab.clearNewlyAdded();
-    // スライドアニメーション
-    const panel = goingSaved ? panelSaved : panelEditor;
-    panel.classList.remove('slide-in-left', 'slide-in-right');
-    requestAnimationFrame(() => panel.classList.add(goingSaved ? 'slide-in-right' : 'slide-in-left'));
+    Object.entries(panelsByTab).forEach(([t, p]) => p?.classList.toggle('hidden', t !== tab));
+    if (tab !== 'saved') savedTab.clearNewlyAdded();
+    // スライドアニメーション（エディターは左から、それ以外は右から）
+    const panel = panelsByTab[tab];
+    if (panel) {
+      panel.classList.remove('slide-in-left', 'slide-in-right');
+      requestAnimationFrame(() => panel.classList.add(tab === 'editor' ? 'slide-in-left' : 'slide-in-right'));
+    }
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
+});
+
+// ── ソングブック（クラウド保存）タブ ──────────────────────────────────
+initSongbookTab(store, (savedArray) => {
+  // 読込確定: store.saved を置換 → ソングファイルタブへ
+  store.set(s => ({ ...s, saved: savedArray }));
+  tabNav.querySelector('[data-tab="saved"]')?.click();
 });
 
 

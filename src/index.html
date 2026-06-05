@@ -140,8 +140,11 @@
 <div class="tab-nav" id="tabNav">
   <button class="tab-btn active" data-tab="editor">スケールエディター</button>
   <button class="tab-btn" data-tab="saved">
-    登録スケール
+    ソングファイル
     <span class="tab-badge" id="savedBadge" style="display:none">0</span>
+  </button>
+  <button class="tab-btn" data-tab="songbook" id="songbookTabBtn" style="display:none">
+    ソングブック
   </button>
 </div>
 
@@ -288,6 +291,30 @@
     </div>
   </section>
 </div><!-- /panelSaved -->
+
+<!-- ── ソングブックパネル（クラウド保存・ログイン時のみ） ───────────────── -->
+<div class="tab-panel hidden" id="panelSongbook">
+  <section class="songbook-section">
+    <div class="songbook-locked" id="songbookLocked">
+      <div class="songbook-locked-icon" aria-hidden="true">🔒</div>
+      <div class="songbook-locked-title">ソングブックはログインで使えます</div>
+      <div class="songbook-locked-hint">ソングファイル（登録したスケール一式）に名前を付けてクラウドに保存・呼び出しできます。</div>
+      <button class="btn-login" id="songbookLoginBtn" type="button">ログイン</button>
+    </div>
+    <div class="songbook-main hidden" id="songbookMain">
+      <div class="songbook-hdr">
+        <span class="songbook-title">ソングブック</span>
+        <button class="btn-songbook-save" id="songbookSaveBtn" type="button">＋ 保存</button>
+      </div>
+      <div class="songbook-list" id="songbookList"></div>
+      <div class="songbook-empty hidden" id="songbookEmpty">
+        <div class="songbook-empty-icon">🎵</div>
+        <div class="songbook-empty-title">保存済みのソングブックはありません</div>
+        <div class="songbook-empty-hint">ソングファイルを用意して「＋ 保存」で登録できます。</div>
+      </div>
+    </div>
+  </section>
+</div><!-- /panelSongbook -->
 
 </div><!-- /app-body -->
 

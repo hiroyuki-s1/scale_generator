@@ -27,6 +27,8 @@ import { initInstallPrompt }    from './ui/installPrompt.js';
 import { initReleaseNotes }      from './ui/releaseNotesModal.js';
 import { exportAllScalesPng }    from './ui/imageExport.js';
 import { showToast }             from './ui/toast.js';
+import { initAuthButton }        from './ui/authButton.js';
+import { initCloud }             from './state/cloudSync.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -474,6 +476,10 @@ initInstrumentPicker(
 );
 initInstallPrompt();
 initReleaseNotes(typeof __VERSION__ !== 'undefined' ? __VERSION__ : '');
+
+// ── クラウド認証（Clerk）: 非同期初期化。失敗してもローカル機能は継続。 ──
+initAuthButton(document.getElementById('authSlot'));
+initCloud();
 
 // ── タブナビゲーション ─────────────────────────────────────────────────
 const tabNav      = document.getElementById('tabNav');

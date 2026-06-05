@@ -196,6 +196,19 @@ body {
 }
 .btn-save:hover { background: #15803d; }
 
+/* ── 認証（ログイン/ユーザー）スロット ── */
+.auth-slot { display: flex; align-items: center; flex-shrink: 0; }
+.btn-login {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border: 1.5px solid var(--accent);
+  border-radius: 8px; background: var(--accent-dim); color: var(--accent);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: all .12s; white-space: nowrap;
+}
+.btn-login:hover { background: var(--accent); color: #fff; }
+.auth-user-btn { display: flex; align-items: center; }
+.auth-disabled { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
 /* MORE MENU (⋮) — always shown; on desktop it surfaces release notes,
    on mobile it also surfaces color/reset (hidden from the compact header). */
 .more-trigger {

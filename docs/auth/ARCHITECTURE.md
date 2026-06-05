@@ -119,3 +119,56 @@ localStorage にデータあり？
 | Phase 4 | フロント UI（ログインボタン・モーダル） |
 | Phase 5 | データ同期ロジック（localStorage ↔ D1） |
 | Phase 6 | localStorage → D1 移行フロー |
+
+---
+
+## 8. ローカル開発環境（方針: ローカルのみで開始）
+
+本番 Cloudflare Pages は**手動デプロイ固定**のまま触らない。
+開発は**ローカルで完結**させる（リモート dev/staging は当面立てない）。
+
+### 8.1 ツール
+
+`wrangler` でローカルに Functions + D1 を再現する。Vite の dev server とは別物。
+
+```bash
+# 1) 静的サイト + Functions をローカル起動（ローカルD1=SQLite を自動使用）
+npx wrangler pages dev -- npm run dev
+#   または dist をビルドして:
+npm run build && npx wrangler pages dev dist
+```
+
+- `wrangler pages dev` が `/functions/api/*` を実行し、`--d1` バインディングを
+  **ローカル SQLite（miniflare）** で提供する。クラウドの本番 D1 には触れない
+- 完全オフライン・無料・本番データを汚さない
+
+### 8.2 ローカル D1
+
+```bash
+# ローカルDBにスキーマを適用（--local でローカルのみ）
+npx wrangler d1 execute scale_generator_db --local \
+  --file ./migrations/0001_create_scales_and_settings.sql
+```
+
+- `wrangler.toml` に D1 バインディングを追加（`[[d1_databases]]`）
+- `--local` を付けるとローカル SQLite、付けないと本番 D1。**開発中は必ず `--local`**
+
+### 8.3 Clerk（dev インスタンス）
+
+- Clerk は本番とは別の **Development instance** を使う（テスト用キー）
+- フロントの publishable key は dev 用を使い、Workers 側の secret は
+  `.dev.vars`（gitignore 済み）に置く
+
+```
+# .dev.vars （コミットしない）
+CLERK_SECRET_KEY=sk_test_xxx
+CLERK_PUBLISHABLE_KEY=pk_test_xxx
+```
+
+### 8.4 リモート環境が必要になったら
+
+将来 dev/staging を常設したくなった場合の選択肢（今は採用しない）:
+- **2個目の Pages プロジェクト** … dev 用 D1 + Clerk dev キーで分離
+- **Workers(static assets) へ移行** … `wrangler.toml` の `[env.*]` で名前付き環境
+
+→ 当面は §8.1〜8.3 のローカル開発のみで進める。

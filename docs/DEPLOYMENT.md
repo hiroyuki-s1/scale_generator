@@ -20,7 +20,7 @@
 
 ## ① 初回セットアップ（自動デプロイをオフにする） — 一度だけ
 
-> ステータス: **未実施（あとで実施予定）**。実施したらこの行を「実施済み」に更新する。
+> ステータス: **実施済み**。
 
 Cloudflare の自動デプロイ（`main` push で即公開）を止めて、手動公開に切り替える：
 
@@ -36,10 +36,14 @@ Cloudflare の自動デプロイ（`main` push で即公開）を止めて、手
 
 本番に出したくなったら：
 
-1. 公開したい変更が `main` にマージ済みであることを確認
-2. Cloudflare → `kami-scale-trainer` → **Deployments** タブ
-3. **"Create deployment"** をクリック（最新コミットからビルド＆公開）
-4. ビルド成功を確認 → 本番反映完了
+1. ローカルでビルド
+   ```bash
+   npm run build
+   ```
+2. Cloudflare → **Workers & Pages** → `kami-scale-trainer` → **Deployments** タブ
+3. 右上 **「Create deployment」** をクリック
+4. `dist/` フォルダをドラッグ＆ドロップ → **「Deploy site」**
+5. 本番サイトのフッターのハッシュが最新コミットと一致していれば反映完了
 
 ---
 

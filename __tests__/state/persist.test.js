@@ -268,6 +268,55 @@ describe('snapshotForStorage → restoreFromStorage round-trip', () => {
   });
 });
 
+// ── visiblePositions (表示ポジション) ──
+describe('visiblePositions persistence', () => {
+  it('snapshotForStorage serializes a Set to an array; null stays null', () => {
+    const withSet = makeState({ edit: { ...makeState().edit, visiblePositions: new Set(['g3s0', 'g5s1']) } });
+    const snap = snapshotForStorage(withSet);
+    expect(Array.isArray(snap.edit.visiblePositions)).toBe(true);
+    expect(snap.edit.visiblePositions.sort()).toEqual(['g3s0', 'g5s1']);
+
+    const withNull = makeState({ edit: { ...makeState().edit, visiblePositions: null } });
+    expect(snapshotForStorage(withNull).edit.visiblePositions).toBeNull();
+  });
+
+  it('sanitizeStoredState restores an array to a Set and drops invalid keys', () => {
+    const s = sanitizeStoredState({
+      edit: { visiblePositions: ['g3s0', 'bad', 'g5s1', 42, 'gXsY'] },
+    });
+    expect(s.edit.visiblePositions).toBeInstanceOf(Set);
+    expect([...s.edit.visiblePositions].sort()).toEqual(['g3s0', 'g5s1']);
+  });
+
+  it('non-array, non-null visiblePositions → null (全表示フォールバック)', () => {
+    expect(sanitizeStoredState({ edit: { visiblePositions: 'oops' } }).edit.visiblePositions).toBeNull();
+    expect(sanitizeStoredState({ edit: { visiblePositions: {} } }).edit.visiblePositions).toBeNull();
+  });
+
+  it('missing visiblePositions defaults to null', () => {
+    expect(sanitizeStoredState({ edit: {} }).edit.visiblePositions).toBeNull();
+    expect(sanitizeStoredState({}).edit.visiblePositions).toBeNull();
+  });
+
+  it('round-trips through snapshot → sanitize', () => {
+    const state = makeState({ edit: { ...makeState().edit, visiblePositions: new Set(['g7s2', 'g3s0']) } });
+    const restored = sanitizeStoredState(snapshotForStorage(state));
+    expect([...restored.edit.visiblePositions].sort()).toEqual(['g3s0', 'g7s2']);
+  });
+
+  it('saved scales keep their own visiblePositions', () => {
+    const s = sanitizeStoredState({
+      saved: [{
+        id: 1, title: 't', rootIndex: 0, activeDegrees: [0, 4, 7], presetName: 'maj',
+        mode: 'chord', mask: { enabled: false, min: 1, max: 15 }, degreeColors: [],
+        instrument: 'guitar', visiblePositions: ['g0s0', 'junk'],
+      }],
+    });
+    expect(s.saved[0].visiblePositions).toBeInstanceOf(Set);
+    expect([...s.saved[0].visiblePositions]).toEqual(['g0s0']);
+  });
+});
+
 // ── sanitizeStoredState (バリデーション・clamp・マイグレーション) ──
 describe('sanitizeStoredState — robustness against bad input', () => {
   it('completely empty input → fully defaulted state', () => {

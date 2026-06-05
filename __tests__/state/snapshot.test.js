@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cloneColors, cloneEditAsSnapshot, propagateColors } from '../../src/state/snapshot.js';
+import { cloneColors, cloneEditAsSnapshot, applyColorsToAllSaved } from '../../src/state/snapshot.js';
 
 const COLORS_A = [{ solid: true, color: '#a00000', text: '#fff' }];
 const COLORS_B = [{ solid: false, color: '#0000a0', text: '#000' }];
@@ -49,33 +49,39 @@ describe('cloneEditAsSnapshot', () => {
   });
 });
 
-describe('propagateColors (global color setting)', () => {
-  it('applies new colors to edit AND every saved scale', () => {
+describe('applyColorsToAllSaved (explicit bulk apply)', () => {
+  it('applies colors to every saved scale but NOT to edit', () => {
     const state = makeState();
-    const next = propagateColors(state, COLORS_B);
-    expect(next.edit.degreeColors).toEqual(COLORS_B);
+    const next = applyColorsToAllSaved(state, COLORS_B);
     next.saved.forEach(s => expect(s.degreeColors).toEqual(COLORS_B));
+    // edit は一括反映の対象外（編集中スケールの色はそのまま）
+    expect(next.edit.degreeColors).toBe(COLORS_A);
   });
 
   it('does not mutate the original state', () => {
     const state = makeState();
-    propagateColors(state, COLORS_B);
-    expect(state.edit.degreeColors).toBe(COLORS_A);
+    applyColorsToAllSaved(state, COLORS_B);
     state.saved.forEach(s => expect(s.degreeColors).toBe(COLORS_A));
   });
 
   it('clones colors independently per scale (no shared reference)', () => {
     const state = makeState();
-    const next = propagateColors(state, COLORS_B);
-    expect(next.edit.degreeColors).not.toBe(COLORS_B);
+    const next = applyColorsToAllSaved(state, COLORS_B);
+    expect(next.saved[0].degreeColors).not.toBe(COLORS_B);
     expect(next.saved[0].degreeColors).not.toBe(next.saved[1].degreeColors);
   });
 
   it('preserves other saved fields (id, title, activeDegrees, instrument)', () => {
     const state = makeState();
-    const next = propagateColors(state, COLORS_B);
+    const next = applyColorsToAllSaved(state, COLORS_B);
     expect(next.saved[0].id).toBe(1);
     expect(next.saved[1].instrument).toBe('bass');
     expect([...next.saved[0].activeDegrees]).toEqual([0, 3, 7]);
+  });
+
+  it('empty saved list → no-op clone', () => {
+    const state = { ...makeState(), saved: [] };
+    const next = applyColorsToAllSaved(state, COLORS_B);
+    expect(next.saved).toEqual([]);
   });
 });

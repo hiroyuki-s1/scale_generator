@@ -1,4 +1,5 @@
 import { cloneEditAsSnapshot } from '../state/snapshot.js';
+import { showToast } from './toast.js';
 
 /**
  * 登録ボタン。
@@ -28,18 +29,4 @@ export function initRegisterBtn(store, registerBtn, titleInputEl, options = {}) 
     options.onComplete?.();
     options.onSaved?.(savedId, wasUpdate);
   });
-}
-
-function showToast(msg) {
-  let toast = document.getElementById('appToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'appToast';
-    toast.className = 'app-toast';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
 }

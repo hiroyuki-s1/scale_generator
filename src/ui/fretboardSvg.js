@@ -4,6 +4,7 @@ import {
   STRING_LABELS_GUITAR, STRING_LABELS_BASS,
 } from '../domain/constants.js';
 import { diffFretNotes, noteKey } from '../domain/fretboard.js';
+import { posKey } from '../domain/positionVisibility.js';
 import { DOT_FONT_SIZE_1, DOT_FONT_SIZE_2, DOT_FONT_SIZE_3 } from '../config.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -154,6 +155,25 @@ export function applyFretboardDiff(svgEl, nextScale, prevScale) {
 
   // mask overlay is cheap (1–3 rects) — just remove + re-add
   updateMaskOverlay(svgEl, nextScale);
+
+  // 表示ポジション: 非表示の位置を薄く（印刷/画像では除外）。毎回適用する
+  // （個別タップは activeDegrees を変えないため diff では検知できないので）。
+  applyPositionVisibility(svgEl, nextScale);
+}
+
+/**
+ * `visiblePositions` に基づき、非表示ポジションのドットに `fb-dot-hidden` を付ける。
+ * visiblePositions が null（未設定）なら全ドット表示。Set なら集合外を非表示にする。
+ * 画面では薄く（CSS opacity）、印刷では非表示（@media print）。
+ */
+function applyPositionVisibility(svgEl, scale) {
+  const vis = scale.visiblePositions;
+  const useVis = vis instanceof Set;
+  svgEl.querySelectorAll('[data-pos-key]').forEach(node => {
+    if (node.classList.contains('fb-dot-exit')) return;
+    const hidden = useVis && !vis.has(node.getAttribute('data-pos-key'));
+    node.classList.toggle('fb-dot-hidden', hidden);
+  });
 }
 
 /**
@@ -188,10 +208,11 @@ function appendDot(svgEl, n, colors, sh) {
   const fs = name.length >= 3 ? String(DOT_FONT_SIZE_3) : name.length === 2 ? String(DOT_FONT_SIZE_2) : String(DOT_FONT_SIZE_1);
   const delay = `${(f - SVG.F0) * 22}ms`;
   const pos = noteKey(n);
+  const pkey = posKey(n);
   // Set transform-origin explicitly in SVG user-space coordinates so that
   // scale() animates from the dot centre on all browsers (incl. iOS Safari
   // where transform-box:fill-box is unreliable for <text> elements).
-  const common = { class: 'fb-dot', 'data-deg': deg, 'data-pos': pos,
+  const common = { class: 'fb-dot', 'data-deg': deg, 'data-pos': pos, 'data-pos-key': pkey,
     style: `animation-delay:${delay};transform-origin:${cx}px ${cy}px` };
 
   // Append into the dot-layer group (always last child) so dots render above mask overlays

@@ -2,6 +2,7 @@ import { cloneColors } from './snapshot.js';
 import {
   DEFAULT_COLORS, FRET_START, FRET_END,
 } from '../domain/constants.js';
+import { serializeVisible, deserializeVisible } from '../domain/positionVisibility.js';
 
 const KEY = 'sg.v1.state';
 const DEBOUNCE_MS = 200;
@@ -25,6 +26,8 @@ const editForJson = e => ({
   mask: { ...e.mask },
   degreeColors: cloneColors(e.degreeColors),
   instrument: e.instrument || null,
+  // Set→Array（null は null）。読込時に deserializeVisible で復元。
+  visiblePositions: serializeVisible(e.visiblePositions),
 });
 
 export function snapshotForStorage(state) {
@@ -93,6 +96,7 @@ function sanitizeEdit(raw) {
       mask: { enabled: false, min: FRET_START, max: FRET_END },
       degreeColors: cloneColors(DEFAULT_COLORS),
       instrument: null,
+      visiblePositions: null,
     };
   }
   return {
@@ -103,6 +107,8 @@ function sanitizeEdit(raw) {
     mask: sanitizeMask(raw.mask),
     degreeColors: sanitizeColors(raw.degreeColors),
     instrument: sanitizeInstrument(raw.instrument, null),
+    // 不正キーは除去、配列でも null でもない値は null（全表示）にフォールバック。
+    visiblePositions: deserializeVisible(raw.visiblePositions),
   };
 }
 

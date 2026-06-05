@@ -196,9 +196,10 @@ body {
 }
 .btn-save:hover { background: #15803d; }
 
-/* MOBILE MORE MENU (⋮) — hidden on desktop, shown on mobile via @media block */
+/* MORE MENU (⋮) — always shown; on desktop it surfaces release notes,
+   on mobile it also surfaces color/reset (hidden from the compact header). */
 .more-trigger {
-  display: none;
+  display: flex;
   align-items: center; justify-content: center;
   width: 36px; height: 36px; padding: 0;
   background: var(--surface); border: 1px solid var(--border);
@@ -226,6 +227,32 @@ body {
 .more-item:hover, .more-item:active { background: var(--bg); }
 .more-item-danger { color: #dc2626; }
 .more-item-danger:hover, .more-item-danger:active { background: #fff1f0; }
+/* color/reset have dedicated header buttons on desktop → menu only needs them on mobile */
+@media (min-width: 768px) { .more-item--mobile { display: none; } }
+.more-item-badge {
+  width: 8px; height: 8px; border-radius: 50%; background: #dc2626;
+  margin-left: auto; flex-shrink: 0;
+}
+.more-item-badge.hidden { display: none; }
+/* unread dot on the ⋮ trigger itself */
+.more-trigger { position: relative; }
+.more-trigger.has-unread::after {
+  content: ''; position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 50%; background: #dc2626;
+}
+
+/* ── Release notes list ─────────────────────────────────────────── */
+.release-notes-list { display: flex; flex-direction: column; gap: 14px; padding: 4px 2px; }
+.release-note-item { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.release-note-item:last-child { border-bottom: none; padding-bottom: 0; }
+.release-note-head {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+}
+.release-note-version { font-weight: 700; font-size: 15px; color: var(--accent); }
+.release-note-date { font-size: 12px; color: var(--text-3); }
+.release-note-highlights { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.release-note-highlights li { font-size: 13px; line-height: 1.5; color: var(--text); }
+.release-notes-empty, .release-notes-error { font-size: 13px; color: var(--text-3); padding: 12px 4px; }
 .more-section { padding: 8px 14px 6px; }
 .more-section-label {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -860,6 +887,27 @@ body {
 .deg-display-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
+/* ── 表示ポジション編集 ── */
+.posmode-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.posmode-toggle {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2);
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.posmode-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.posmode-toggle.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.posmode-reset {
+  padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.posmode-reset:hover { border-color: var(--accent); color: var(--accent); }
+.posmode-hint { font-size: 11px; color: var(--text-3); }
+/* posmode 中はドットがタップ対象だと分かるようカーソルを変える */
+.fb-wrap.posmode { cursor: crosshair; }
+.fb-wrap.posmode svg.fb { cursor: crosshair; }
 .deg-picker-btn {
   padding: 6px 12px; flex-shrink: 0;
   border: 1.5px solid var(--border); border-radius: 8px;
@@ -972,6 +1020,42 @@ body {
   flex-shrink: 0; transition: all .12s;
 }
 .btn-edit-saved:hover { background: var(--accent); color: #fff; }
+.btn-image-saved {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1.5px solid var(--border);
+  border-radius: 7px; background: var(--surface); color: var(--text-2);
+  font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer;
+  flex-shrink: 0; transition: all .12s;
+}
+.btn-image-saved:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
+.btn-image-saved:disabled { opacity: .5; cursor: default; }
+.btn-color-saved {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1.5px solid var(--border);
+  border-radius: 7px; background: var(--surface); color: var(--text-2);
+  font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer;
+  flex-shrink: 0; transition: all .12s;
+}
+.btn-color-saved:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
+/* ── 度数カラー: 一括反映行 ── */
+.color-bulk-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.btn-color-bulk {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--accent);
+  border-radius: 9px; background: var(--accent-dim); color: var(--accent);
+  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: all .12s;
+}
+.btn-color-bulk:hover { background: var(--accent); color: #fff; }
+.btn-color-bulk:disabled { opacity: .5; cursor: default; background: var(--surface); color: var(--text-3); border-color: var(--border); }
+.btn-image-bulk {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border: 1.5px solid var(--accent);
+  border-radius: 8px; background: var(--accent-dim); color: var(--accent);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  flex-shrink: 0; transition: all .12s; margin-left: auto;
+}
+.btn-image-bulk:hover { background: var(--accent); color: #fff; }
+.btn-image-bulk:disabled { opacity: .5; cursor: default; }
 .saved-fb-wrap { cursor: pointer; }
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
 /* ── 楽器未選択ヒント (ボタン下に表示) ── */
@@ -1424,6 +1508,10 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .fb-dot-exit {
   animation: dotExit .18s ease-in forwards !important;
 }
+/* 表示ポジション: 非表示にしたドットは画面では薄く（非表示中だと分かる）、
+   印刷では完全に除外する（docs/features/POSITION_VISIBILITY.md）。 */
+.fb-dot-hidden { opacity: .25; }
+@media print { .fb-dot-hidden { display: none !important; } }
 
 .deg-btn:active   { transform: scale(.92); }
 .hdr-btn:active   { transform: scale(.9); }

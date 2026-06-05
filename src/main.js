@@ -7,6 +7,9 @@ import { localizeTitle } from './domain/i18n.js';
 import { createStore } from './state/store.js';
 import { attachPersist, restoreFromStorage } from './state/persist.js';
 import { cloneColors } from './state/snapshot.js';
+import {
+  allActivePositionKeys, toggleVisible, reconcileVisible,
+} from './domain/positionVisibility.js';
 
 import { initKeyPicker }        from './ui/keyPicker.js';
 import { initScalePicker }      from './ui/scalePicker.js';
@@ -21,6 +24,9 @@ import { initPrintCss }                    from './print/printCss.js';
 import { wrapIntoPageGroups, unwrapPageGroups } from './print/pageGroup.js';
 import { initInstrumentPicker } from './ui/instrumentPicker.js';
 import { initInstallPrompt }    from './ui/installPrompt.js';
+import { initReleaseNotes }      from './ui/releaseNotesModal.js';
+import { exportAllScalesPng }    from './ui/imageExport.js';
+import { showToast }             from './ui/toast.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -97,6 +103,7 @@ function defaultState() {
       mask: { enabled: false, min: FRET_START, max: FRET_END },
       degreeColors: cloneColors(DEFAULT_COLORS),
       instrument: null,      // null = 未選択, 'guitar' | 'bass'
+      visiblePositions: null, // null = 全表示（未カスタマイズ）
     },
     saved: [],
     layout: { orientation: 'landscape', cols: 2, rows: 3 },
@@ -107,6 +114,38 @@ function defaultState() {
 
 const store = createStore(restoreFromStorage() || defaultState());
 attachPersist(store);
+
+// ── 表示ポジションの集中リコンサイル ───────────────────────────────────
+// プリセット選択/ルート・楽器変更で表示集合を全アクティブ位置に再構築し、
+// カスタム度数トグルで増減させる（docs/features/POSITION_VISIBILITY.md）。
+// 個別タップ（visiblePositions のみ変化）では再構築しない。各ピッカーを
+// 触らず store 購読1か所で吸収する。
+const setsEqual = (a, b) => {
+  if (a === b) return true;
+  if (!(a instanceof Set) || !(b instanceof Set)) return false;
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+};
+let prevEditForReconcile = store.get().edit;
+// スナップショット読込時はその visiblePositions を尊重し、1サイクルだけ再構築を抑止する。
+let suppressReconcileOnce = false;
+// 自身の書き戻し（updateEdit）による再入で他購読者を二度発火させないためのガード。
+let reconcilingNow = false;
+store.subscribe(s => {
+  if (reconcilingNow) return;
+  const prev = prevEditForReconcile;
+  const next = s.edit;
+  if (prev === next) return;
+  prevEditForReconcile = next;
+  if (suppressReconcileOnce) { suppressReconcileOnce = false; return; }
+  const desired = reconcileVisible(prev, next);
+  if (!setsEqual(desired, next.visiblePositions)) {
+    reconcilingNow = true;
+    store.updateEdit({ visiblePositions: desired });
+    reconcilingNow = false;
+  }
+});
 
 // ── 指板 ──────────────────────────────────────────────────────────────
 const fretboardEl   = document.getElementById('fretboard');
@@ -230,6 +269,42 @@ function toggleMobileZoom() {
 
 if (fbZoomBtn) fbZoomBtn.addEventListener('click', toggleMobileZoom);
 
+// ── 表示ポジション編集モード ──────────────────────────────────────────
+// ON 時: 指板のドットをタップで表示/非表示トグル。OFF 時: 通常操作（タップで全画面）。
+let posEditMode = false;
+const posModeBtn  = document.getElementById('posModeBtn');
+const posResetBtn = document.getElementById('posResetBtn');
+const posModeHint = document.getElementById('posModeHint');
+
+function setPosEditMode(on) {
+  posEditMode = on;
+  posModeBtn?.classList.toggle('active', on);
+  posModeBtn?.setAttribute('aria-pressed', String(on));
+  posResetBtn?.classList.toggle('hidden', !on);
+  posModeHint?.classList.toggle('hidden', !on);
+  editFbWrapEl.classList.toggle('posmode', on);
+}
+posModeBtn?.addEventListener('click', () => setPosEditMode(!posEditMode));
+posResetBtn?.addEventListener('click', () => {
+  // 現在アクティブな全ポジションで再構築（全表示に戻す）
+  store.updateEdit({ visiblePositions: allActivePositionKeys(store.get().edit) });
+});
+
+// capture フェーズで拾い、posmode 中は wrap の click→全画面を抑止する
+fretboardEl.addEventListener('click', e => {
+  if (!posEditMode) return;
+  const node = e.target.closest?.('[data-pos-key]');
+  if (!node) return;
+  e.stopPropagation();
+  const key = node.getAttribute('data-pos-key');
+  const edit = store.get().edit;
+  // 未設定(null)なら全アクティブで材化してからトグル
+  const base = edit.visiblePositions instanceof Set
+    ? edit.visiblePositions
+    : allActivePositionKeys(edit);
+  store.updateEdit({ visiblePositions: toggleVisible(base, key) });
+}, true);
+
 /**
  * store/resize 変化時の指板幅同期。マスク変化時のみ自動スクロール。
  * 幅の数値は src/config.js → MOBILE_EDITOR_FRETBOARD_WIDTH で調整。
@@ -339,15 +414,19 @@ function clearEditMode() {
 }
 
 function loadSnapToEditor(snap) {
-  // degreeColors は読み込まない: 度数カラーはアプリ全体共通の設定で、
-  // スケールごとには持たない（現在のグローバル色を維持）。
+  // degreeColors はスケールごとの個別設定 (docs/features/DEGREE_COLORS.md)。
+  // 読み込み時はそのスケールの色をエディターへ引き継ぐ。
+  // 表示ポジションも読み込んだ値を尊重する（再構築で消さない）。
+  suppressReconcileOnce = true;
   store.updateEdit({
     rootIndex: snap.rootIndex,
     activeDegrees: new Set(snap.activeDegrees),
     presetName: snap.presetName,
     mode: snap.mode,
     mask: { ...snap.mask },
+    degreeColors: cloneColors(snap.degreeColors || DEFAULT_COLORS),
     instrument: snap.instrument || 'guitar',
+    visiblePositions: snap.visiblePositions ? new Set(snap.visiblePositions) : null,
   });
   titleInputEl.value = snap.title;
   userEditedTitle = true;
@@ -361,7 +440,14 @@ document.getElementById('editorModeCancel').addEventListener('click', () => {
   clearEditMode();
 });
 
-const savedTab = initSavedTab(document.getElementById('savedGrid'), store, (state, title) => openFbFullscreen(state, title), loadSnapToEditor);
+const colorModal = initColorModal(store);
+const savedTab = initSavedTab(
+  document.getElementById('savedGrid'),
+  store,
+  (state, title) => openFbFullscreen(state, title),
+  loadSnapToEditor,
+  (id) => colorModal.openForSaved(id),
+);
 
 initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,
@@ -377,7 +463,7 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
     }));
   },
 });
-initColorModal(store, document.getElementById('colorBtn'));
+document.getElementById('colorBtn')?.addEventListener('click', () => colorModal.openForEdit());
 initLayoutPicker(store);
 initHeaderMenu(store);
 initPrintCss(store);
@@ -387,6 +473,7 @@ initInstrumentPicker(
   store,
 );
 initInstallPrompt();
+initReleaseNotes(typeof __VERSION__ !== 'undefined' ? __VERSION__ : '');
 
 // ── タブナビゲーション ─────────────────────────────────────────────────
 const tabNav      = document.getElementById('tabNav');
@@ -418,10 +505,40 @@ function updateSavedCount(n) {
   }
   if (savedSectionHdr) savedSectionHdr.style.display = n > 0 ? '' : 'none';
 }
+const exportAllBtn = document.getElementById('exportAllImagesBtn');
+function updateExportAllBtn(n) {
+  if (exportAllBtn) exportAllBtn.disabled = n === 0;
+}
 updateSavedCount(store.get().saved.length);
+updateExportAllBtn(store.get().saved.length);
 store.subscribe((s, p) => {
   if (p && s.saved.length === p.saved.length) return;
   updateSavedCount(s.saved.length);
+  updateExportAllBtn(s.saved.length);
+});
+
+// ── 画像 一括出力 ──────────────────────────────────────────────────────
+let exportingAll = false;
+exportAllBtn?.addEventListener('click', async () => {
+  if (exportingAll) return;
+  const saved = store.get().saved;
+  if (saved.length === 0) return;
+  exportingAll = true;
+  exportAllBtn.disabled = true;
+  showToast(`画像を出力中… (0/${saved.length})`);
+  try {
+    const { ok, fail } = await exportAllScalesPng(
+      saved,
+      (done, total) => showToast(`画像を出力中… (${done}/${total})`),
+    );
+    showToast(fail > 0 ? `${ok}件出力（${fail}件失敗）` : `${ok}件の画像を出力しました`);
+  } catch (e) {
+    console.error('画像一括出力でエラー:', e);
+    showToast('画像の出力に失敗しました');
+  } finally {
+    exportingAll = false;
+    exportAllBtn.disabled = store.get().saved.length === 0;
+  }
 });
 
 // ── 一括削除ボタン ─────────────────────────────────────────────────────

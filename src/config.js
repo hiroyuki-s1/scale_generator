@@ -79,3 +79,14 @@ export const DOT_FONT_SIZE_2 = 16;
 
 /** 3文字以上の度数ラベル (b13, #11 など) */
 export const DOT_FONT_SIZE_3 = 12;
+
+// ─────────────────────────────────────────────
+// 画像 (PNG) 出力
+// ─────────────────────────────────────────────
+
+/**
+ * SVG→PNG ラスタライズの解像度スケール係数。論理サイズ × この値の canvas に描く。
+ * 大きいほど高精細だが canvas 上限・メモリに注意（3 で実用十分）。
+ * docs/features/IMAGE_EXPORT.md §3.1。
+ */
+export const IMAGE_EXPORT_SCALE = 3;

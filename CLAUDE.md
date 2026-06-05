@@ -50,9 +50,19 @@ R, b9, 9, m3, M3, 11, #11, 5, b13, 13, m7, M7
 - saved スナップショットは楽器が必ず確定 (未選択は `'guitar'` に正規化)
 
 ### 度数カラー (degreeColors)
-- **アプリ全体で共通の一括設定**。スケールごとには持たない
-- 色変更は `propagateColors()` で edit と全 saved に伝播
-- snap をエディタに読み込む際も degreeColors は読み込まない (現在のグローバル色を維持)
+- **スケールごとの個別設定**（[docs/features/DEGREE_COLORS.md](docs/features/DEGREE_COLORS.md) で旧「全体共通」から変更）。
+- 色変更は対象スケール（edit または特定の saved 1件）にのみ反映。**自動伝播しない**。
+- 「一括反映」は `applyColorsToAllSaved(state, colors)` で明示的に全 saved へ上書き（確認ダイアログ必須）。
+- snap をエディタに読み込む際は **その snap の degreeColors を引き継ぐ**（個別設定を保持）。
+- カラー編集 UI: ヘッダ「色」=編集中スケール / 各カード「色」ボタン=その saved スケールを個別編集。
+
+### 表示ポジション (visiblePositions)
+- 異弦同音の表示/非表示。**表示する位置の実体集合** `Set<'g{fret}s{string}'>`。`null`=全表示（既定）。
+- 一次ロジックは `domain/positionVisibility.js`（pure）。更新ルール（プリセット選択で全再構築・
+  度数トグルで増減・個別タップでトグル）は `main.js` の store 購読1か所で集中リコンサイル
+  （`reconcileVisible`）。スナップショット読込時は再構築せず尊重する。
+- 非表示ドットは画面で薄表示（`.fb-dot-hidden` opacity）、印刷・画像出力では除外。
+- 永続化は `serializeVisible`/`deserializeVisible`（Set⇄Array、不正キー除去）。snapshot/persist 対応済み。
 
 ### ローカライズ (i18n)
 - プリセット英名 → カタカナ/記号表記の対訳は `src/domain/i18n.js`
@@ -74,7 +84,7 @@ main.js → orchestrates all
 - `state/store.js` — minimal pub/sub store (get/set/subscribe/updateEdit/updateLayout)。
   listener は `(state, prev)` を受け取り、スライス比較で関心外の更新を早期 return する
 - `state/persist.js` — localStorage read/write (debounce 200ms) + **入力サニタイズ/clamp/マイグレーション**
-- `state/snapshot.js` — edit→保存スナップショットの不変複製、`propagateColors()`
+- `state/snapshot.js` — edit→保存スナップショットの不変複製、`applyColorsToAllSaved()`（旧 `propagateColors`）
 
 ### 設定レイヤー (開発者ノブ) — 直近 pull で導入
 ユーザー設定ではなく **開発者が数値を調整する場所**。2ファイルに集約:

@@ -21,8 +21,9 @@
 
 ## 1. 絶対に守る制約（CLAUDE.md の要約・違反厳禁）
 
-- **ランタイム依存ゼロ**: フレームワーク/外部ライブラリを入れない（Tonal.js/React等も不可）。
+- **ランタイム依存ゼロ（src/）**: フレームワーク/外部ライブラリを入れない（Tonal.js/React等も不可）。
   Pure ES2022 modules + Vanilla。Vite/Vitest/ESLint は開発ツールなのでOK。
+  ※ サーバ側 `functions/`（Pages Functions）は別レイヤーで、Clerk SDK 等のサーバ依存は許容。
 - **TypeScript 不使用**: plain JS + JSDoc。
 - **不変パターン**: state を破壊的変更しない。store は必ず新オブジェクトを返す。
 - **度数表記（厳守）**: `R, b9, 9, m3, M3, 11, #11, 5, b13, 13, m7, M7`。
@@ -156,7 +157,10 @@
 | 項目 | 状態 |
 |------|------|
 | 仕様 md・D1 マイグレーション(0001,0002) | ✅ 完成・sqlite3 で検証済(37項目PASS) |
-| アプリ実装コード（functions/api, 認証UI, 各機能） | ⛔ **未着手**（これから） |
+| **MVP-0 ローカル4機能**（画像出力/度数色個別化/表示ポジション/リリースノート） | ✅ **実装・検証済**（Vitest + Chromium/WebKit ブラウザ確認）|
+| Functions API（functions/api + _lib） | 🟡 **スキャフォールド済**（pure 層 Vitest 済・JWT/WHERE user_id/bind/検証 実装）。実 Clerk/D1 で結合テスト要 |
+| 認証 UI / フロント連携 (Phase 4-5) | ⛔ 未着手（Clerk セットアップ後） |
+| レート制限 / CORS（Cloudflare WAF・`public/_headers`） | ⚠️ デプロイ前に設定（コードでは未強制） |
 | `wrangler.toml` の `database_id` | ⚠️ プレースホルダ。`wrangler d1 create` 後に記入 |
 | `.dev.vars` | ⚠️ 未作成。Clerk dev キーを記入（gitignore 済） |
 | 法務 md（運営者情報・法務確認） | ⚠️ ドラフト。公開前に記入＋確認 |

@@ -118,11 +118,16 @@
     </svg>
   </button>
   <div class="more-menu" id="moreMenu" role="menu">
-    <button class="more-item" data-act="color" role="menuitem">
+    <button class="more-item more-item--mobile" data-act="color" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 2.5 2.5 0 0 0 0-5 .5.5 0 0 1 0-1h.01A9 9 0 0 0 12 3zM3 12a9 9 0 0 1 9-9 9 9 0 1 1-9 9zm5-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
       色設定
     </button>
-    <button class="more-item more-item-danger" data-act="reset" role="menuitem">
+    <button class="more-item" data-act="release-notes" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zM4.5 8a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 2a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 2a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4z"/></svg>
+      リリースノート
+      <span class="more-item-badge hidden" id="releaseNotesBadge" aria-label="新着あり"></span>
+    </button>
+    <button class="more-item more-item--mobile more-item-danger" data-act="reset" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
       保存データをリセット
     </button>
@@ -197,6 +202,16 @@
         </div>
       </div>
 
+      <!-- 表示ポジション編集 (異弦同音の表示/非表示) -->
+      <div class="posmode-row">
+        <button class="posmode-toggle" id="posModeBtn" aria-pressed="false" title="異弦同音のポジションを個別に表示/非表示">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="2.4"/><circle cx="12" cy="8" r="2.4" opacity=".35"/></svg>
+          ポジション編集
+        </button>
+        <button class="posmode-reset hidden" id="posResetBtn" title="全ポジションを表示に戻す">リセット</button>
+        <span class="posmode-hint hidden" id="posModeHint">ドットをタップで表示/非表示</span>
+      </div>
+
       <!-- 度数行: [スケール設定] [拡大/全体] [度数チップ] -->
       <div class="deg-display-row">
         <button class="deg-picker-btn" id="degPickerBtn">スケール設定  設定数：0</button>
@@ -245,6 +260,13 @@
   <section class="saved-section" id="savedSection">
     <div class="saved-section-hdr" id="savedSectionHdr" style="display:none">
       <span class="saved-section-title">登録スケール一覧</span>
+      <button class="btn-image-bulk" id="exportAllImagesBtn" title="登録中の全スケールを画像 (PNG) で書き出す">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+          <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+        </svg>
+        画像一括出力
+      </button>
       <button class="btn-delete" id="deleteAllBtn">
         <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
           <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -347,6 +369,11 @@
       </div>
     </div>
     <div class="color-list" id="colorList"></div>
+    <div class="color-bulk-row">
+      <button class="btn-color-bulk" data-act="bulk" id="colorBulkApplyBtn">
+        現在の色設定をソングファイルの全スケールに適用
+      </button>
+    </div>
   </div>
 </div>
 
@@ -424,6 +451,19 @@
         <button class="alpha-notice-close" id="alphaNoticeClose">了解しました</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── リリースノートモーダル ──────────────────────────────────────── -->
+<div class="modal-overlay" id="releaseNotesModal" role="dialog" aria-modal="true" aria-labelledby="releaseNotesTitle">
+  <div class="color-modal-box">
+    <div class="color-modal-header">
+      <div class="modal-title" id="releaseNotesTitle">リリースノート</div>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="modal-confirm" data-act="close">閉じる</button>
+      </div>
+    </div>
+    <div class="release-notes-list" id="releaseNotesList"></div>
   </div>
 </div>
 

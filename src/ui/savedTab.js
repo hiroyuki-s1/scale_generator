@@ -10,6 +10,8 @@ import {
 import { savedListChanged, colorOnlyUpdate } from '../state/savedList.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
+import { exportSavedScalePng } from './imageExport.js';
+import { showToast } from './toast.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -57,7 +59,7 @@ function updateRestoreBtn() {
   if (restoreEl) restoreEl.classList.toggle('hidden', !localStorage.getItem(WARN_KEY));
 }
 
-export function initSavedTab(container, store, openFullscreen, onEditMode = null) {
+export function initSavedTab(container, store, openFullscreen, onEditMode = null, onColorEdit = null) {
   const emptyEl = document.getElementById('savedEmpty');
   // 直前に描画した saved 配列（位置ごとの参照で再描画要否を判定）
   let lastRendered = [];
@@ -160,7 +162,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   // ── タッチイベント (iOS/Android): touchmove+preventDefault でスクロール抑制 ──
   container.addEventListener('touchstart', e => {
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
+    if (e.target.closest('.btn-edit-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     const t = e.changedTouches[0];
@@ -228,7 +230,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse') return;
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-delete')) return;
+    if (e.target.closest('.btn-edit-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     dragState = {
@@ -282,7 +284,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     lastRendered = [...saved];
     saved.forEach(snap => {
       try {
-        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId));
+        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId, onColorEdit));
       } catch (e) {
         console.warn('savedTab: failed to render card', snap.id, e);
       }
@@ -391,7 +393,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   return { applyEditingHighlight, highlightNewCard, clearNewlyAdded, scrollToCard };
 }
 
-function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
+function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onColorEdit) {
   const snapId = snap.id;
   // colorOnlyUpdate パスはカードを再生成しないため、クリック時に常に最新 snap を参照する
   const liveSnap = () => store.get().saved.find(s => s.id === snapId) ?? snap;
@@ -423,6 +425,31 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   </svg>編集`;
   editBtn.addEventListener('click', () => onEditMode?.(liveSnap()));
 
+  const imageBtn = document.createElement('button');
+  imageBtn.className = 'btn-image-saved';
+  imageBtn.title = '画像 (PNG) で書き出す';
+  imageBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+    <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+  </svg>画像`;
+  imageBtn.addEventListener('click', async () => {
+    imageBtn.disabled = true;
+    try {
+      await exportSavedScalePng(liveSnap());
+    } catch (e) {
+      console.error('画像の出力に失敗しました:', e);
+      showToast('画像の出力に失敗しました');
+    } finally {
+      imageBtn.disabled = false;
+    }
+  });
+
+  const colorBtn = document.createElement('button');
+  colorBtn.className = 'btn-color-saved';
+  colorBtn.title = 'このスケールの色を編集';
+  colorBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 2.5 2.5 0 0 0 0-5 .5.5 0 0 1 0-1h.01A9 9 0 0 0 12 3zM3 12a9 9 0 0 1 9-9 9 9 0 1 1-9 9zm5-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>色`;
+  colorBtn.addEventListener('click', () => onColorEdit?.(snapId));
+
   const del = document.createElement('button');
   del.className = 'btn-delete';
   del.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
@@ -443,6 +470,8 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId) {
   });
 
   hdr.appendChild(editBtn);
+  hdr.appendChild(colorBtn);
+  hdr.appendChild(imageBtn);
   hdr.appendChild(del);
   card.appendChild(hdr);
 

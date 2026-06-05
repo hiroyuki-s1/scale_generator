@@ -1660,13 +1660,13 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .fb-dot-exit {
   animation: dotExit .18s ease-in forwards !important;
 }
-/* 表示ポジション: 非表示にしたドットは画面では薄く（非表示中だと分かる）、
-   印刷では完全に除外する（docs/features/POSITION_VISIBILITY.md）。
-   ※ `.fb-dot` には `animation: dotPop .. both` が掛かっており、`both` の
-   fill-mode で末尾キーフレームの `opacity:1` がカスケード上で勝つため、
-   `!important` で明示的に上書きしないと視覚的に薄くならない (タップしても
-   何も変わらない、と見える)。 */
+/* 表示ポジション (docs/features/POSITION_VISIBILITY.md):
+     - スケールエディター + 全画面表示: 薄く表示 (非表示中だと分かる)
+     - ソングファイル(登録カード) + 印刷: 完全に除外 (薄い表示も不要)
+   `.fb-dot` には `animation: dotPop .. both` が掛かっており、末尾キーフレーム
+   の `opacity:1` がカスケード上で勝つため `!important` 必須。 */
 .fb-dot-hidden { opacity: .25 !important; }
+.saved-card .fb-dot-hidden { display: none !important; }
 @media print { .fb-dot-hidden { display: none !important; } }
 
 .deg-btn:active   { transform: scale(.92); }

@@ -37,6 +37,7 @@ export function snapshotForStorage(state) {
     layout: { ...state.layout },
     activeTab: state.activeTab,
     nextId: state.nextId,
+    songfileTitle: typeof state.songfileTitle === 'string' ? state.songfileTitle : '',
   };
 }
 
@@ -143,6 +144,7 @@ export function sanitizeStoredState(data) {
     layout: sanitizeLayout(data?.layout),
     activeTab: data?.activeTab === 'saved' ? 'saved' : 'edit',
     nextId: isInt(data?.nextId) && data.nextId >= 1 ? data.nextId : 1,
+    songfileTitle: typeof data?.songfileTitle === 'string' ? data.songfileTitle.slice(0, 100) : '',
   };
 }
 

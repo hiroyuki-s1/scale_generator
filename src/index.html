@@ -274,9 +274,10 @@
 
 <!-- ── 登録スケールパネル ─────────────────────────────────────────── -->
 <div class="tab-panel hidden" id="panelSaved">
-  <!-- ソングファイル上部: 今のソングファイルをソングブック(クラウド)へ保存（ログイン時のみ） -->
-  <div class="songfile-cloud-bar hidden" id="songfileCloudBar">
-    <button class="btn-save-songbook" id="songbookSaveTopBtn" type="button">
+  <!-- ソングファイル上部: タイトル(任意・いつでも編集可) + クラウド保存(ログイン時) -->
+  <div class="songfile-top" id="songfileTop">
+    <input class="songfile-title-input" id="songfileTitleInput" placeholder="ソングファイル名（任意）" maxlength="100" autocomplete="off" spellcheck="false">
+    <button class="btn-save-songbook" id="songbookSaveTopBtn" type="button" style="display:none">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
       ソングブックに保存
     </button>
@@ -323,7 +324,7 @@
     <div class="songbook-main hidden" id="songbookMain">
       <div class="songbook-hdr">
         <span class="songbook-title">ソングブック</span>
-        <button class="btn-songbook-save" id="songbookSaveBtn" type="button">＋ 保存</button>
+        <span class="songbook-hdr-hint">ソングファイルタブの「ソングブックに保存」から追加できます</span>
       </div>
       <div class="songbook-list" id="songbookList"></div>
       <div class="songbook-empty hidden" id="songbookEmpty">

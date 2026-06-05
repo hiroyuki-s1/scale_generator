@@ -118,7 +118,7 @@ export function initShareUi(store, onLoadSongbook) {
       '共有されたソングファイルを読み込みます。\n現在編集中のソングファイルは上書きされます。\nよろしいですか？',
     );
     if (!ok) return;
-    onLoadSongbook(cloudToSongfile(full.scales));
+    onLoadSongbook(cloudToSongfile(full.scales), full.name);
     showToast('共有を読み込みました');
   }
 

@@ -21,25 +21,22 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
   const main     = document.getElementById('songbookMain');
   const listEl   = document.getElementById('songbookList');
   const emptyEl  = document.getElementById('songbookEmpty');
-  const saveBtn  = document.getElementById('songbookSaveBtn');
   const loginBtn = document.getElementById('songbookLoginBtn');
-  const cloudBar = document.getElementById('songfileCloudBar');       // ソングファイルタブ上部
-  const saveTopBtn = document.getElementById('songbookSaveTopBtn');
+  const saveTopBtn = document.getElementById('songbookSaveTopBtn'); // ソングファイルタブ上部の保存
   if (!tabBtn || !locked || !main) return;
 
   let loggedIn = false;
   const IMPORT_OFFERED_KEY = 'sg.v1.songbookImportOffered';
 
   loginBtn?.addEventListener('click', () => openSignIn());
-  saveBtn?.addEventListener('click', saveCurrent);
   saveTopBtn?.addEventListener('click', saveCurrent);
 
   onAuthChange(user => {
     const was = loggedIn;
     loggedIn = !!user;
-    // ソングブックタブ / ソングファイル上部の保存バーはログイン時のみ表示
+    // ソングブックタブ / ソングファイル上部の保存ボタンはログイン時のみ表示
     tabBtn.style.display = loggedIn ? '' : 'none';
-    cloudBar?.classList.toggle('hidden', !loggedIn);
+    if (saveTopBtn) saveTopBtn.style.display = loggedIn ? '' : 'none';
     locked.classList.toggle('hidden', loggedIn);
     main.classList.toggle('hidden', !loggedIn);
     if (loggedIn) {
@@ -171,12 +168,12 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
     // SPEC: 確認＋名前入力。MVP は prompt（既存も confirm/alert を使用）。
     const name = window.prompt(
       `現在のソングファイル（${count}スケール）をソングブックに保存します。\n名前を入力してください。`,
-      '',
+      store.get().songfileTitle || '',
     );
     if (name === null) return;            // キャンセル
     const trimmed = name.trim();
     if (trimmed === '') { showToast('名前を入力してください'); return; }
-    saveBtn.disabled = true;
+    if (saveTopBtn) saveTopBtn.disabled = true;
     try {
       await createSongbook(trimmed, store.get());
       showToast('ソングブックに保存しました');
@@ -185,7 +182,7 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
       console.error('ソングブック保存に失敗:', e);
       showToast(e.status === 400 ? (e.message || '保存できません') : '保存に失敗しました');
     } finally {
-      saveBtn.disabled = false;
+      if (saveTopBtn) saveTopBtn.disabled = false;
     }
   }
 
@@ -199,7 +196,7 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
       // 取得成功を確定してからローカルを書き換える（途中失敗でデータ喪失しない）
       const full = await getSongbook(book.public_id);
       const savedArray = cloudToSongfile(full.scales);
-      onLoadSongbook(savedArray);
+      onLoadSongbook(savedArray, book.name); // ソングファイル名にソングブック名を反映
       showToast(`「${book.name}」を読み込みました`);
     } catch (e) {
       console.error('ソングブック読み込みに失敗:', e);

@@ -113,6 +113,7 @@ function defaultState() {
     layout: { orientation: 'landscape', cols: 2, rows: 3 },
     activeTab: 'edit',
     nextId: 1,
+    songfileTitle: '',   // ソングファイル全体の名前（任意・いつでも編集可）
   };
 }
 
@@ -307,13 +308,30 @@ posResetBtn?.addEventListener('click', () => {
   store.updateEdit({ visiblePositions: allActivePositionKeys(store.get().edit) });
 });
 
-// capture フェーズで拾い、posmode 中は wrap の click→全画面を抑止する
+/** クリック座標に最も近いドットのキーを返す（ドット間に落ちても拾えるよう近傍許容）。 */
+function nearestDotKey(clientX, clientY) {
+  let bestKey = null;
+  let bestDist = Infinity;
+  fretboardEl.querySelectorAll('circle[data-pos-key]').forEach(c => {
+    const r = c.getBoundingClientRect();
+    if (r.width === 0) return;
+    const dx = clientX - (r.left + r.width / 2);
+    const dy = clientY - (r.top + r.height / 2);
+    const d = Math.hypot(dx, dy);
+    if (d < bestDist) { bestDist = d; bestKey = c.getAttribute('data-pos-key'); }
+  });
+  // しきい値: ドット直径ぶん程度まで許容（指/マウスのズレを吸収）
+  return bestDist <= 44 ? bestKey : null;
+}
+
+// capture フェーズで拾い、posmode 中は wrap の click→全画面を必ず抑止する
 fretboardEl.addEventListener('click', e => {
   if (!posEditMode) return;
-  const node = e.target.closest?.('[data-pos-key]');
-  if (!node) return;
   e.stopPropagation();
-  const key = node.getAttribute('data-pos-key');
+  // 直接ヒット → そのドット。外していても近傍のドットを拾う。
+  const direct = e.target.closest?.('[data-pos-key]');
+  const key = direct ? direct.getAttribute('data-pos-key') : nearestDotKey(e.clientX, e.clientY);
+  if (!key) return;
   const edit = store.get().edit;
   // 未設定(null)なら全アクティブで材化してからトグル
   const base = edit.visiblePositions instanceof Set
@@ -520,14 +538,31 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ── ソングブック（クラウド保存）/ 共有 ────────────────────────────────
 // 読込確定の共通処理: store.saved を置換 → ソングファイルタブへ。
-const applyCloudSongfile = (savedArray) => {
-  store.set(s => ({ ...s, saved: savedArray }));
+const applyCloudSongfile = (savedArray, title) => {
+  store.set(s => ({
+    ...s,
+    saved: savedArray,
+    songfileTitle: typeof title === 'string' ? title : s.songfileTitle,
+  }));
   tabNav.querySelector('[data-tab="saved"]')?.click();
 };
 const shareUi = initShareUi(store, applyCloudSongfile);
 initSongbookTab(store, applyCloudSongfile, (book) => shareUi.shareSongbook(book));
 // 起動時の共有URL（?share=<id>）受け取り
 shareUi.checkUrlParam();
+
+// ── ソングファイル名（任意・いつでも編集可・localStorage 永続） ──────────
+const songfileTitleEl = document.getElementById('songfileTitleInput');
+if (songfileTitleEl) {
+  songfileTitleEl.value = store.get().songfileTitle || '';
+  songfileTitleEl.addEventListener('input', () => {
+    store.set(s => ({ ...s, songfileTitle: songfileTitleEl.value }));
+  });
+  store.subscribe((s, p) => {
+    if (p && s.songfileTitle === p.songfileTitle) return;
+    if (document.activeElement !== songfileTitleEl) songfileTitleEl.value = s.songfileTitle || '';
+  });
+}
 
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────

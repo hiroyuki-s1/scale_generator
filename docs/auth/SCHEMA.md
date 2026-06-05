@@ -1,11 +1,20 @@
 # D1 データベーススキーマ
 
+> ⚠️ **このドキュメントの `scales` テーブルは旧設計（スケール個別をD1同期）であり、
+> 現行方針では採用しない。** 現行は「ソングファイルは localStorage、ログインユーザーが
+> 丸ごと保存したスナップショットだけ `songbooks` テーブルに持つ」方式。
+> 実際に作成する D1 テーブルは [songbook/SCHEMA.md](../songbook/SCHEMA.md) の
+> `songbooks` ＋ 本ファイルの `user_settings`。マイグレーションは
+> **`migrations/0001_create_songbooks_and_settings.sql`**。
+> 以下の `scales` 定義は将来「スケール個別同期」を再導入する場合の参考として残す。
+
 ## テーブル一覧
 
-| テーブル | 用途 |
-|---------|------|
-| `scales` | 登録スケール（既存の localStorage saved[] に対応） |
-| `user_settings` | ユーザーごとの印刷レイアウト設定 |
+| テーブル | 用途 | 現行採用 |
+|---------|------|---------|
+| `songbooks` | ソングファイルのスナップショット（→ songbook/SCHEMA.md） | ✅ |
+| `user_settings` | ユーザーごとの印刷レイアウト設定 | ✅ |
+| `scales` | 登録スケール個別同期（旧設計・参考） | ⛔ 現行では未採用 |
 
 ※ ユーザー管理（users / sessions）は Clerk が担うため D1 には持たない。
 
@@ -61,12 +70,16 @@ CREATE TABLE user_settings (
 
 ## マイグレーションファイル
 
+現行マイグレーションは `songbooks` ＋ `user_settings` を作る
+**`migrations/0001_create_songbooks_and_settings.sql`**（→ [songbook/SCHEMA.md](../songbook/SCHEMA.md)）。
+下記の `scales` を含む定義は旧設計の参考。
+
 ```
 migrations/
-└── 0001_create_scales_and_settings.sql
+└── 0001_create_songbooks_and_settings.sql   # 現行（songbooks + user_settings）
 ```
 
-### 0001_create_scales_and_settings.sql
+### （参考・旧設計）scales + user_settings
 
 ```sql
 CREATE TABLE scales (

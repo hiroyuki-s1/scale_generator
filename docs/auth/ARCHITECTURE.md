@@ -147,7 +147,7 @@ npm run build && npx wrangler pages dev dist
 ```bash
 # ローカルDBにスキーマを適用（--local でローカルのみ）
 npx wrangler d1 execute scale_generator_db --local \
-  --file ./migrations/0001_create_scales_and_settings.sql
+  --file ./migrations/0001_create_songbooks_and_settings.sql
 ```
 
 - `wrangler.toml` に D1 バインディングを追加（`[[d1_databases]]`）

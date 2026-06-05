@@ -30,6 +30,10 @@ releases/
 *.html
 !index.html
 
+# Cloudflare wrangler (ローカル D1/状態・秘密鍵)
+.wrangler/
+.dev.vars
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,0 +1,10 @@
+# ローカル開発用シークレットのテンプレート
+# このファイルをコピーして `.dev.vars` を作る（.dev.vars は gitignore 済み・コミット禁止）:
+#   cp .dev.vars.example .dev.vars
+#
+# Clerk は本番とは別の Development instance のキーを使う。
+# 値は Clerk ダッシュボード > API Keys から取得する。
+
+# （実値の例: sk_test_ で始まる文字列。下はダミーなので必ず自分のキーに置き換える）
+CLERK_SECRET_KEY=YOUR_CLERK_SECRET_KEY_HERE
+CLERK_PUBLISHABLE_KEY=YOUR_CLERK_PUBLISHABLE_KEY_HERE

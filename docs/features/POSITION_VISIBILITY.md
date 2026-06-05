@@ -64,7 +64,17 @@
 }
 ```
 
-キー形式: `g{fret}s{string}` （fret=フレット番号, string=弦番号 0始まり）
+キー形式: `g{fret}s{string}` （fret=フレット番号, string=弦番号 0始まり）。
+1キー = 指板上の1ドット（弦×フレット）を一意に指す。**非表示にした位置だけ**を持つ（差分管理）。
+
+### 実装メモ（保存経路で必ず対応）
+
+- `state/snapshot.js` の `cloneEditAsSnapshot()` に `hiddenPositions: new Set(edit.hiddenPositions)` を追加する
+  （現状は未対応。色 `degreeColors` と同様にスケール単位で複製する）。
+- localStorage / D1(ソングブック) は JSON なので **Set ⇄ Array** を変換する:
+  保存時 `Array.from(set)`、読込時 `new Set(arr)`。型不整合時は空 `Set` にフォールバック。
+- `persist.js` の読込サニタイズで `/^g\d+s\d+$/` に合致しないキーは破棄（破損データ対策）。
+- 楽器（guitar/bass）で弦数が違うため、範囲外の弦・フレットのキーは描画時に無視する。
 
 ---
 

@@ -58,23 +58,37 @@ CREATE INDEX idx_songbooks_user_list
   "v": 1,
   "scales": [
     {
-      "title": "C メジャーペンタ",
-      "root_index": 0,
-      "active_degrees": [0, 2, 4, 7, 9],
-      "preset_name": "Major Penta",
+      "title": "G メジャー",
+      "root_index": 7,
+      "active_degrees": [0, 2, 4, 5, 7, 9, 11],
+      "preset_name": "Ionian",
       "mode": "scale",
       "mask": { "enabled": false, "min": 0, "max": 21 },
-      "degree_colors": [],
       "instrument": "guitar",
-      "hidden_positions": []
+
+      "degree_colors": [
+        { "solid": true,  "color": "#d92b2b", "text": "#ffffff" },
+        { "solid": false, "color": "#1c1c1c", "text": "#1c1c1c" },
+        { "solid": false, "color": "#1c1c1c", "text": "#1c1c1c" }
+        /* … 全12要素。度数インデックス順 R, b9, 9, m3, M3, 11, #11, 5, b13, 13, m7, M7 */
+      ],
+
+      "hidden_positions": ["g3s0"]
     }
   ]
 }
 ```
 
 - `id` / `sort_order` は localStorage 管理のため含まない（配列順＝表示順）
-- `hidden_positions` は異弦同音の非表示ポジション（→ [features/POSITION_VISIBILITY.md](../features/POSITION_VISIBILITY.md)）
-- `degree_colors` はスケールごとの度数色（→ [features/DEGREE_COLORS.md](../features/DEGREE_COLORS.md)）
+- **`degree_colors`**: スケールごとの度数色（→ [features/DEGREE_COLORS.md](../features/DEGREE_COLORS.md)）。
+  **12要素固定**の配列で、添字が度数インデックス（0=R … 11=M7）。各要素は
+  `{ "solid": boolean, "color": "#rrggbb", "text": "#rrggbb" }`。
+  一次ソースは [src/domain/constants.js](../../src/domain/constants.js) の `DEFAULT_COLORS`。
+- **`hidden_positions`**: 異弦同音の**非表示ポジション**（→ [features/POSITION_VISIBILITY.md](../features/POSITION_VISIBILITY.md)）。
+  弦×フレットを一意に表すキー **`g{fret}s{string}`** の配列（`fret`=フレット番号, `string`=弦番号 0始まり）。
+  **「非表示にした位置だけ」を列挙**する（大半は表示なので差分だけ持つ）。
+  例 `"g3s0"` = 0弦・3フレットだけ非表示。同じ音名が別の弦にもあっても、列挙した位置だけが隠れる。
+  ランタイムでは `Set`、保存時に `Array.from()`、読込時に `new Set()` で相互変換する。
 
 ### バージョン移行の指針
 

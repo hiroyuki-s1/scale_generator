@@ -15,7 +15,7 @@ import { showToast } from './toast.js';
  * @param {object} store
  * @param {(savedArray:Array)=>void} onLoadSongbook 読込確定時：store.saved を置換しタブ切替
  */
-export function initSongbookTab(store, onLoadSongbook) {
+export function initSongbookTab(store, onLoadSongbook, onShare = null) {
   const tabBtn   = document.getElementById('songbookTabBtn');
   const locked   = document.getElementById('songbookLocked');
   const main     = document.getElementById('songbookMain');
@@ -141,6 +141,12 @@ export function initSongbookTab(store, onLoadSongbook) {
     info.appendChild(meta);
     info.addEventListener('click', () => loadBook(book));
 
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'btn-songbook-share';
+    shareBtn.title = '共有リンク/IDを発行';
+    shareBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/></svg>共有`;
+    shareBtn.addEventListener('click', e => { e.stopPropagation(); onShare?.(book); });
+
     const del = document.createElement('button');
     del.className = 'btn-songbook-del';
     del.title = '削除';
@@ -148,6 +154,7 @@ export function initSongbookTab(store, onLoadSongbook) {
     del.addEventListener('click', e => { e.stopPropagation(); deleteBook(book, row); });
 
     row.appendChild(info);
+    if (onShare) row.appendChild(shareBtn);
     row.appendChild(del);
     return row;
   }

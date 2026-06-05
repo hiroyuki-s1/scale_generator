@@ -150,3 +150,25 @@ export async function deleteSongbook(publicId) {
     method: 'DELETE',
   }));
 }
+
+// ── 共有（shares・SHARE.md） ───────────────────────────────────────────
+/** ソングブックを共有化（スナップショット複製）。{ share_id, url, name, expires_at } を返す。 */
+export async function createShare(songbookId) {
+  return asJsonOrThrow(await authedFetch('api/shares', {
+    method: 'POST', body: JSON.stringify({ songbook_id: songbookId }),
+  }));
+}
+/** 共有の受け取り（公開・認証不要）。失効/不正は 404。 */
+export async function getShare(shareId) {
+  return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`));
+}
+/** 自分の有効な共有一覧。 */
+export async function listMyShares() {
+  return asJsonOrThrow(await authedFetch('api/shares/mine'));
+}
+/** 共有の取り消し（即失効）。 */
+export async function revokeShare(shareId) {
+  return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`, {
+    method: 'DELETE',
+  }));
+}

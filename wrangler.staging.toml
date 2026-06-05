@@ -1,0 +1,26 @@
+# 検証用（staging）Cloudflare Pages プロジェクト設定。
+# 本番 (wrangler.toml / kami-scale-trainer / kami_db) とは完全に分離。
+#
+# 使い方:
+#   # スキーマ適用（リモート staging D1）
+#   npx wrangler d1 migrations apply kami_db_staging --remote --config wrangler.staging.toml
+#   # デプロイ（staging Pages へ）
+#   npm run build
+#   npx wrangler pages deploy dist --project-name kami-scale-trainer-staging --config wrangler.staging.toml
+#
+# Clerk は dev インスタンス（set-turkey-55）を流用。staging の *.pages.dev ドメインを
+# Clerk 許可ドメインに追加すること。env（CLERK_*）は Pages プロジェクト側に設定する。
+
+name = "kami-scale-trainer-staging"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kami_db_staging"
+database_id = "3ab1441f-8d9b-4d6c-aa5c-5462173dcad1"
+
+# Clerk（dev インスタンス）。どちらも公開情報なので [vars] に直書きでよい
+# （SECRET は現状のサーバ JWT 検証=JWKS 方式では未使用）。
+[vars]
+CLERK_ISSUER = "https://set-turkey-55.clerk.accounts.dev"
+CLERK_PUBLISHABLE_KEY = "pk_test_c2V0LXR1cmtleS01NS5jbGVyay5hY2NvdW50cy5kZXYk"

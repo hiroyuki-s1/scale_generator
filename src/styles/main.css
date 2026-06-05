@@ -259,11 +259,54 @@ body {
 }
 .songbook-row-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
 .songbook-row-meta { font-size: 11px; color: var(--text-3); }
+.btn-songbook-share {
+  flex-shrink: 0; display: flex; align-items: center; gap: 4px;
+  padding: 0 12px; border: none; border-left: 1px solid var(--border);
+  background: transparent; color: var(--accent);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.btn-songbook-share:hover { background: var(--accent-dim); }
 .btn-songbook-del {
   flex-shrink: 0; width: 44px; border: none; border-left: 1px solid var(--border);
   background: transparent; color: var(--text-3); cursor: pointer; transition: all .12s;
 }
 .btn-songbook-del:hover { background: #fff1f0; color: #dc2626; }
+
+/* ── 共有モーダル ── */
+.share-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.share-row-label {
+  flex-shrink: 0; width: 36px; font-size: 11px; font-weight: 700; color: var(--text-3);
+}
+.share-row-input {
+  flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg); color: var(--text); font-size: 12px; font-family: monospace;
+}
+.share-copy {
+  flex-shrink: 0; padding: 8px 12px; border: 1.5px solid var(--accent); border-radius: 7px;
+  background: var(--accent-dim); color: var(--accent);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.share-copy:hover { background: var(--accent); color: #fff; }
+.share-expiry { font-size: 11px; color: var(--text-3); margin: 8px 0 0; }
+.share-receive-input {
+  width: 100%; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 13px; font-family: monospace; box-sizing: border-box;
+}
+.share-manage-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; }
+.share-manage-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+}
+.share-manage-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.share-manage-meta { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.btn-share-revoke {
+  flex-shrink: 0; padding: 6px 12px; border: 1.5px solid #fca5a5; border-radius: 7px;
+  background: #fff1f0; color: #dc2626;
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.btn-share-revoke:hover { background: #dc2626; color: #fff; }
+.btn-share-revoke:disabled { opacity: .5; cursor: default; }
+.share-manage-empty, .share-manage-loading { font-size: 13px; color: var(--text-3); padding: 16px; text-align: center; }
 .songbook-empty { text-align: center; padding: 40px 16px; }
 .songbook-empty-icon { font-size: 34px; margin-bottom: 10px; }
 .songbook-empty-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }

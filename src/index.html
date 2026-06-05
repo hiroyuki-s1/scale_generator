@@ -129,6 +129,14 @@
       リリースノート
       <span class="more-item-badge hidden" id="releaseNotesBadge" aria-label="新着あり"></span>
     </button>
+    <button class="more-item" data-act="share-receive" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/></svg>
+      IDから読み込み
+    </button>
+    <button class="more-item more-item--auth" data-act="share-manage" role="menuitem" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
+      共有を管理
+    </button>
     <button class="more-item more-item--mobile more-item-danger" data-act="reset" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
       保存データをリセット
@@ -507,6 +515,53 @@
       </div>
     </div>
     <div class="release-notes-list" id="releaseNotesList"></div>
+  </div>
+</div>
+
+<!-- ── 共有: 結果（URL/ID） ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="shareResultModal" role="dialog" aria-modal="true" aria-labelledby="shareResultTitle">
+  <div class="modal-box">
+    <div class="modal-title" id="shareResultTitle">共有</div>
+    <div class="share-row">
+      <span class="share-row-label">URL</span>
+      <input class="share-row-input" id="shareUrlInput" readonly>
+      <button class="share-copy" data-copy="url" type="button">コピー</button>
+    </div>
+    <div class="share-row">
+      <span class="share-row-label">ID</span>
+      <input class="share-row-input" id="shareIdInput" readonly>
+      <button class="share-copy" data-copy="id" type="button">コピー</button>
+    </div>
+    <p class="share-expiry" id="shareExpiry"></p>
+    <div class="modal-actions">
+      <button class="modal-confirm" data-act="close" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 共有: IDから読み込み（受け取り・ログイン不要） ─────────────────── -->
+<div class="modal-overlay" id="shareReceiveModal" role="dialog" aria-modal="true" aria-labelledby="shareReceiveTitle">
+  <div class="modal-box">
+    <div class="modal-title" id="shareReceiveTitle">IDから読み込み</div>
+    <div class="modal-body">共有された ID または URL を貼り付けてください。</div>
+    <input class="share-receive-input" id="shareReceiveInput" placeholder="共有ID または URL" autocomplete="off" spellcheck="false">
+    <div class="modal-actions">
+      <button class="modal-cancel" data-act="cancel" type="button">キャンセル</button>
+      <button class="modal-confirm" data-act="load" type="button">読み込み</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 共有: 管理（自分の共有一覧・取り消し） ───────────────────────── -->
+<div class="modal-overlay" id="shareManageModal" role="dialog" aria-modal="true" aria-labelledby="shareManageTitle">
+  <div class="color-modal-box">
+    <div class="color-modal-header">
+      <div class="modal-title" id="shareManageTitle">共有を管理</div>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="modal-confirm" data-act="close" type="button">閉じる</button>
+      </div>
+    </div>
+    <div class="share-manage-list" id="shareManageList"></div>
   </div>
 </div>
 

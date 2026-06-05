@@ -31,6 +31,7 @@ import { initAuthButton }        from './ui/authButton.js';
 import { initCloud }             from './state/cloudSync.js';
 import { initSongbookTab }       from './ui/songbookTab.js';
 import { initEditPreview }       from './ui/editPreview.js';
+import { initShareUi }           from './ui/shareModal.js';
 import {
   drawFretboardBase,
   applyFretboardDiff,
@@ -505,12 +506,16 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ── ソングブック（クラウド保存）タブ ──────────────────────────────────
-initSongbookTab(store, (savedArray) => {
-  // 読込確定: store.saved を置換 → ソングファイルタブへ
+// ── ソングブック（クラウド保存）/ 共有 ────────────────────────────────
+// 読込確定の共通処理: store.saved を置換 → ソングファイルタブへ。
+const applyCloudSongfile = (savedArray) => {
   store.set(s => ({ ...s, saved: savedArray }));
   tabNav.querySelector('[data-tab="saved"]')?.click();
-});
+};
+const shareUi = initShareUi(store, applyCloudSongfile);
+initSongbookTab(store, applyCloudSongfile, (book) => shareUi.shareSongbook(book));
+// 起動時の共有URL（?share=<id>）受け取り
+shareUi.checkUrlParam();
 
 // ── ソングファイルタブ上部「編集中スケール」プレビュー（SPEC §6） ──────
 initEditPreview(

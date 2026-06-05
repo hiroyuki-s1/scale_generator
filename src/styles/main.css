@@ -1661,8 +1661,12 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   animation: dotExit .18s ease-in forwards !important;
 }
 /* 表示ポジション: 非表示にしたドットは画面では薄く（非表示中だと分かる）、
-   印刷では完全に除外する（docs/features/POSITION_VISIBILITY.md）。 */
-.fb-dot-hidden { opacity: .25; }
+   印刷では完全に除外する（docs/features/POSITION_VISIBILITY.md）。
+   ※ `.fb-dot` には `animation: dotPop .. both` が掛かっており、`both` の
+   fill-mode で末尾キーフレームの `opacity:1` がカスケード上で勝つため、
+   `!important` で明示的に上書きしないと視覚的に薄くならない (タップしても
+   何も変わらない、と見える)。 */
+.fb-dot-hidden { opacity: .25 !important; }
 @media print { .fb-dot-hidden { display: none !important; } }
 
 .deg-btn:active   { transform: scale(.92); }

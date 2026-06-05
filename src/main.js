@@ -289,16 +289,19 @@ function setPosEditMode(on) {
   posResetBtn?.classList.toggle('hidden', !on);
   posModeHint?.classList.toggle('hidden', !on);
   editFbWrapEl.classList.toggle('posmode', on);
-  // 拡大(横スクロール)表示はタップがスクロール扱いになり誤作動するので、
-  // posmode 中は一時的に全体表示へ切替え、抜けたら元に戻す。
+  // posmode 中はモバイルでも必ず「拡大」表示に強制する。
+  // 理由: 全体表示だとドットが小さすぎてタップが当てづらく操作にならない
+  // (PC は元々十分大きいので何もしない)。横スクロール状態でもタップは
+  // click として届く (touch-action: manipulation でタップ遅延も無し)。
   const isMobile = window.innerWidth <= MOBILE_ZOOM_BREAKPOINT;
   if (on) {
     zoomBeforePosEdit = mobileZoomed;
-    if (isMobile && mobileZoomed) toggleMobileZoom();   // → 全体表示
+    if (isMobile && !mobileZoomed) toggleMobileZoom();   // → 拡大表示
     if (fbZoomBtn) fbZoomBtn.disabled = true;
   } else {
     if (fbZoomBtn) fbZoomBtn.disabled = false;
-    if (isMobile && zoomBeforePosEdit && !mobileZoomed) toggleMobileZoom(); // 拡大へ戻す
+    // 入った時の状態に戻す (元が全体ならまた全体へ、元が拡大なら拡大のまま)
+    if (isMobile && zoomBeforePosEdit === false && mobileZoomed) toggleMobileZoom();
     zoomBeforePosEdit = null;
   }
 }

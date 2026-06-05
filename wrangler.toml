@@ -12,4 +12,4 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "kami_db"
-database_id = "REPLACE_WITH_DATABASE_ID"   # `wrangler d1 create` 後に差し替え
+database_id = "f6d363a6-92b6-405d-ab0f-36874b47f0ce"   # `wrangler d1 create kami_db` で発行

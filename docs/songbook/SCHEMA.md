@@ -73,11 +73,12 @@ CREATE INDEX idx_songbooks_user_list
         /* … 全12要素。度数インデックス順 R, b9, 9, m3, M3, 11, #11, 5, b13, 13, m7, M7 */
       ],
 
-      "visible_positions": null
+      "visible_positions": ["g3s0", "g0s3", "g2s2", "g3s1"]
     }
   ]
 }
 ```
+（`visible_positions` は表示中の位置の実体集合。`null` は未設定フォールバック＝全表示）
 
 - `id` / `sort_order` は localStorage 管理のため含まない（配列順＝表示順）
 - **`degree_colors`**: スケールごとの度数色（→ [features/DEGREE_COLORS.md](../features/DEGREE_COLORS.md)）。
@@ -87,14 +88,14 @@ CREATE INDEX idx_songbooks_user_list
 - **`visible_positions`**: 異弦同音の**表示するポジションを明示列挙**する
   （→ [features/POSITION_VISIBILITY.md](../features/POSITION_VISIBILITY.md)）。
   弦×フレットを一意に表すキー **`g{fret}s{string}`** の配列（`fret`=フレット番号, `string`=弦番号 0始まり）。
-  - **`null`（または未設定）= 未カスタマイズ＝アクティブな全ポジションを表示**（既定挙動）。
-  - **配列 = その配列に含まれる位置だけ表示**。含まれないアクティブ位置は非表示（薄く表示）。
+  - **配列 = 表示中の位置の実体集合**（通常はこちら）。含まれないアクティブ位置は非表示（薄く表示）。
+  - **`null` = フォールバック（未設定/旧データ）＝アクティブ全表示**。通常の編集操作では必ず実体集合に材化する。
   - **「非表示の差分」ではなく「表示する位置」を持つ理由**: カスタムスケールがあり、
     必ずしも標準スケール（メジャーペンタ／単一度数 等）とは限らないため「大半は表示」を前提に
     できない。特定の運指の型だけ出す使い方では表示数の方が少ないので、表示集合を持つのが自然。
-  - ランタイムでは `Set`（または配列）、保存時に `Array.from()`、読込時に復元。`null` は `null` のまま。
-  - 描画は「現在アクティブな位置 ∩ visible_positions」。スケールの度数を変えたときの再計算方針は
+  - 更新ルール（プリセット選択で再構築・度数トグルで増減・個別タップでトグル）は
     [POSITION_VISIBILITY.md](../features/POSITION_VISIBILITY.md) を参照。
+  - ランタイムは `Set`、保存時 `Array.from()`、読込時に復元（`null` はそのまま）。
 
 ### バージョン移行の指針
 

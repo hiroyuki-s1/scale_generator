@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  validateName, validateScales, validateSongbookBody, validateShareBody,
-  MAX_NAME_LEN, MAX_SCALES,
+  validateName, validateDisplayName, validateScales, validateSongbookBody, validateShareBody,
+  MAX_NAME_LEN, MAX_DISPLAY_NAME_LEN, MAX_SCALES,
 } from '../../functions/_lib/validation.js';
 
 describe('validateName', () => {
@@ -20,6 +20,40 @@ describe('validateName', () => {
   it('rejects non-strings', () => {
     expect(validateName(42).ok).toBe(false);
     expect(validateName(null).ok).toBe(false);
+  });
+});
+
+describe('validateDisplayName', () => {
+  it('trims and accepts 1..50 chars', () => {
+    expect(validateDisplayName('  たろう  ')).toEqual({ ok: true, value: 'たろう' });
+  });
+  it('collapses internal whitespace runs to a single space', () => {
+    expect(validateDisplayName('山田   太郎').value).toBe('山田 太郎');
+  });
+  it('rejects empty / whitespace-only', () => {
+    expect(validateDisplayName('').ok).toBe(false);
+    expect(validateDisplayName('   ').ok).toBe(false);
+  });
+  it('rejects > 50 chars', () => {
+    const res = validateDisplayName('x'.repeat(MAX_DISPLAY_NAME_LEN + 1));
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe('invalid_body');
+  });
+  it('accepts exactly 50 chars', () => {
+    expect(validateDisplayName('x'.repeat(MAX_DISPLAY_NAME_LEN)).ok).toBe(true);
+  });
+  it('rejects control characters (newline/tab)', () => {
+    expect(validateDisplayName('foo\nbar').ok).toBe(false);
+    expect(validateDisplayName('foo\tbar').ok).toBe(false);
+  });
+  it('rejects non-strings', () => {
+    expect(validateDisplayName(42).ok).toBe(false);
+    expect(validateDisplayName(null).ok).toBe(false);
+    expect(validateDisplayName(undefined).ok).toBe(false);
+  });
+  it('allows duplicates (no uniqueness check at this layer)', () => {
+    expect(validateDisplayName('たろう').ok).toBe(true);
+    expect(validateDisplayName('たろう').ok).toBe(true);
   });
 });
 

@@ -82,7 +82,10 @@ function loadClerkScript(pk, host) {
 // ── 認証 UI（Clerk プリビルト） ────────────────────────────────────────
 export function openSignIn()  { clerk?.openSignIn?.(); }
 export function openSignUp()  { clerk?.openSignUp?.(); }
-export function mountUserButton(el) { if (clerk && el) clerk.mountUserButton(el, { afterSignOutUrl: import.meta.env.BASE_URL }); }
+export function mountUserButton(el, opts = {}) {
+  if (clerk && el) clerk.mountUserButton(el, { afterSignOutUrl: import.meta.env.BASE_URL, ...opts });
+}
+export function unmountUserButton(el) { if (clerk && el) clerk.unmountUserButton?.(el); }
 export function signOut()     { return clerk?.signOut?.(); }
 
 // ── 認証付き fetch ─────────────────────────────────────────────────────
@@ -174,6 +177,21 @@ export async function listMyShares() {
 export async function revokeShare(shareId) {
   return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`, {
     method: 'DELETE',
+  }));
+}
+
+// ── プロフィール（表示名・migration 0005） ───────────────────────────
+/**
+ * 自分の表示名を取得。未設定（オンボーディング未完了）は { displayName: null }。
+ * 未ログイン/失敗時は throw（呼び出し側で握りつぶしてモーダルを出さない判断に使う）。
+ */
+export async function getProfile() {
+  return asJsonOrThrow(await authedFetch('api/profile'));
+}
+/** 表示名を設定/更新（upsert）。{ ok, displayName } を返す。検証エラーは 400 で throw。 */
+export async function setProfile(displayName) {
+  return asJsonOrThrow(await authedFetch('api/profile', {
+    method: 'PUT', body: JSON.stringify({ displayName }),
   }));
 }
 

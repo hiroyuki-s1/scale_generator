@@ -335,6 +335,9 @@ body {
   width: 100%; padding: 10px 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px;
   background: var(--bg); color: var(--text); font-size: 13px; font-family: monospace; box-sizing: border-box;
 }
+/* 表示名入力は ID/URL と違い人名なので等幅をやめて読みやすく */
+#profileNameInput { font-family: inherit; }
+.profile-name-error { color: #dc2626; font-size: 12px; margin: -2px 0 6px; }
 .share-manage-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; }
 .share-manage-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -1372,6 +1375,17 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* SAVED CARDS */
 .saved-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+/* スケールカード下部の X 投稿ボタン（画面のみ・印刷は .screen-only で非表示） */
+.saved-card-footer { display: flex; justify-content: center; margin-top: 8px; }
+/* X(旧Twitter) 投稿ボタン（カードフッター / 共有モーダル共通） */
+.btn-x-share {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 14px; border: none; border-radius: 7px;
+  background: #000; color: #fff; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer; transition: opacity .12s;
+}
+.btn-x-share:hover { opacity: .82; }
+.btn-x-share--wide { width: 100%; padding: 11px; margin: 2px 0 10px; font-size: 13px; }
 /* 印刷専用タイトル: 画面では隠し、印刷時のみ指板の上にシンプル印字 */
 .saved-print-title { display: none; }
 

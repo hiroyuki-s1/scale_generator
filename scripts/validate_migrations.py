@@ -219,6 +219,40 @@ def main():
                    "INSERT INTO user_events(at,event_type,user_id) VALUES(?,?,?)",
                    (T0, 'badtype', 'user_abc')))
 
+    print("== 14. user_profiles (0005: 表示名) ==")
+    pobjs = dict(db.execute(
+        "SELECT name,type FROM sqlite_master WHERE name LIKE 'user_profiles%'").fetchall())
+    ok("table user_profiles") if pobjs.get("user_profiles") == "table" else bad("table user_profiles", pobjs.get("user_profiles"))
+    pddl = db.execute("SELECT sql FROM sqlite_master WHERE name='user_profiles'").fetchone()
+    ok("user_profiles is STRICT") if pddl and "STRICT" in pddl[0].upper() else bad("user_profiles is STRICT", "no STRICT")
+
+    def pins(d, user="user_p", name="たろう", c=T0, u=T0):
+        d.execute("INSERT INTO user_profiles(user_id,display_name,created_at,updated_at)"
+                  " VALUES(?,?,?,?)", (user, name, c, u))
+
+    expect_ok(db, "insert valid profile", lambda d: pins(d))
+    # 重複OK（display_name に UNIQUE は無い）: 別 user_id で同じ表示名が入る
+    expect_ok(db, "duplicate display_name allowed (different user)",
+              lambda d: pins(d, user="user_p2", name="たろう"))
+    # PK(user_id) は重複不可
+    expect_err(db, "user_profiles PK dup", lambda d: pins(d, user="user_p"))
+    # CHECK: 表示名 1〜50 文字
+    expect_err(db, "reject display_name length 0", lambda d: pins(d, user="user_p0", name=""))
+    expect_err(db, "reject display_name length 51", lambda d: pins(d, user="user_p51", name="x" * 51))
+    expect_ok(db, "accept display_name length 50", lambda d: pins(d, user="user_p50", name="x" * 50))
+    # CHECK: updated_at >= created_at
+    expect_err(db, "reject profile updated_at<created_at",
+               lambda d: pins(d, user="user_pt", c=T0, u=T0 - 1))
+    # NOT NULL: display_name
+    expect_err(db, "reject NULL display_name",
+               lambda d: d.execute("INSERT INTO user_profiles(user_id,display_name,created_at,updated_at)"
+                                   " VALUES('user_pn',NULL,?,?)", (T0, T0)))
+    # 自己参照 / 他ユーザー参照ともに PK で seek（SCAN しない）
+    pplan = " | ".join(r[-1] for r in db.execute(
+        "EXPLAIN QUERY PLAN SELECT display_name FROM user_profiles WHERE user_id=?", ("user_p",)).fetchall())
+    print("    PROFILE GET PLAN:", pplan)
+    ok("profile lookup uses PK seek") if "SCAN user_profiles" not in pplan else bad("profile lookup uses PK seek", pplan)
+
     print(f"\n==== RESULT: {len(passed)} passed, {len(failed)} failed (SQLite {sqlite3.sqlite_version}) ====")
     return 1 if failed else 0
 

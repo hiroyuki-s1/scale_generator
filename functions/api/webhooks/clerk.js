@@ -38,12 +38,14 @@ export async function onRequestPost({ request, env }) {
     const sb = await env.DB.prepare('DELETE FROM songbooks WHERE user_id = ?').bind(userId).run();
     const us = await env.DB.prepare('DELETE FROM user_settings WHERE user_id = ?').bind(userId).run();
     const sh = await env.DB.prepare('DELETE FROM shares WHERE user_id = ?').bind(userId).run();
+    const up = await env.DB.prepare('DELETE FROM user_profiles WHERE user_id = ?').bind(userId).run();
     return json({
       ok: true,
       deleted: {
         songbooks: sb.meta?.changes ?? 0,
         user_settings: us.meta?.changes ?? 0,
         shares: sh.meta?.changes ?? 0,
+        user_profiles: up.meta?.changes ?? 0,
       },
     });
   } catch (e) {

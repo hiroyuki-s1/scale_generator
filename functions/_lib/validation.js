@@ -8,6 +8,8 @@
  */
 
 export const MAX_NAME_LEN = 100;
+/** 表示名（公開プロフィール名）の最大長。migration 0005 の CHECK と一致させる。 */
+export const MAX_DISPLAY_NAME_LEN = 50;
 export const MAX_SCALES = 200;
 /** scales JSON の最大バイト数（巨大ペイロードでの D1 圧迫・worker OOM 防止）。 */
 export const MAX_SCALES_JSON_BYTES = 500_000;
@@ -25,6 +27,26 @@ export function validateName(name) {
   if (trimmed.length < 1) return fail('名前を入力してください');
   if (trimmed.length > MAX_NAME_LEN) return fail(`名前は${MAX_NAME_LEN}文字以内にしてください`);
   return { ok: true, value: trimmed };
+}
+
+// 制御文字（C0 範囲 U+0000–001F と DEL U+007F）。表示崩れ/なりすまし防止のため表示名で拒否する。
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
+
+/**
+ * 表示名（公開プロフィール名）: 文字列・トリム後 1〜50 文字。重複は許可（一意ハンドルではない）。
+ * 他ユーザーにも表示されるため、改行/タブ/制御文字（U+0000–001F, U+007F）は拒否する。
+ * 空白は内部の連続をひとつに畳んでからトリムする（見えない水増しを防ぐ）。
+ */
+export function validateDisplayName(name) {
+  if (typeof name !== 'string') return fail('表示名は文字列である必要があります');
+  if (CONTROL_CHARS.test(name)) return fail('表示名に使用できない文字が含まれています');
+  const normalized = name.replace(/\s+/g, ' ').trim();
+  if (normalized.length < 1) return fail('表示名を入力してください');
+  if (normalized.length > MAX_DISPLAY_NAME_LEN) {
+    return fail(`表示名は${MAX_DISPLAY_NAME_LEN}文字以内にしてください`);
+  }
+  return { ok: true, value: normalized };
 }
 
 /**

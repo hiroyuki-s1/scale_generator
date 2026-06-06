@@ -28,6 +28,7 @@ import { initReleaseNotes }      from './ui/releaseNotesModal.js';
 import { exportAllScalesPng }    from './ui/imageExport.js';
 import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
+import { initProfileUi }         from './ui/profileModal.js';
 import { initCloud }             from './state/cloudSync.js';
 import { initSongbookTab }       from './ui/songbookTab.js';
 import { initShareUi }           from './ui/shareModal.js';
@@ -523,7 +524,14 @@ initInstallPrompt();
 initReleaseNotes(typeof __VERSION__ !== 'undefined' ? __VERSION__ : '');
 
 // ── クラウド認証（Clerk）: 非同期初期化。失敗してもローカル機能は継続。 ──
-initAuthButton(document.getElementById('authSlot'));
+// 表示名（オンボーディング/編集）を先に用意し、UserButton メニューへ連携する。
+// onAuthChange の購読は initCloud 前に済ませておく。
+const profileUi = initProfileUi();
+initAuthButton(document.getElementById('authSlot'), {
+  onEditProfile: profileUi.openEdit,
+  getDisplayName: profileUi.getDisplayName,
+  onProfileChange: profileUi.onProfileChange,
+});
 initCloud();
 
 // ── タブナビゲーション ─────────────────────────────────────────────────

@@ -52,8 +52,12 @@ export async function initCloud() {
     await clerk.load();
     clerk.addListener(() => notify());
     notify();
+    // 起動イベント記録 (失敗しても無視・本体に影響しない)
+    recordLaunch();
     return clerk;
   } catch (e) {
+    // Clerk が落ちても起動記録は試みる (匿名 ID で記録される)
+    recordLaunch();
     loadError = e;
     console.error('Clerk 初期化に失敗しました（ログイン機能のみ無効・本体は継続）:', e);
     notify();
@@ -171,4 +175,38 @@ export async function revokeShare(shareId) {
   return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`, {
     method: 'DELETE',
   }));
+}
+
+// ── 行動記録 (起動イベント・migration 0004) ─────────────────────────
+const ANON_ID_KEY = 'sg.v1.anonId';
+const LAUNCH_SENT_KEY = 'sg.v1.launchSentAt';
+// 同一セッションで二重送信しない (タブ復帰や軽い再描画で何度も打たない)。
+const LAUNCH_DEDUPE_MS = 6 * 60 * 60 * 1000; // 6 時間
+
+function getOrCreateAnonId() {
+  try {
+    let id = localStorage.getItem(ANON_ID_KEY);
+    if (!id) {
+      // crypto.randomUUID は十分新しい環境で利用可能。fallback で 16 進ランダム。
+      id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'anon-' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+      localStorage.setItem(ANON_ID_KEY, id);
+    }
+    return id;
+  } catch { return null; }
+}
+
+/** 起動イベントを 1 回だけ送る (LAUNCH_DEDUPE_MS 以内なら省略)。失敗しても無視。 */
+export async function recordLaunch() {
+  try {
+    const last = Number(localStorage.getItem(LAUNCH_SENT_KEY) || 0);
+    if (Number.isFinite(last) && Date.now() - last < LAUNCH_DEDUPE_MS) return;
+    const body = {
+      anon_id: getOrCreateAnonId(),
+      tz_offset: -new Date().getTimezoneOffset(),
+    };
+    await authedFetch('api/events/launch', { method: 'POST', body: JSON.stringify(body) });
+    localStorage.setItem(LAUNCH_SENT_KEY, String(Date.now()));
+  } catch { /* 起動を阻害しない */ }
 }

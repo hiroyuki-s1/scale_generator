@@ -194,6 +194,31 @@ def main():
     print("    GET PLAN:", gplan)
     ok("share GET uses index seek") if "SCAN shares" not in gplan else bad("share GET uses index seek", gplan)
 
+    print("== 13. user_events (0004) ==")
+    uobjs = dict(db.execute(
+        "SELECT name,type FROM sqlite_master WHERE name LIKE 'user_events%' OR name LIKE 'idx_user_events%'").fetchall())
+    ok("table user_events") if uobjs.get("user_events") == "table" else bad("table user_events", uobjs.get("user_events"))
+    uddl = db.execute("SELECT sql FROM sqlite_master WHERE name='user_events'").fetchone()
+    ok("user_events is STRICT") if uddl and "STRICT" in uddl[0].upper() else bad("user_events is STRICT", "no STRICT")
+    (ok("index idx_user_events_user") if "idx_user_events_user" in uobjs
+     else bad("index idx_user_events_user", "missing"))
+
+    # 認証あり (user_id) で記録できる
+    expect_ok(db, "insert launch event (logged-in user)",
+              lambda d: d.execute(
+                  "INSERT INTO user_events(at,event_type,user_id,anon_id,tz_offset) VALUES(?,?,?,?,?)",
+                  (T0, 'launch', 'user_abc', None, 540)))
+    # 匿名でも記録できる
+    expect_ok(db, "insert launch event (anonymous)",
+              lambda d: d.execute(
+                  "INSERT INTO user_events(at,event_type,user_id,anon_id,tz_offset) VALUES(?,?,?,?,?)",
+                  (T0, 'launch', None, 'anon-uuid-xyz', 540)))
+    # 未対応の event_type は拒否
+    expect_err(db, "reject unknown event_type",
+               lambda d: d.execute(
+                   "INSERT INTO user_events(at,event_type,user_id) VALUES(?,?,?)",
+                   (T0, 'badtype', 'user_abc')))
+
     print(f"\n==== RESULT: {len(passed)} passed, {len(failed)} failed (SQLite {sqlite3.sqlite_version}) ====")
     return 1 if failed else 0
 

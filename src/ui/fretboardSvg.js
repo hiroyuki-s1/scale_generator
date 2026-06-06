@@ -283,15 +283,13 @@ export function setMaskOverlayVisible(svgEl, visible) {
   });
 }
 
+import {
+  PRINT_TITLE_FONT_SIZE,
+  PRINT_TITLE_ALIGN,
+  PRINT_TITLE_BAND_RATIO,
+} from '../config.js';
+
 const PRINT_TITLE_CLASS = 'fb-print-title';
-// タイトル帯の高さ = 指板表示高さ(viewBox の h)に対する比率。
-// 帯を上に足すぶん、固定セル内では指板が少し縮小して見える (= ユーザー要望
-// 「スケールを少し縮小して上部に文字」)。
-const PRINT_TITLE_BAND_RATIO = 0.22;
-// 印刷タイトルの文字サイズは固定 (ユーザー要望: 全レイアウトで一定サイズ)。
-// 単位は SVG user-space。20 程度がフレット番号 (font-size 24) より小ぶりで
-// 1〜6 枚どのレイアウトでも同じ文字サイズに見える。
-const PRINT_TITLE_FONT_SIZE = 32;
 
 /**
  * 印刷用にスケール名を SVG 内の上部へ焼き込む (スケール名＋指板で1枚の画像にする)。
@@ -323,12 +321,21 @@ export function bakePrintTitle(svgEl, title, baseViewBox) {
     class: PRINT_TITLE_CLASS,
     x: minX, y: newMinY, width: w, height: band, fill: '#ffffff',
   }));
-  // タイトル本体 — 帯の中央。指板(y >= minY)とは重ならない。
+  // タイトル本体 — 帯の指定位置 (config.js の PRINT_TITLE_ALIGN で左/中央/右切替)。
+  // x, text-anchor は揃え方で変える。左寄せ時は左パディングをわずかに取る。
+  const padding = w * 0.04;
+  const align = PRINT_TITLE_ALIGN;
+  const textAnchor = align === 'left' ? 'start'
+    : align === 'right' ? 'end'
+    : 'middle';
+  const textX = align === 'left' ? minX + padding
+    : align === 'right' ? minX + w - padding
+    : minX + w / 2;
   const t = el('text', {
     class: PRINT_TITLE_CLASS,
-    x: minX + w / 2,
+    x: textX,
     y: newMinY + band * 0.58,
-    'text-anchor': 'middle',
+    'text-anchor': textAnchor,
     'dominant-baseline': 'middle',
     fill: '#1c1c1c',
     'font-size': String(fontSize),
@@ -339,7 +346,7 @@ export function bakePrintTitle(svgEl, title, baseViewBox) {
 
   // 幅に合わせてフォントを自動縮小し、スケール名の全文が必ず収まるようにする。
   // 帯の利用可能幅 (左右に少し余白) を超える分だけ、実測長に比例して縮める。
-  const avail = w * 0.92;
+  const avail = w - padding * 2;
   let measured = 0;
   try { measured = t.getComputedTextLength(); } catch { measured = 0; }
   if (measured > avail && avail > 0) {

@@ -20,6 +20,28 @@ export const CARD_TITLE_SVG_LETTER_SPACING = 5;
 /** SVGオーバーレイ背景帯の高さ（SVG座標単位） */
 export const CARD_TITLE_BG_HEIGHT = 92;
 
+// ─────────────────────────────────────────────
+// 印刷タイトル — SVG に焼き込むスケール名 (印刷専用・ユーザー調整ポイント)
+// ─────────────────────────────────────────────
+
+/**
+ * 印刷時に SVG 上部に焼き込むスケール名の文字サイズ (SVG ユーザー座標)。
+ * 大きすぎる/小さすぎる場合はこの値を調整する。
+ * フレット番号 (font-size: 24) との比較で大きさ感をイメージ。推奨 18〜32。
+ */
+export const PRINT_TITLE_FONT_SIZE = 22;
+
+/**
+ * 印刷タイトルの揃え方: 'left' | 'center' | 'right'。
+ */
+export const PRINT_TITLE_ALIGN = 'left';
+
+/**
+ * タイトル帯の高さ比率 (指板 viewBox 高さに対する割合・SVG 内で帯ぶん上に拡張)。
+ * 文字を小さくしたら帯も狭くする。推奨 0.12〜0.30。
+ */
+export const PRINT_TITLE_BAND_RATIO = 0.18;
+
 // カード下に表示するテキストタイトルの CSS フォントサイズは、JS からは使わず
 // CSS 変数で管理している（src/styles/main.css の :root）:
 //   --card-title-size         (通常時)

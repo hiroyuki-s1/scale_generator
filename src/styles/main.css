@@ -75,11 +75,14 @@ body {
   flex-shrink: 0; letter-spacing: .3px; margin-right: 4px;
 }
 /* ベータ版ピル — オレンジで目立たせる */
-.more-item--info {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-  font-size: 11px; color: var(--text-3); border-top: 1px dashed var(--border);
+.more-item--feedback {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  font-size: 12px; color: var(--text-2); border-top: 1px dashed var(--border);
+  text-decoration: none; cursor: pointer;
+  transition: background .12s, color .12s;
 }
-.more-item-info-text { font-size: 11px; line-height: 1.4; }
+.more-item--feedback:hover { background: var(--surface-2); color: var(--accent); }
+.more-item-feedback-text { font-size: 12px; line-height: 1.4; font-weight: 600; }
 .alpha-pill {
   display: inline-block;
   background: var(--accent);
@@ -403,28 +406,25 @@ body {
 }
 
 /* ── Release notes list ─────────────────────────────────────────── */
-/* ── ソングブック読込プレビュー ── */
+/* ── ソングブック読込プレビュー: スケール名 + ミニ指板を 1 列で並べる ── */
 .songbook-preview-meta { padding: 10px 22px 4px; font-size: 12px; color: var(--text-3); }
 .songbook-preview-list {
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 12px;
   padding: 10px 22px 22px;
-  overflow-y: auto; max-height: 60vh;
+  overflow-y: auto; max-height: 70vh;
 }
-.songbook-preview-row {
-  display: flex; align-items: center; gap: 10px;
+.songbook-preview-card {
+  display: flex; flex-direction: column; gap: 4px;
   padding: 10px 12px; border: 1px solid var(--border);
   border-radius: 8px; background: var(--surface-2);
 }
-.songbook-preview-num {
-  flex: 0 0 26px; font-size: 12px; color: var(--text-3); font-weight: 700;
-  text-align: center;
-}
-.songbook-preview-name { flex: 1 1 auto; font-size: 14px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.songbook-preview-sub { flex: 0 0 auto; font-size: 11px; color: var(--text-3); padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.songbook-preview-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.songbook-preview-fb { width: 100%; overflow: hidden; }
+.songbook-preview-fb svg.fb { display: block; width: 100% !important; min-width: 0 !important; height: auto !important; }
 .songbook-preview-empty { padding: 24px; color: var(--text-3); text-align: center; font-size: 13px; }
 @media (max-width: 480px) {
   .songbook-preview-meta { padding: 10px 14px 4px; }
-  .songbook-preview-list { padding: 10px 14px 18px; }
+  .songbook-preview-list { padding: 10px 14px 18px; gap: 10px; }
 }
 .release-notes-list {
   display: flex; flex-direction: column; gap: 16px;
@@ -1051,9 +1051,14 @@ body {
    インライン style にせず CSS で持つことで、@media print のレイアウト指定が
    詳細度で勝てるようにする。 */
 #savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-#savedGrid.screen-grid svg.fb { min-width: 0 !important; }
+#savedGrid.screen-grid svg.fb { min-width: 0 !important; width: 100% !important; height: auto !important; }
 #savedGrid.screen-grid .fb-title { font-size: var(--card-title-size); }
-#savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; }
+#savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; overflow: hidden; }
+/* モバイル: 2 列だと指板が縮みすぎて読めないので 1 列にしてフル幅で縮尺。
+   svg.fb は viewBox に従って width:100% で自動縮尺 (これでスマホに必ず収まる)。 */
+@media (max-width: 767px) {
+  #savedGrid.screen-grid { grid-template-columns: 1fr; gap: 10px; }
+}
 
 .fb-header {
   display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;
@@ -1089,10 +1094,12 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
 .mask-and-pos-row .posmode-row { flex: 1 1 auto; min-width: 0; }
 .posmode-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .posmode-toggle {
+  /* マスクボタン (.btn-mask) と同じサイズに揃える (padding, font, min-height) */
   display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 8px;
   background: var(--surface); color: var(--text-2);
   font-size: 12px; font-weight: 700; font-family: inherit;
+  min-height: 44px;
   cursor: pointer; transition: all .12s; white-space: nowrap;
 }
 .posmode-toggle:hover { border-color: var(--accent); color: var(--accent); }
@@ -1799,8 +1806,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   /* ── Modal inputs: 16px to suppress iOS auto-zoom on focus ── */
   .modal-input { font-size: 16px; padding: 12px 14px; }
 
-  /* ── Mask control ── */
-  .btn-mask { padding: 12px 16px; font-size: 14px; min-height: 48px; flex-shrink: 0; }
+  /* ── Mask control + posmode-toggle: モバイルでも同じサイズに揃える ── */
+  .btn-mask, .posmode-toggle { padding: 12px 16px; font-size: 14px; min-height: 48px; flex-shrink: 0; }
   .mask-row { flex-wrap: wrap; }
   .mask-step-btn { width: 44px; height: 44px; font-size: 20px; }
   .mval { font-size: 17px; min-width: 30px; }

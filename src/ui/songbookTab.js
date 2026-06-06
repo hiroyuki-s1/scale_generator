@@ -3,6 +3,11 @@ import {
   listSongbooks, getSongbook, createSongbook, deleteSongbook, cloudToSongfile,
 } from '../state/cloudSync.js';
 import { showToast } from './toast.js';
+import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
+import { SVG } from '../config/fretboardGeometry.js';
+import { localizeTitle } from '../domain/i18n.js';
+
+const NS = 'http://www.w3.org/2000/svg';
 
 /**
  * ソングブックタブ（クラウド保存・docs/songbook/SPEC.md）。
@@ -219,21 +224,32 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
       e.textContent = 'スケールが登録されていません。';
       listEl_.appendChild(e);
     } else {
-      savedArray.forEach((s, i) => {
+      // ソングファイル画面と同じく「スケール名 + その下にミニ指板」を 1 列で並べる
+      savedArray.forEach((s) => {
         const row = document.createElement('div');
-        row.className = 'songbook-preview-row';
-        const num = document.createElement('span');
-        num.className = 'songbook-preview-num';
-        num.textContent = String(i + 1);
-        const name = document.createElement('span');
-        name.className = 'songbook-preview-name';
-        name.textContent = s.name || '(名称未設定)';
-        const sub = document.createElement('span');
-        sub.className = 'songbook-preview-sub';
-        const instr = s.instrument === 'bass' ? 'Bass' : 'Guitar';
-        sub.textContent = `${instr}`;
-        row.appendChild(num); row.appendChild(name); row.appendChild(sub);
+        row.className = 'songbook-preview-card';
+
+        const title = document.createElement('div');
+        title.className = 'songbook-preview-title';
+        title.textContent = localizeTitle(s.title || s.name || '(名称未設定)');
+        row.appendChild(title);
+
+        const fbWrap = document.createElement('div');
+        fbWrap.className = 'songbook-preview-fb';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'fb');
+        svg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        fbWrap.appendChild(svg);
+        row.appendChild(fbWrap);
+
         listEl_.appendChild(row);
+        try {
+          drawFretboardBase(svg, s.instrument || 'guitar');
+          applyFretboardDiff(svg, s, null);
+        } catch (e) {
+          console.warn('songbook-preview: failed to render', e);
+        }
       });
     }
     function close() { modal.classList.remove('show'); cleanup(); }

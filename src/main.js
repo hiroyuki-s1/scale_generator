@@ -819,7 +819,8 @@ window.addEventListener('afterprint', () => {
   restorePrintState();
 });
 
-document.getElementById('resetBtn').addEventListener('click', () => {
+/** 保存データを全消去してリロード。… メニューから呼ぶ (ヘッダのリセットボタンは廃止)。 */
+function performHardReset() {
   if (!confirm('保存済みデータをすべて消去してリセットしますか？\nこの操作は元に戻せません。')) return;
   // ベータ版告知の "了解しました" フラグはリセットで消さない
   // (ユーザーが何度も告知を見させられないようにするため)。
@@ -834,4 +835,8 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.clear();
   for (const [k, v] of Object.entries(backup)) localStorage.setItem(k, v);
   location.reload();
+}
+// … メニューの「保存データをリセット」項目から直接呼ぶ。
+document.querySelectorAll('[data-act="reset"]').forEach(el => {
+  el.addEventListener('click', performHardReset);
 });

@@ -9,7 +9,8 @@ export function initHeaderMenu(store) {
   if (!trigger || !menu) return;
 
   const colorBtn = document.getElementById('colorBtn');
-  const resetBtn = document.getElementById('resetBtn');
+  // 'reset' は main.js が [data-act="reset"] に直接ハンドラを付けている。
+  // ここではメニューを閉じるだけでよいので、resetBtn への参照は持たない。
 
   function close() {
     trigger.classList.remove('open');
@@ -35,7 +36,7 @@ export function initHeaderMenu(store) {
     if (act === 'color')        colorBtn?.click();
     else if (act === 'orient-land') store.updateLayout({ orientation: 'landscape' });
     else if (act === 'orient-port') store.updateLayout({ orientation: 'portrait' });
-    else if (act === 'reset')   resetBtn?.click();
+    // 'reset' は main.js のリスナーで処理 (ここでは close() のみで OK)
     else if (act === 'reload')  { location.reload(); return; }
     close();
   });

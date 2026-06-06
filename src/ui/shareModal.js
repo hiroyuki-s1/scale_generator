@@ -58,11 +58,10 @@ export function initShareUi(store, onLoadSongbook) {
       const res = await createShare(book.public_id); // { share_id, url, name }
       document.getElementById('shareResultTitle').textContent = `「${res.name || book.name}」を共有`;
       const urlInput = document.getElementById('shareUrlInput');
-      const idInput  = document.getElementById('shareIdInput');
       urlInput.value = res.url || '';
-      idInput.value  = res.share_id || '';
+      // URL のみコピーさせる (ID は廃止: ユーザー混乱を避けるため UI から除外)
       resultModal.querySelectorAll('.share-copy').forEach(btn => {
-        btn.onclick = () => copyText(btn.dataset.copy === 'url' ? urlInput.value : idInput.value);
+        btn.onclick = () => copyText(urlInput.value);
       });
       show(resultModal);
     } catch (e) {

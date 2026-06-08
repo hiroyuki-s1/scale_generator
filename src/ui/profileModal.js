@@ -1,4 +1,5 @@
 import { onAuthChange, getProfile, setProfile } from '../state/cloudSync.js';
+import { track } from '../state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 import { showToast } from './toast.js';
 
 /**
@@ -87,6 +88,7 @@ export function initProfileUi() {
     clearError();
     try {
       const res = await setProfile(candidate);
+      if (mode === 'onboarding') track('onboarding_done'); // [removable-analytics]
       setDisplayName(res.displayName || candidate);
       hide();
       showToast(mode === 'onboarding' ? `ようこそ、${displayName} さん！` : '表示名を変更しました');

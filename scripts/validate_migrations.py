@@ -253,6 +253,32 @@ def main():
     print("    PROFILE GET PLAN:", pplan)
     ok("profile lookup uses PK seek") if "SCAN user_profiles" not in pplan else bad("profile lookup uses PK seek", pplan)
 
+    print("== 15. analytics_events (0006: 行動ログ・後で消す前提) ==")
+    aobjs = dict(db.execute(
+        "SELECT name,type FROM sqlite_master WHERE name LIKE 'analytics_events%' OR name LIKE 'idx_analytics_events%'").fetchall())
+    ok("table analytics_events") if aobjs.get("analytics_events") == "table" else bad("table analytics_events", aobjs.get("analytics_events"))
+    addl = db.execute("SELECT sql FROM sqlite_master WHERE name='analytics_events'").fetchone()
+    ok("analytics_events is STRICT") if addl and "STRICT" in addl[0].upper() else bad("analytics_events is STRICT", "no STRICT")
+    (ok("index idx_analytics_events_type_at") if "idx_analytics_events_type_at" in aobjs
+     else bad("index idx_analytics_events_type_at", "missing"))
+
+    def ains(d, t="scale_save", user="user_a", anon=None, props=None, at=T0):
+        d.execute("INSERT INTO analytics_events(at,event_type,user_id,anon_id,props) VALUES(?,?,?,?,?)",
+                  (at, t, user, anon, props))
+
+    expect_ok(db, "insert event (logged-in + props)",
+              lambda d: ains(d, props='{"root":0,"mode":"dorian"}'))
+    expect_ok(db, "insert event (anonymous)", lambda d: ains(d, user=None, anon="anon-xyz"))
+    expect_err(db, "reject empty event_type", lambda d: ains(d, t=""))
+    expect_err(db, "reject event_type > 40", lambda d: ains(d, t="x" * 41))
+    # 列挙 CHECK は付けない（新種別を migration 無しで足せる設計）
+    expect_ok(db, "arbitrary new event_type allowed (no enum CHECK)", lambda d: ains(d, t="brand_new_event"))
+    # 種類別集計が索引を使う
+    aplan = " | ".join(r[-1] for r in db.execute(
+        "EXPLAIN QUERY PLAN SELECT COUNT(*) FROM analytics_events WHERE event_type=?", ("scale_save",)).fetchall())
+    print("    PLAN:", aplan)
+    ok("count-by-type uses index") if "idx_analytics_events_type_at" in aplan else bad("count-by-type uses index", aplan)
+
     print(f"\n==== RESULT: {len(passed)} passed, {len(failed)} failed (SQLite {sqlite3.sqlite_version}) ====")
     return 1 if failed else 0
 

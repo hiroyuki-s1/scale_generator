@@ -2,6 +2,7 @@ import { getSharedSongbook, getLegacyShare, cloudToSongfile } from '../state/clo
 import {
   buildShareUrl, extractShareId, isLikelyShareId, buildXShareUrl,
 } from '../domain/shareLink.js';
+import { track } from '../state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 import { showToast } from './toast.js';
 
 /**
@@ -53,6 +54,7 @@ export function initShareUi(store, onLoadSongbook) {
     const origin = (typeof window !== 'undefined' && window.location) ? window.location.origin : '';
     const base = import.meta.env.BASE_URL;
     const url = buildShareUrl(origin, base, book.public_id);
+    track('share_create', { scale_count: book.scale_count ?? undefined }); // [removable-analytics]
     const titleEl = document.getElementById('shareResultTitle');
     if (titleEl) titleEl.textContent = `「${book.name}」を共有`;
     const urlInput = document.getElementById('shareUrlInput');

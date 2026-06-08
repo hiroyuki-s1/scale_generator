@@ -30,6 +30,7 @@ import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
 import { initProfileUi }         from './ui/profileModal.js';
 import { initCloud }             from './state/cloudSync.js';
+import { track }                 from './state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 import { initSongbookTab }       from './ui/songbookTab.js';
 import { initShareUi }           from './ui/shareModal.js';
 import {
@@ -501,6 +502,7 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
   getEditingId: () => editingId,
   onComplete: clearEditMode,
   onSaved: (id, isUpdate) => {
+    track('scale_save', { update: !!isUpdate }); // [removable-analytics]
     // 登録スケールタブへスライド移動
     const savedBtn = tabNav.querySelector('[data-tab="saved"]');
     savedBtn?.click();

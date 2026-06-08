@@ -38,6 +38,7 @@ export function snapshotForStorage(state) {
     activeTab: state.activeTab,
     nextId: state.nextId,
     songfileTitle: typeof state.songfileTitle === 'string' ? state.songfileTitle : '',
+    songfileSource: sanitizeSource(state.songfileSource),
   };
 }
 
@@ -85,6 +86,20 @@ function sanitizeMask(raw) {
 
 function sanitizeInstrument(raw, fallback = null) {
   return raw === 'guitar' || raw === 'bass' ? raw : fallback;
+}
+
+/**
+ * ソングファイルの「元ソングブック束縛」。
+ *   { publicId } … 自分のソングブックを読み込んで編集中 → 保存で上書き(update)。
+ *   null         … 未束縛（新規 or 共有受信のコピー）→ 保存で新規(create)。
+ * 不正値は null（＝新規保存側に倒す。誤って他人のものを上書きしないため安全側）。
+ */
+function sanitizeSource(raw) {
+  if (raw && typeof raw === 'object'
+    && typeof raw.publicId === 'string' && raw.publicId.length > 0 && raw.publicId.length <= 100) {
+    return { publicId: raw.publicId };
+  }
+  return null;
 }
 
 function sanitizeEdit(raw) {
@@ -145,6 +160,7 @@ export function sanitizeStoredState(data) {
     activeTab: data?.activeTab === 'saved' ? 'saved' : 'edit',
     nextId: isInt(data?.nextId) && data.nextId >= 1 ? data.nextId : 1,
     songfileTitle: typeof data?.songfileTitle === 'string' ? data.songfileTitle.slice(0, 100) : '',
+    songfileSource: sanitizeSource(data?.songfileSource),
   };
 }
 

@@ -116,6 +116,9 @@ function defaultState() {
     activeTab: 'edit',
     nextId: 1,
     songfileTitle: '',   // ソングファイル全体の名前（任意・いつでも編集可）
+    // 編集中ソングファイルの「元ソングブック束縛」。{publicId}=自分のを読込中→保存で上書き、
+    // null=未束縛（新規 or 共有コピー）→保存で新規。
+    songfileSource: null,
   };
 }
 
@@ -560,11 +563,14 @@ tabNav.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ── ソングブック（クラウド保存）/ 共有 ────────────────────────────────
 // 読込確定の共通処理: store.saved を置換 → ソングファイルタブへ。
-const applyCloudSongfile = (savedArray, title) => {
+//   source = { publicId } … 自分のソングブックを読込（保存で上書き）
+//   source = null/未指定  … 共有コピー等（束縛なし＝保存で新規。共有元は不変）
+const applyCloudSongfile = (savedArray, title, source = null) => {
   store.set(s => ({
     ...s,
     saved: savedArray,
     songfileTitle: typeof title === 'string' ? title : s.songfileTitle,
+    songfileSource: source && source.publicId ? { publicId: source.publicId } : null,
   }));
   tabNav.querySelector('[data-tab="saved"]')?.click();
 };
@@ -642,7 +648,8 @@ document.getElementById('deleteAllBtn').addEventListener('click', () => {
   const { saved } = store.get();
   if (saved.length === 0) return;
   if (!confirm(`登録済みのスケール ${saved.length} 件をすべて削除します。\nこの操作は元に戻せません。よろしいですか？`)) return;
-  store.set(state => ({ ...state, saved: [] }));
+  // 全削除でソングブック束縛も解除（空のソングファイルに元束縛は無意味）。
+  store.set(state => ({ ...state, saved: [], songfileSource: null }));
 });
 
 // ── 全画面フレットボード ──────────────────────────────────────────────

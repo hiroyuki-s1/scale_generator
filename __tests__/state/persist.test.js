@@ -317,6 +317,38 @@ describe('visiblePositions persistence', () => {
   });
 });
 
+// ── songfileSource (元ソングブック束縛: 上書き保存 vs 新規) ──
+describe('songfileSource persistence', () => {
+  it('snapshotForStorage keeps a valid { publicId }', () => {
+    const state = makeState({ songfileSource: { publicId: 'abc-123' } });
+    expect(snapshotForStorage(state).songfileSource).toEqual({ publicId: 'abc-123' });
+  });
+
+  it('null / missing source stays null', () => {
+    expect(snapshotForStorage(makeState({ songfileSource: null })).songfileSource).toBeNull();
+    expect(snapshotForStorage(makeState()).songfileSource).toBeNull();
+  });
+
+  it('round-trips through snapshot → sanitize', () => {
+    const restored = sanitizeStoredState(snapshotForStorage(makeState({ songfileSource: { publicId: 'p1' } })));
+    expect(restored.songfileSource).toEqual({ publicId: 'p1' });
+  });
+
+  it('invalid shapes sanitize to null (安全側=新規保存。他人のものを誤上書きしない)', () => {
+    expect(sanitizeStoredState({ songfileSource: 'oops' }).songfileSource).toBeNull();
+    expect(sanitizeStoredState({ songfileSource: {} }).songfileSource).toBeNull();
+    expect(sanitizeStoredState({ songfileSource: { publicId: '' } }).songfileSource).toBeNull();
+    expect(sanitizeStoredState({ songfileSource: { publicId: 42 } }).songfileSource).toBeNull();
+    expect(sanitizeStoredState({ songfileSource: { publicId: 'x'.repeat(101) } }).songfileSource).toBeNull();
+    expect(sanitizeStoredState({}).songfileSource).toBeNull();
+  });
+
+  it('strips extra keys, keeping only publicId', () => {
+    const s = sanitizeStoredState({ songfileSource: { publicId: 'keep', owner: 'someone', evil: true } });
+    expect(s.songfileSource).toEqual({ publicId: 'keep' });
+  });
+});
+
 // ── sanitizeStoredState (バリデーション・clamp・マイグレーション) ──
 describe('sanitizeStoredState — robustness against bad input', () => {
   it('completely empty input → fully defaulted state', () => {

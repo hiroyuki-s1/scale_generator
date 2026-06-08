@@ -1,6 +1,6 @@
 import {
   onAuthChange, openSignIn,
-  listSongbooks, getSongbook, createSongbook, deleteSongbook, cloudToSongfile,
+  listSongbooks, getSongbook, createSongbook, updateSongbook, deleteSongbook, cloudToSongfile,
 } from '../state/cloudSync.js';
 import { showToast } from './toast.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
@@ -28,6 +28,7 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
   const emptyEl  = document.getElementById('songbookEmpty');
   const loginBtn = document.getElementById('songbookLoginBtn');
   const saveTopBtn = document.getElementById('songbookSaveTopBtn'); // ソングファイルタブ上部の保存
+  const saveLabel  = document.getElementById('songbookSaveLabel');
   if (!tabBtn || !locked || !main) return;
 
   let loggedIn = false;
@@ -35,6 +36,27 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
 
   loginBtn?.addEventListener('click', () => openSignIn());
   saveTopBtn?.addEventListener('click', saveCurrent);
+
+  /** 編集中ソングブック束縛 {publicId}|null を保存。null=新規保存側。 */
+  function setSource(source) {
+    store.set(s => ({ ...s, songfileSource: source && source.publicId ? { publicId: source.publicId } : null }));
+  }
+  /** 保存ボタンの文言を束縛状態に合わせる（上書き or 新規）。 */
+  function syncSaveLabel() {
+    if (!saveLabel) return;
+    const bound = !!store.get().songfileSource?.publicId;
+    saveLabel.textContent = bound ? '上書き保存' : 'ソングブックに保存';
+    if (saveTopBtn) {
+      saveTopBtn.title = bound
+        ? '読み込んだソングブックへ上書き保存します'
+        : '現在のソングファイルを新しいソングブックとして保存します';
+    }
+  }
+  syncSaveLabel();
+  store.subscribe((s, p) => {
+    if (p && s.songfileSource === p.songfileSource) return;
+    syncSaveLabel();
+  });
 
   onAuthChange(user => {
     const was = loggedIn;
@@ -75,7 +97,9 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
       const t = name.trim();
       if (t === '') { showToast('名前を入力してください'); return; }
       try {
-        await createSongbook(t, store.get());
+        const res = await createSongbook(t, store.get());
+        // 取り込んだローカルソングファイル＝このソングブック、として以後束縛。
+        if (res?.public_id) store.set(s => ({ ...s, songfileTitle: t, songfileSource: { publicId: res.public_id } }));
         showToast('ソングブックに保存しました');
         refresh();
       } catch (e) {
@@ -168,19 +192,58 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
   async function saveCurrent() {
     if (!loggedIn) return;
     if (offline()) return;
-    const count = store.get().saved.length;
+    const state = store.get();
+    const count = state.saved.length;
     if (count === 0) { showToast('保存するスケールがありません'); return; }
-    // SPEC: 確認＋名前入力。MVP は prompt（既存も confirm/alert を使用）。
+
+    const source = state.songfileSource;
+    // ① 自分のソングブックを読み込んで編集中 → 元へ上書き保存(update)。
+    if (source?.publicId) {
+      const name = (state.songfileTitle || '').trim() || '無題のソングブック';
+      if (!window.confirm(`「${name}」を上書き保存します。\n読み込んだソングブックの内容が、現在の${count}スケールで更新されます。よろしいですか？`)) return;
+      if (saveTopBtn) saveTopBtn.disabled = true;
+      try {
+        await updateSongbook(source.publicId, name, state);
+        showToast('上書き保存しました');
+        await refresh();
+      } catch (e) {
+        if (e.status === 404) {
+          // 元が削除済み/自分のものでない → 束縛を切って新規保存に切替（共有元は不変なので安全）。
+          showToast('元のソングブックが見つからないため、新規保存に切り替えます');
+          setSource(null);
+          await saveAsNew();
+        } else {
+          console.error('ソングブック上書き保存に失敗:', e);
+          showToast('保存に失敗しました');
+        }
+      } finally {
+        if (saveTopBtn) saveTopBtn.disabled = false;
+      }
+      return;
+    }
+
+    // ② 未束縛（新規 or 共有コピー）→ 新規保存(create)。
+    await saveAsNew();
+  }
+
+  /** 新規ソングブックとして保存し、成功したら以後そのソングブックへ束縛する。 */
+  async function saveAsNew() {
+    const state = store.get();
+    const count = state.saved.length;
     const name = window.prompt(
-      `現在のソングファイル（${count}スケール）をソングブックに保存します。\n名前を入力してください。`,
-      store.get().songfileTitle || '',
+      `現在のソングファイル（${count}スケール）を新しいソングブックとして保存します。\n名前を入力してください。`,
+      state.songfileTitle || '',
     );
     if (name === null) return;            // キャンセル
     const trimmed = name.trim();
     if (trimmed === '') { showToast('名前を入力してください'); return; }
     if (saveTopBtn) saveTopBtn.disabled = true;
     try {
-      await createSongbook(trimmed, store.get());
+      const res = await createSongbook(trimmed, store.get());
+      // 以後の保存はこのソングブックへ上書き（公開IDを束縛）。
+      if (res?.public_id) {
+        store.set(s => ({ ...s, songfileTitle: trimmed, songfileSource: { publicId: res.public_id } }));
+      }
       showToast('ソングブックに保存しました');
       await refresh();
     } catch (e) {
@@ -254,7 +317,8 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
     }
     function close() { modal.classList.remove('show'); cleanup(); }
     function load() {
-      onLoadSongbook(savedArray, book.name);
+      // 自分のソングブックを読込 → 束縛（保存で上書き）。public_id を渡す。
+      onLoadSongbook(savedArray, book.name, { publicId: book.public_id });
       showToast(`「${book.name}」を読み込みました`);
       close();
     }

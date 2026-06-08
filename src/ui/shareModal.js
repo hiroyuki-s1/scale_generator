@@ -1,5 +1,7 @@
 import { getSharedSongbook, getLegacyShare, cloudToSongfile } from '../state/cloudSync.js';
-import { buildShareUrl, extractShareId, isLikelyShareId } from '../domain/shareLink.js';
+import {
+  buildShareUrl, extractShareId, isLikelyShareId, buildXShareUrl,
+} from '../domain/shareLink.js';
 import { showToast } from './toast.js';
 
 /**
@@ -56,6 +58,15 @@ export function initShareUi(store, onLoadSongbook) {
     const urlInput = document.getElementById('shareUrlInput');
     if (urlInput) urlInput.value = url;
     resultModal.querySelectorAll('.share-copy').forEach(btn => { btn.onclick = () => copyText(url); });
+    // X に投稿: 共有 URL を本文添付で投稿作成画面を開く
+    const xBtn = document.getElementById('shareXBtn');
+    if (xBtn) {
+      xBtn.onclick = () => {
+        const text = `🎸「${book.name}」を神スケールトレーナーで共有しました`;
+        const href = buildXShareUrl({ text, url, hashtags: ['神スケールトレーナー'] });
+        window.open(href, '_blank', 'noopener,noreferrer');
+      };
+    }
     show(resultModal);
   }
 

@@ -337,6 +337,15 @@ body {
 }
 /* 表示名入力は ID/URL と違い人名なので等幅をやめて読みやすく */
 #profileNameInput { font-family: inherit; }
+/* X(旧Twitter) 投稿ボタン（共有モーダル） */
+.btn-x-share {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 14px; border: none; border-radius: 7px;
+  background: #000; color: #fff; font-size: 13px; font-weight: 700;
+  font-family: inherit; cursor: pointer; transition: opacity .12s;
+}
+.btn-x-share:hover { opacity: .82; }
+.btn-x-share--wide { width: 100%; padding: 11px; margin: 2px 0 10px; }
 .profile-name-error { color: #dc2626; font-size: 12px; margin: -2px 0 6px; }
 .songbook-empty { text-align: center; padding: 40px 16px; }
 .songbook-empty-icon { font-size: 34px; margin-bottom: 10px; }

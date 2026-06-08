@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildShareUrl, extractShareId, isLikelyShareId } from '../../src/domain/shareLink.js';
+import {
+  buildShareUrl, extractShareId, isLikelyShareId, buildXShareUrl,
+} from '../../src/domain/shareLink.js';
 
 describe('buildShareUrl', () => {
   it('本番(base=/)で origin/?share=public_id を組む', () => {
@@ -66,5 +68,34 @@ describe('isLikelyShareId', () => {
     expect(isLikelyShareId('has space')).toBe(false);
     expect(isLikelyShareId('drop/table')).toBe(false);
     expect(isLikelyShareId('')).toBe(false);
+  });
+});
+
+describe('buildXShareUrl', () => {
+  it('x.com の intent エンドポイントを使う', () => {
+    expect(buildXShareUrl({ text: 'hi' })).toMatch(/^https:\/\/x\.com\/intent\/tweet\?/);
+  });
+
+  it('text と url をエンコードして載せる', () => {
+    const u = buildXShareUrl({ text: 'C リディアン', url: 'https://e.com/?share=abc' });
+    const p = new URLSearchParams(u.split('?')[1]);
+    expect(p.get('text')).toBe('C リディアン');
+    expect(p.get('url')).toBe('https://e.com/?share=abc');
+  });
+
+  it('hashtags をカンマ連結し空を捨てる', () => {
+    const u = buildXShareUrl({ text: 'x', hashtags: ['神スケールトレーナー', '', 'guitar'] });
+    const p = new URLSearchParams(u.split('?')[1]);
+    expect(p.get('hashtags')).toBe('神スケールトレーナー,guitar');
+  });
+
+  it('空の url / hashtags は省略する', () => {
+    const p = new URLSearchParams(buildXShareUrl({ text: 'only' }).split('?')[1]);
+    expect(p.has('url')).toBe(false);
+    expect(p.has('hashtags')).toBe(false);
+  });
+
+  it('引数なしでも落ちない', () => {
+    expect(buildXShareUrl()).toBe('https://x.com/intent/tweet?');
   });
 });

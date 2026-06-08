@@ -46,3 +46,20 @@ export function extractShareId(raw) {
 export function isLikelyShareId(id) {
   return /^[A-Za-z0-9-]{6,40}$/.test(String(id || ''));
 }
+
+/**
+ * X(旧Twitter) の Web Intent URL を組み立てる（OAuth/アプリ登録不要・投稿作成画面を開くだけ）。
+ * @param {object} opts
+ * @param {string} [opts.text]      本文
+ * @param {string} [opts.url]       添付 URL（X がカード化。本文とは別枠）
+ * @param {string[]} [opts.hashtags] ハッシュタグ（# は付けない）
+ * @returns {string} intent URL
+ */
+export function buildXShareUrl({ text = '', url = '', hashtags = [] } = {}) {
+  const params = new URLSearchParams();
+  if (text) params.set('text', text);
+  if (url) params.set('url', url);
+  const tags = (hashtags || []).filter(Boolean);
+  if (tags.length) params.set('hashtags', tags.join(','));
+  return `https://x.com/intent/tweet?${params.toString()}`;
+}

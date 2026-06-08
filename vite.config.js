@@ -49,8 +49,13 @@ function swVersionInjectPlugin() {
   };
 }
 
-// GitHub Actions (Pages ミラー) では /scale_generator/、本番 (Cloudflare Pages) では /
-const base = process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/';
+// base path の決定:
+//   1. BASE_PATH が明示されていれば最優先。
+//      ※ `GITHUB_*` は GitHub Actions の予約環境変数で `env:` から上書きできないため、
+//        CI(staging) で Cloudflare 用の '/' を強制する手段として非予約の BASE_PATH を使う。
+//   2. それ以外で GitHub Actions（= Pages ミラー deploy.yml）なら /scale_generator/。
+//   3. ローカル開発・本番(Cloudflare)手動ビルドは '/'。
+const base = process.env.BASE_PATH || (process.env.GITHUB_ACTIONS ? '/scale_generator/' : '/');
 
 export default defineConfig({
   root: join(__dirname, 'src'),

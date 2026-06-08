@@ -44,10 +44,11 @@ jobs:
       - name: Build (Cloudflare Pages base '/')
         run: npm run build
         env:
-          # GitHub Actions ランナーは GITHUB_ACTIONS=true を自動設定するが、それだと
-          # vite.config.js が base:/scale_generator/ に切替えてしまう（Pages ミラー用）。
-          # Cloudflare Pages は base '/' が必要なので、ここだけ空にして無効化する。
-          GITHUB_ACTIONS: ''
+          # GitHub Actions ランナーは GITHUB_ACTIONS=true を自動設定する。これだと
+          # vite.config.js が base:/scale_generator/（Pages ミラー用）に切替わるが、
+          # `GITHUB_*` は予約環境変数で env: から上書きできない（'' にしても無効）。
+          # → 非予約の BASE_PATH を明示して Cloudflare 用の base '/' を強制する。
+          BASE_PATH: '/'
       - name: Apply D1 migrations (staging only)
         # staging D1 (kami_db_staging) にのみ適用。--config で対象 DB を明示するので本番には触れない。
         # 追加すべきマイグレーションが無ければ wrangler は no-op で正常終了する。

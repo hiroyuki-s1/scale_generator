@@ -7,12 +7,13 @@ name: Deploy to Staging (Cloudflare Pages)
 #    本番公開は引き続き人間が手動で行う（docs/DEPLOYMENT.md）。
 #
 # 必要な GitHub シークレット（Settings → Secrets and variables → Actions）:
-#   CLOUDFLARE_API_TOKEN  … Cloudflare の API トークン（権限: Account > Cloudflare Pages > Edit）
+#   CLOUDFLARE_API_TOKEN  … Cloudflare の API トークン
+#                           権限: Account > Cloudflare Pages > Edit ＋ Account > D1 > Edit
 #   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
 #
-# staging の D1 スキーマ適用（マイグレーションを追加したとき）は自動化していない。
-# 必要時のみ手動で:
-#   npx wrangler d1 migrations apply kami_db_staging --remote --config wrangler.staging.toml
+# staging の D1 スキーマ適用はこのワークフローで自動化している（staging 限定）。
+# 適用先は --config wrangler.staging.toml の kami_db_staging のみ。本番 D1 (kami_db) には
+# 一切触れない（本番マイグレーションは docs/DEPLOYMENT.md / kami §7 に従い人間が手動実行）。
 
 on:
   push:
@@ -47,6 +48,14 @@ jobs:
           # vite.config.js が base:/scale_generator/ に切替えてしまう（Pages ミラー用）。
           # Cloudflare Pages は base '/' が必要なので、ここだけ空にして無効化する。
           GITHUB_ACTIONS: ''
+      - name: Apply D1 migrations (staging only)
+        # staging D1 (kami_db_staging) にのみ適用。--config で対象 DB を明示するので本番には触れない。
+        # 追加すべきマイグレーションが無ければ wrangler は no-op で正常終了する。
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply kami_db_staging --remote --config wrangler.staging.toml
       - name: Use staging wrangler config
         # `wrangler pages deploy` は --config 非対応。デプロイ時の wrangler.toml を
         # staging 内容（project=staging / D1=kami_db_staging）へ差し替える。

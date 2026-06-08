@@ -8,9 +8,9 @@ export function initHeaderMenu(store) {
   const menu = document.getElementById('moreMenu');
   if (!trigger || !menu) return;
 
-  const colorBtn = document.getElementById('colorBtn');
   // 'reset' は main.js が [data-act="reset"] に直接ハンドラを付けている。
   // ここではメニューを閉じるだけでよいので、resetBtn への参照は持たない。
+  // 色設定はスケールエディタ画面内（フレット範囲セクション）の専用ボタンに移設済み。
 
   function close() {
     trigger.classList.remove('open');
@@ -33,8 +33,7 @@ export function initHeaderMenu(store) {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
     const act = btn.dataset.act;
-    if (act === 'color')        colorBtn?.click();
-    else if (act === 'orient-land') store.updateLayout({ orientation: 'landscape' });
+    if (act === 'orient-land') store.updateLayout({ orientation: 'landscape' });
     else if (act === 'orient-port') store.updateLayout({ orientation: 'portrait' });
     // 'reset' は main.js のリスナーで処理 (ここでは close() のみで OK)
     else if (act === 'reload')  { location.reload(); return; }

@@ -511,7 +511,7 @@ initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {
     }));
   },
 });
-document.getElementById('colorBtn')?.addEventListener('click', () => colorModal.openForEdit());
+document.getElementById('editorColorBtn')?.addEventListener('click', () => colorModal.openForEdit());
 initLayoutPicker(store);
 initHeaderMenu(store);
 initPrintCss(store);

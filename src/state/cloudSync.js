@@ -158,26 +158,20 @@ export async function deleteSongbook(publicId) {
   }));
 }
 
-// ── 共有（shares・SHARE.md・期限廃止 migration 0003） ─────────────────
-/** ソングブックを共有化（スナップショット複製）。{ share_id, url, name } を返す。 */
-export async function createShare(songbookId) {
-  return asJsonOrThrow(await authedFetch('api/shares', {
-    method: 'POST', body: JSON.stringify({ songbook_id: songbookId }),
-  }));
+// ── 共有（無期限・自動生成・public_id ベース） ───────────────────────
+// ソングブックの public_id（推測不能な UUID）をそのまま共有キーに使う（unlisted リンク）。
+// 共有 URL は `?share=<public_id>` の 1 本で、ソングブックが存在する限り無期限。
+// 別途の「共有を作成」操作・期限・取り消し（管理）は不要。
+/** 共有の受け取り（公開・認証不要）。不正/不存在/論理削除は 404。 */
+export async function getSharedSongbook(publicId) {
+  return asJsonOrThrow(await authedFetch(`api/public/songbooks/${encodeURIComponent(publicId)}`));
 }
-/** 共有の受け取り（公開・認証不要）。不正/不存在は 404。 */
-export async function getShare(shareId) {
+/**
+ * レガシー共有（旧 shares テーブル・短い share_id）のフォールバック受け取り。
+ * 既に配布済みの `?share=<短いID>` リンクを壊さないために残す（公開・認証不要）。
+ */
+export async function getLegacyShare(shareId) {
   return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`));
-}
-/** 自分の共有一覧。 */
-export async function listMyShares() {
-  return asJsonOrThrow(await authedFetch('api/shares/mine'));
-}
-/** 共有の取り消し（即失効）。 */
-export async function revokeShare(shareId) {
-  return asJsonOrThrow(await authedFetch(`api/shares/${encodeURIComponent(shareId)}`, {
-    method: 'DELETE',
-  }));
 }
 
 // ── プロフィール（表示名・migration 0005） ───────────────────────────

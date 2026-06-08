@@ -183,7 +183,7 @@ body {
 .layout-menu-btn:hover { background: var(--bg); border-color: var(--border); color: var(--text-2); }
 .layout-menu-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
-.btn-color, .btn-print, .btn-reset {
+.btn-print, .btn-reset {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 12px;
   background: var(--surface); border: 1px solid var(--border);
@@ -191,7 +191,7 @@ body {
   font-size: 12px; font-weight: 600; font-family: inherit;
   cursor: pointer; transition: all .12s; flex-shrink: 0;
 }
-.btn-color:hover, .btn-print:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
+.btn-print:hover { background: var(--bg); border-color: #c8bfb5; color: var(--text); }
 .btn-reset { padding: 6px 9px; }
 .btn-reset:hover { background: var(--bg); border-color: #e07070; color: #e07070; }
 .btn-save {
@@ -338,21 +338,6 @@ body {
 /* 表示名入力は ID/URL と違い人名なので等幅をやめて読みやすく */
 #profileNameInput { font-family: inherit; }
 .profile-name-error { color: #dc2626; font-size: 12px; margin: -2px 0 6px; }
-.share-manage-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; }
-.share-manage-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
-}
-.share-manage-name { font-size: 13px; font-weight: 700; color: var(--text); }
-.share-manage-meta { font-size: 11px; color: var(--text-3); margin-top: 3px; }
-.btn-share-revoke {
-  flex-shrink: 0; padding: 6px 12px; border: 1.5px solid #fca5a5; border-radius: 7px;
-  background: #fff1f0; color: #dc2626;
-  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
-}
-.btn-share-revoke:hover { background: #dc2626; color: #fff; }
-.btn-share-revoke:disabled { opacity: .5; cursor: default; }
-.share-manage-empty, .share-manage-loading { font-size: 13px; color: var(--text-3); padding: 16px; text-align: center; }
 .songbook-empty { text-align: center; padding: 40px 16px; }
 .songbook-empty-icon { font-size: 34px; margin-bottom: 10px; }
 .songbook-empty-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
@@ -1375,17 +1360,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* SAVED CARDS */
 .saved-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
-/* スケールカード下部の X 投稿ボタン（画面のみ・印刷は .screen-only で非表示） */
-.saved-card-footer { display: flex; justify-content: center; margin-top: 8px; }
-/* X(旧Twitter) 投稿ボタン（カードフッター / 共有モーダル共通） */
-.btn-x-share {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 7px 14px; border: none; border-radius: 7px;
-  background: #000; color: #fff; font-size: 12px; font-weight: 700;
-  font-family: inherit; cursor: pointer; transition: opacity .12s;
-}
-.btn-x-share:hover { opacity: .82; }
-.btn-x-share--wide { width: 100%; padding: 11px; margin: 2px 0 10px; font-size: 13px; }
 /* 印刷専用タイトル: 画面では隠し、印刷時のみ指板の上にシンプル印字 */
 .saved-print-title { display: none; }
 

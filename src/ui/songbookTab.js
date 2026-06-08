@@ -149,7 +149,7 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
 
     const shareBtn = document.createElement('button');
     shareBtn.className = 'btn-songbook-share';
-    shareBtn.title = '共有リンク/IDを発行';
+    shareBtn.title = '共有URLを表示（無期限・誰でも読み込み可）';
     shareBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/></svg>共有`;
     shareBtn.addEventListener('click', e => { e.stopPropagation(); onShare?.(book); });
 

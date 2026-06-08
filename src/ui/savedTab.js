@@ -8,7 +8,6 @@ import {
   MOBILE_ZOOM_BREAKPOINT,
 } from '../config.js';
 import { savedListChanged, colorOnlyUpdate } from '../state/savedList.js';
-import { buildXShareUrl, SITE_URL } from '../domain/socialShare.js';
 import { drawFretboardBase, applyFretboardDiff } from './fretboardSvg.js';
 import { renderLegend } from './legend.js';
 import { exportSavedScalePng } from './imageExport.js';
@@ -504,23 +503,6 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   const leg = document.createElement('div');
   leg.className = 'legend';
   card.appendChild(leg);
-
-  // ── フッター: X(旧Twitter) 投稿ボタン（画面のみ・印刷では screen-only で隠す） ──
-  const footer = document.createElement('div');
-  footer.className = 'saved-card-footer screen-only';
-  const xBtn = document.createElement('button');
-  xBtn.type = 'button';
-  xBtn.className = 'btn-x-share';
-  xBtn.title = 'X に投稿';
-  xBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X に投稿`;
-  xBtn.addEventListener('click', () => {
-    const cur = liveSnap();
-    const text = `🎸「${localizeTitle(cur.title)}」を神スケールトレーナーで可視化しました`;
-    const href = buildXShareUrl({ text, url: SITE_URL, hashtags: ['神スケールトレーナー'] });
-    window.open(href, '_blank', 'noopener,noreferrer');
-  });
-  footer.appendChild(xBtn);
-  card.appendChild(footer);
 
   drawFretboardBase(svg, snap.instrument || 'guitar');
 

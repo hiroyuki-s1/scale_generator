@@ -1,0 +1,60 @@
+name: Deploy to Staging (Cloudflare Pages)
+
+# main への push で staging 検証環境へ自動デプロイする。
+#   → https://kami-scale-trainer-staging.pages.dev/
+#
+# ⚠️ これは staging 専用。本番 (kami-scale-trainer / kami_db / 本番 Clerk) には一切触れない。
+#    本番公開は引き続き人間が手動で行う（docs/DEPLOYMENT.md）。
+#
+# 必要な GitHub シークレット（Settings → Secrets and variables → Actions）:
+#   CLOUDFLARE_API_TOKEN  … Cloudflare の API トークン（権限: Account > Cloudflare Pages > Edit）
+#   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
+#
+# staging の D1 スキーマ適用（マイグレーションを追加したとき）は自動化していない。
+# 必要時のみ手動で:
+#   npx wrangler d1 migrations apply kami_db_staging --remote --config wrangler.staging.toml
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://kami-scale-trainer-staging.pages.dev/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - name: Build (Cloudflare Pages base '/')
+        run: npm run build
+        env:
+          # GitHub Actions ランナーは GITHUB_ACTIONS=true を自動設定するが、それだと
+          # vite.config.js が base:/scale_generator/ に切替えてしまう（Pages ミラー用）。
+          # Cloudflare Pages は base '/' が必要なので、ここだけ空にして無効化する。
+          GITHUB_ACTIONS: ''
+      - name: Use staging wrangler config
+        # `wrangler pages deploy` は --config 非対応。デプロイ時の wrangler.toml を
+        # staging 内容（project=staging / D1=kami_db_staging）へ差し替える。
+        # CI の作業コピーは使い捨てなので復元は不要。
+        run: cp wrangler.staging.toml wrangler.toml
+      - name: Deploy to Cloudflare Pages (staging)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name kami-scale-trainer-staging --branch main --commit-dirty=true

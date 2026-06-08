@@ -135,7 +135,15 @@ curl -s localhost:8788/api/shares/nope            # 404
 
 ## 6. staging へのデプロイ（本番と完全分離）
 
-**ハマりどころ: `wrangler pages deploy` は `--config` 非対応。** デプロイ時だけ `wrangler.toml` を staging 内容に一時差替え→**必ず復元**する:
+**自動デプロイ（既定）**: `main` への push で `.github/workflows/staging.yml` が
+`lint → test → build(base '/') → wrangler pages deploy` を実行し staging へ反映する。
+要 GitHub シークレット: `CLOUDFLARE_API_TOKEN`（Account > Cloudflare Pages > Edit）・
+`CLOUDFLARE_ACCOUNT_ID`。**注意**: GH Actions は `GITHUB_ACTIONS=true` を自動設定し
+vite が base を `/scale_generator/` にしてしまうため、staging ビルドだけ step env で
+`GITHUB_ACTIONS: ''` にして base `/` を強制している。D1 マイグレーションは自動化していない
+（必要時のみ §5 の `--config wrangler.staging.toml --remote` を手動実行）。本番には一切触れない。
+
+**手動デプロイ（CI を使わない場合）。ハマりどころ: `wrangler pages deploy` は `--config` 非対応。** デプロイ時だけ `wrangler.toml` を staging 内容に一時差替え→**必ず復元**する:
 
 ```bash
 N23=~/.nvm/versions/node/v23.3.0/bin

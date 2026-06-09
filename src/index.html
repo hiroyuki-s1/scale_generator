@@ -157,14 +157,6 @@
 <!-- ── エディターパネル ────────────────────────────────────────────── -->
 <div class="tab-panel" id="panelEditor">
 
-  <!-- スケール編集モード (新規登録 / 編集中) — ヘッダから移設 -->
-  <div class="editor-mode-bar">
-    <div class="editor-mode-banner new-mode" id="editorModeBanner">
-      <span id="editorModeLabel"><span class="editor-mode-label-icon">✨</span>新規登録</span>
-      <button class="editor-mode-cancel hidden" id="editorModeCancel" aria-label="編集をキャンセル" title="編集をキャンセル">✕ キャンセル</button>
-    </div>
-  </div>
-
   <!-- ── スケールエディター ──────────────────────────────────────────── -->
   <div class="editor">
 
@@ -199,6 +191,14 @@
 
     <!-- 指板エリア -->
     <div class="editor-fretboard">
+
+      <!-- スケール編集モード (新規登録 / 編集中) — 登録ボタン列の先頭に左寄せ配置 -->
+      <div class="editor-mode-bar">
+        <div class="editor-mode-banner new-mode" id="editorModeBanner">
+          <span id="editorModeLabel"><span class="editor-mode-label-icon">✨</span>新規登録</span>
+          <button class="editor-mode-cancel hidden" id="editorModeCancel" aria-label="編集をキャンセル" title="編集をキャンセル">✕ キャンセル</button>
+        </div>
+      </div>
 
       <!-- スケール名 (編集可能) + 登録ボタン -->
       <div class="fb-header">

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { detectPitchYIN, freqToNote, nearestOpenString, A4 } from '../../src/domain/pitch.js';
+import {
+  detectPitchYIN, freqToNote, nearestOpenString, noteLabelFromMidi, midiToFreq, A4,
+} from '../../src/domain/pitch.js';
 import { TUNING_GUITAR, TUNING_BASS } from '../../src/domain/constants.js';
 
 const SR = 44100;
@@ -140,6 +142,50 @@ describe('nearestOpenString', () => {
 
   it('returns null for empty tuning', () => {
     expect(nearestOpenString(110, [])).toBeNull();
+  });
+});
+
+describe('noteLabelFromMidi', () => {
+  it('maps reference MIDI numbers to labels', () => {
+    expect(noteLabelFromMidi(69).label).toBe('A4');   // A4
+    expect(noteLabelFromMidi(60).label).toBe('C4');   // C4
+    expect(noteLabelFromMidi(64).label).toBe('E4');   // guitar 1st
+    expect(noteLabelFromMidi(40).label).toBe('E2');   // guitar 6th
+    expect(noteLabelFromMidi(28).label).toBe('E1');   // bass 4th
+  });
+  it('returns parts (noteName, octave)', () => {
+    const n = noteLabelFromMidi(46); // A#2 / Bb2
+    expect(n.noteName).toBe('A#');
+    expect(n.octave).toBe(2);
+  });
+});
+
+describe('midiToFreq', () => {
+  it('A4(69) = a4 reference', () => {
+    expect(midiToFreq(69, 440)).toBeCloseTo(440, 6);
+    expect(midiToFreq(69, 442)).toBeCloseTo(442, 6);
+  });
+  it('E2(40) ≈ 82.41Hz at A4=440', () => {
+    expect(midiToFreq(40, 440)).toBeCloseTo(82.41, 1);
+  });
+  it('scales with reference A4 (442 shifts everything up)', () => {
+    expect(midiToFreq(40, 442)).toBeGreaterThan(midiToFreq(40, 440));
+  });
+  it('round-trips with freqToNote', () => {
+    for (const midi of [28, 40, 55, 64, 69]) {
+      const n = freqToNote(midiToFreq(midi, 440), 440);
+      expect(n.midi).toBe(midi);
+      expect(n.cents).toBe(0);
+    }
+  });
+});
+
+describe('reference pitch (a4) affects detection', () => {
+  it('same hz reads as sharper when a4 is lower', () => {
+    // 440Hz は A4=440 で 0¢、A4=435 だと基準が下がるので + 側にずれる
+    expect(freqToNote(440, 440).cents).toBe(0);
+    expect(freqToNote(440, 435).cents).toBeGreaterThan(0);
+    expect(freqToNote(440, 445).cents).toBeLessThan(0);
   });
 });
 

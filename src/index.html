@@ -478,40 +478,49 @@
 <div class="tuner-overlay hidden" id="tunerOverlay" role="dialog" aria-modal="true" aria-label="チューナー">
   <div class="tuner-inner">
     <div class="tuner-hdr">
+      <button class="tuner-back" id="tunerBackBtn" type="button" aria-label="戻る">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+        戻る
+      </button>
       <div class="tuner-title">チューナー</div>
-      <button class="tuner-close" id="tunerCloseBtn" aria-label="閉じる">&#x2715;</button>
     </div>
 
-    <!-- 楽器選択 -->
-    <div class="tuner-instr" id="tunerInstr" role="tablist" aria-label="楽器">
+    <!-- モード選択（ギター/ベース=対応開放弦のみ / ノーマル=12音クロマチック） -->
+    <div class="tuner-instr" id="tunerInstr" role="tablist" aria-label="モード">
       <button class="tuner-instr-btn active" data-instr="guitar" role="tab" aria-selected="true">ギター</button>
       <button class="tuner-instr-btn" data-instr="bass" role="tab" aria-selected="false">ベース</button>
+      <button class="tuner-instr-btn" data-instr="normal" role="tab" aria-selected="false">ノーマル</button>
+    </div>
+
+    <!-- 基準ピッチ A（430〜450Hz / 既定440） -->
+    <div class="tuner-a4">
+      <span class="tuner-a4-label">基準ピッチ A</span>
+      <button class="tuner-a4-btn" id="tunerA4Down" type="button" aria-label="基準ピッチを下げる">−</button>
+      <span class="tuner-a4-val" id="tunerA4Val">440 Hz</span>
+      <button class="tuner-a4-btn" id="tunerA4Up" type="button" aria-label="基準ピッチを上げる">＋</button>
     </div>
 
     <!-- メイン表示 -->
     <div class="tuner-display">
-      <div class="tuner-note" id="tunerNote">–</div>
-      <div class="tuner-freq" id="tunerFreq">マイクの準備中…</div>
-
-      <div class="tuner-meter" id="tunerMeter">
-        <span class="tuner-meter-side tuner-meter-flat">♭ 低い</span>
-        <div class="tuner-meter-track">
-          <div class="tuner-meter-zone"></div>
-          <div class="tuner-meter-center"></div>
-          <div class="tuner-meter-needle" id="tunerNeedle"></div>
+      <!-- デジタル表示（粗くチェック）: 音名 + セント + 周波数 -->
+      <div class="tuner-digital" id="tunerDigital">
+        <div class="tuner-note" id="tunerNote">–</div>
+        <div class="tuner-digital-sub">
+          <span class="tuner-dir tuner-dir-flat" id="tunerDirFlat" aria-hidden="true">♭</span>
+          <span class="tuner-cents" id="tunerCents">--</span>
+          <span class="tuner-dir tuner-dir-sharp" id="tunerDirSharp" aria-hidden="true">♯</span>
         </div>
-        <span class="tuner-meter-side tuner-meter-sharp">高い ♯</span>
+        <div class="tuner-freq" id="tunerFreq">マイクの準備中…</div>
       </div>
-      <div class="tuner-cents" id="tunerCents"></div>
 
-      <!-- ピッチ推移グラフ（横:時間 / 縦:周波数）。ビブラート・ふらつきの可視化用 -->
+      <!-- ピッチ推移グラフ（細かく調整）: 横=時間 / 縦=周波数 -->
       <div class="tuner-graph-wrap">
         <canvas class="tuner-graph" id="tunerGraph"></canvas>
         <div class="tuner-graph-cap">ピッチ推移 — 横軸:時間（直近6秒） / 縦軸:周波数（中心線=ジャスト）</div>
       </div>
     </div>
 
-    <!-- 開放弦 -->
+    <!-- 開放弦（ギター/ベース時のみ） -->
     <div class="tuner-strings" id="tunerStrings"></div>
 
     <button class="tuner-retry hidden" id="tunerRetryBtn" type="button">マイクを許可して再試行</button>

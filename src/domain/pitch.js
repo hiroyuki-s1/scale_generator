@@ -104,14 +104,33 @@ export function detectPitchYIN(buf, sampleRate, opts = {}) {
  * @returns {{ midi:number, noteName:string, octave:number, label:string, cents:number, hz:number } | null}
  *   cents は最寄り音からのズレ（+ で高い / − で低い、-50〜+50）。
  */
+/**
+ * MIDI ノート番号 → 音名/オクターブ/表示ラベル（例: 64 → E4）。
+ * @param {number} midi
+ * @returns {{ noteName:string, octave:number, label:string }}
+ */
+export function noteLabelFromMidi(midi) {
+  const noteName = NOTES[(((midi % 12) + 12) % 12)];
+  const octave = Math.floor(midi / 12) - 1;       // MIDI 60 = C4
+  return { noteName, octave, label: `${noteName}${octave}` };
+}
+
+/**
+ * MIDI ノート番号 → 周波数(Hz)。基準 A4 を変えると全体が移調する。
+ * @param {number} midi
+ * @param {number} [a4=440]
+ */
+export function midiToFreq(midi, a4 = A4) {
+  return a4 * Math.pow(2, (midi - 69) / 12);
+}
+
 export function freqToNote(hz, a4 = A4) {
   if (!(hz > 0) || !(a4 > 0)) return null;
   const midiFloat = 69 + 12 * Math.log2(hz / a4);
   const midi = Math.round(midiFloat);
   const cents = Math.round((midiFloat - midi) * 100);
-  const noteName = NOTES[((midi % 12) + 12 + 12) % 12];
-  const octave = Math.floor(midi / 12) - 1;       // MIDI 60 = C4
-  return { midi, noteName, octave, label: `${noteName}${octave}`, cents, hz };
+  const { noteName, octave, label } = noteLabelFromMidi(midi);
+  return { midi, noteName, octave, label, cents, hz };
 }
 
 /**

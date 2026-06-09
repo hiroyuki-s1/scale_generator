@@ -13,7 +13,7 @@ Cloudflare Pages が配信時に付与（GitHub Pages ミラーは無視）。
 | `X-Content-Type-Options` | `nosniff` | MIME スニッフィング防止 |
 | `X-Frame-Options` | `SAMEORIGIN` | クリックジャッキング防止 |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | リファラ漏洩抑制 |
-| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | 不要な権限を無効化 |
+| `Permissions-Policy` | `camera=(), microphone=(self), geolocation=()` | 不要な権限は無効化。マイクはチューナー機能のため自オリジンのみ許可（camera/geolocation は無効のまま） |
 | `Content-Security-Policy-Report-Only` | （下記） | XSS 緩和（まず観察モード） |
 
 ### CSP の段階導入（重要）

@@ -1615,6 +1615,116 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 /* Clickable fretboard hint on edit tab */
 
 
+/* ── チューナー（全画面オーバーレイ） ───────────────────────────────── */
+.tuner-overlay {
+  position: fixed; inset: 0; z-index: 320;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  animation: fadeUp .18s ease both;
+}
+.tuner-overlay.hidden { display: none; }
+.tuner-inner {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; max-width: 520px; margin: 0 auto;
+  padding: 14px 20px 28px;
+}
+.tuner-hdr {
+  width: 100%; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.tuner-title { font-size: 20px; font-weight: 700; letter-spacing: -.6px; color: var(--text); flex: 1; }
+.tuner-close {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-2); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .1s;
+}
+.tuner-close:hover { border-color: var(--accent); color: var(--accent); }
+
+/* 楽器セグメント */
+.tuner-instr {
+  display: inline-flex; margin-top: 18px; padding: 4px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+}
+.tuner-instr-btn {
+  border: none; background: transparent; cursor: pointer;
+  padding: 8px 22px; border-radius: 999px;
+  font-size: 14px; font-weight: 700; font-family: inherit; color: var(--text-2);
+  transition: all .12s;
+}
+.tuner-instr-btn.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+
+/* メイン表示 */
+.tuner-display {
+  width: 100%; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px;
+}
+.tuner-note {
+  font-size: 88px; font-weight: 800; line-height: 1; letter-spacing: -2px;
+  color: var(--text); transition: color .12s;
+  font-variant-numeric: tabular-nums;
+}
+.tuner-note.in-tune { color: var(--green); }
+.tuner-freq { font-size: 14px; color: var(--text-2); font-variant-numeric: tabular-nums; min-height: 18px; }
+
+/* セントメーター */
+.tuner-meter {
+  width: 100%; margin-top: 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+.tuner-meter-side { font-size: 12px; font-weight: 700; color: var(--text-3); flex-shrink: 0; white-space: nowrap; }
+.tuner-meter-track {
+  position: relative; flex: 1; height: 46px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--border); overflow: hidden;
+}
+/* 中央の「合っている」許容ゾーン */
+.tuner-meter-zone {
+  position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 10%; background: var(--accent-dim);
+}
+.tuner-meter.in-tune .tuner-meter-zone { background: rgba(22,163,74,.14); }
+.tuner-meter-center {
+  position: absolute; top: 6px; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 2px; background: var(--text-3);
+}
+.tuner-meter-needle {
+  position: absolute; top: 4px; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 5px; border-radius: 3px; background: var(--accent);
+  transition: left .08s linear, background .12s;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.6);
+}
+.tuner-meter.in-tune .tuner-meter-needle { background: var(--green); }
+.tuner-cents {
+  margin-top: 10px; font-size: 15px; font-weight: 700; color: var(--text-2);
+  font-variant-numeric: tabular-nums; min-height: 20px;
+}
+
+/* 開放弦ピル */
+.tuner-strings {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  margin-top: 22px; flex-shrink: 0;
+}
+.tuner-string {
+  min-width: 46px; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 15px; font-weight: 700; color: var(--text-2); text-align: center;
+  font-variant-numeric: tabular-nums; transition: all .12s;
+}
+.tuner-string.target { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.tuner-string.in-tune { border-color: var(--green); color: #fff; background: var(--green); }
+
+.tuner-hint { margin-top: 16px; font-size: 13px; color: var(--text-3); text-align: center; min-height: 18px; flex-shrink: 0; }
+
+@media (max-width: 767px) {
+  .tuner-close { width: 44px; height: 44px; font-size: 18px; }
+  .tuner-note { font-size: 76px; }
+  .tuner-instr-btn { padding: 10px 26px; font-size: 15px; }
+  .tuner-string { min-width: 52px; padding: 12px 14px; }
+}
+
+
 /* PRINT BASE */
 @media print {
   /* CRITICAL (iOS 横印刷の空白対策):
@@ -1632,6 +1742,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .header, .modal-overlay, .btn-delete, .legend { display: none !important; }
   .app-toast, #appToast { display: none !important; }
   .fb-fullscreen { display: none !important; }
+  .tuner-overlay { display: none !important; }
   /* Hide editor panel, show saved panel */
   .tab-nav { display: none !important; }
   .name-list-bar { display: none !important; }

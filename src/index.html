@@ -116,6 +116,10 @@
       リリースノート
       <span class="more-item-badge hidden" id="releaseNotesBadge" aria-label="新着あり"></span>
     </button>
+    <button class="more-item" data-act="tuner" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 0 1 .5.5v1.293l1.146-1.147a.5.5 0 0 1 .708.708L8.5 4.207V11.5a2.5 2.5 0 1 1-1-2V1.5A.5.5 0 0 1 8 1zM6.5 11.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"/></svg>
+      チューナー
+    </button>
     <button class="more-item" data-act="reload" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
       更新（リロード）
@@ -467,6 +471,44 @@
       <svg class="fb" id="fbFullscreenSvg" viewBox="0 0 960 230" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="legend" id="fbFullscreenLegend"></div>
+  </div>
+</div>
+
+<!-- ── チューナー ─────────────────────────────────────────────────── -->
+<div class="tuner-overlay hidden" id="tunerOverlay" role="dialog" aria-modal="true" aria-label="チューナー">
+  <div class="tuner-inner">
+    <div class="tuner-hdr">
+      <div class="tuner-title">チューナー</div>
+      <button class="tuner-close" id="tunerCloseBtn" aria-label="閉じる">&#x2715;</button>
+    </div>
+
+    <!-- 楽器選択 -->
+    <div class="tuner-instr" id="tunerInstr" role="tablist" aria-label="楽器">
+      <button class="tuner-instr-btn active" data-instr="guitar" role="tab" aria-selected="true">ギター</button>
+      <button class="tuner-instr-btn" data-instr="bass" role="tab" aria-selected="false">ベース</button>
+    </div>
+
+    <!-- メイン表示 -->
+    <div class="tuner-display">
+      <div class="tuner-note" id="tunerNote">–</div>
+      <div class="tuner-freq" id="tunerFreq">マイクの準備中…</div>
+
+      <div class="tuner-meter" id="tunerMeter">
+        <span class="tuner-meter-side tuner-meter-flat">♭ 低い</span>
+        <div class="tuner-meter-track">
+          <div class="tuner-meter-zone"></div>
+          <div class="tuner-meter-center"></div>
+          <div class="tuner-meter-needle" id="tunerNeedle"></div>
+        </div>
+        <span class="tuner-meter-side tuner-meter-sharp">高い ♯</span>
+      </div>
+      <div class="tuner-cents" id="tunerCents"></div>
+    </div>
+
+    <!-- 開放弦 -->
+    <div class="tuner-strings" id="tunerStrings"></div>
+
+    <div class="tuner-hint" id="tunerHint"></div>
   </div>
 </div>
 

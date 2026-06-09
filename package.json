@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "node e2e/all-features.test.cjs",
+    "test:e2e:tuner": "node e2e/tuner.test.cjs",
     "test:e2e:print": "node e2e/print-dom.test.cjs",
     "test:e2e:measure": "node e2e/measure-print.cjs",
     "test:db": "python3 scripts/validate_migrations.py",

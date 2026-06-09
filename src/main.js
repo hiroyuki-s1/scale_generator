@@ -25,6 +25,7 @@ import { wrapIntoPageGroups, unwrapPageGroups } from './print/pageGroup.js';
 import { initInstrumentPicker } from './ui/instrumentPicker.js';
 import { initInstallPrompt }    from './ui/installPrompt.js';
 import { initReleaseNotes }      from './ui/releaseNotesModal.js';
+import { initTuner }             from './ui/tuner.js';
 import { exportAllScalesPng }    from './ui/imageExport.js';
 import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
@@ -527,6 +528,7 @@ initInstrumentPicker(
 );
 initInstallPrompt();
 initReleaseNotes(typeof __VERSION__ !== 'undefined' ? __VERSION__ : '');
+initTuner(store);
 
 // ── クラウド認証（Clerk）: 非同期初期化。失敗してもローカル機能は継続。 ──
 // 表示名（オンボーディング/編集）を先に用意し、UserButton メニューへ連携する。

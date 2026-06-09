@@ -503,6 +503,12 @@
         <span class="tuner-meter-side tuner-meter-sharp">高い ♯</span>
       </div>
       <div class="tuner-cents" id="tunerCents"></div>
+
+      <!-- ピッチ推移グラフ（横:時間 / 縦:周波数）。ビブラート・ふらつきの可視化用 -->
+      <div class="tuner-graph-wrap">
+        <canvas class="tuner-graph" id="tunerGraph"></canvas>
+        <div class="tuner-graph-cap">ピッチ推移 — 横軸:時間（直近6秒） / 縦軸:周波数（中心線=ジャスト）</div>
+      </div>
     </div>
 
     <!-- 開放弦 -->

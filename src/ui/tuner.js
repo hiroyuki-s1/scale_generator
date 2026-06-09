@@ -30,6 +30,8 @@ const INSTR = {
 const IN_TUNE_CENTS = 5;     // ±これ以内で「合っている（緑）」
 const NEEDLE_SMOOTH = 0.35;  // 針の EMA 係数（0..1、大きいほど追従が速い）
 const ANALYZE_MS = 40;       // 解析の最小間隔（≈25fps。低音の重い解析でも CPU を抑える）
+const GRAPH_WINDOW_MS = 6000; // ピッチ推移グラフの時間窓（横軸）
+const GRAPH_CENTS_SPAN = 50;  // 縦軸の上下レンジ（基準音 ±この cents 相当の Hz）
 
 export function initTuner(store) {
   const overlay  = document.getElementById('tunerOverlay');
@@ -43,6 +45,8 @@ export function initTuner(store) {
   const stringsEl = document.getElementById('tunerStrings');
   const hintEl   = document.getElementById('tunerHint');
   const retryBtn = document.getElementById('tunerRetryBtn');
+  const graphCanvas = document.getElementById('tunerGraph');
+  const gctx = graphCanvas ? graphCanvas.getContext('2d') : null;
   const openTrigger = document.querySelector('[data-act="tuner"]');
   if (!overlay || !openTrigger) return;
 
@@ -55,6 +59,9 @@ export function initTuner(store) {
   let lastTs = 0;
   let smoothCents = 0;
   let active = false;
+  let history = [];   // ピッチ推移: { t:ms, hz:number|null } の時系列（直近 GRAPH_WINDOW_MS）
+  let refHz = null;   // グラフ縦軸の基準周波数（直近検出音の平均律周波数）
+  let gW = 0, gH = 0; // canvas の論理サイズ(px)
 
   const isOpen = () => !overlay.classList.contains('hidden');
 
@@ -88,6 +95,7 @@ export function initTuner(store) {
     });
     renderStrings();
     smoothCents = 0;
+    resetGraph(); // 楽器が変わると音域が変わるので推移はリセット
     if (analyser) {
       analyser.fftSize = INSTR[instr].fftSize;
       buf = new Float32Array(analyser.fftSize);
@@ -113,6 +121,9 @@ export function initTuner(store) {
     const cents = note.cents;            // 最寄り平均律音からのズレ（-50..+50）
     const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
 
+    // グラフ縦軸の基準＝検出音の平均律周波数（揺れはこの線まわりに見える）。
+    refHz = 440 * Math.pow(2, (note.midi - 69) / 12);
+
     noteEl.textContent = note.label;
     noteEl.classList.toggle('in-tune', inTune);
     freqEl.textContent = `${result.hz.toFixed(1)} Hz`;
@@ -135,12 +146,104 @@ export function initTuner(store) {
   function loop(ts) {
     rafId = requestAnimationFrame(loop);
     if (!analyser || !audioCtx) return;
-    if (ts && ts - lastTs < ANALYZE_MS) return;
-    lastTs = ts || 0;
-    analyser.getFloatTimeDomainData(buf);
-    const cfg = INSTR[instr];
-    const r = detectPitchYIN(buf, audioCtx.sampleRate, { minHz: cfg.minHz, maxHz: cfg.maxHz });
-    render(r);
+    const now = ts || 0;
+    // 解析は ANALYZE_MS 間隔（重い低音解析を抑制）。描画は毎フレームで滑らかにスクロール。
+    if (now - lastTs >= ANALYZE_MS) {
+      lastTs = now;
+      analyser.getFloatTimeDomainData(buf);
+      const cfg = INSTR[instr];
+      const r = detectPitchYIN(buf, audioCtx.sampleRate, { minHz: cfg.minHz, maxHz: cfg.maxHz });
+      render(r);
+      pushHistory(now, r ? r.hz : null);
+    }
+    drawGraph(now);
+  }
+
+  // ── ピッチ推移グラフ（横:時間 / 縦:周波数） ──────────────────────────
+  function pushHistory(t, hz) {
+    history.push({ t, hz });
+    const cutoff = t - GRAPH_WINDOW_MS - 200;
+    while (history.length && history[0].t < cutoff) history.shift();
+  }
+
+  function resizeGraph() {
+    if (!graphCanvas || !gctx) return;
+    const rect = graphCanvas.getBoundingClientRect();
+    if (rect.width === 0) return; // 非表示中は 0 → 後で再試行
+    const dpr = window.devicePixelRatio || 1;
+    graphCanvas.width = Math.round(rect.width * dpr);
+    graphCanvas.height = Math.round(rect.height * dpr);
+    gW = rect.width; gH = rect.height;
+    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v && v.trim()) || fallback;
+  }
+
+  function drawGraph(now) {
+    if (!gctx) return;
+    if (gW === 0) { resizeGraph(); if (gW === 0) return; }
+    gctx.clearRect(0, 0, gW, gH);
+
+    if (!refHz) {
+      gctx.fillStyle = cssVar('--text-3', '#b0a9a1');
+      gctx.font = '12px sans-serif';
+      gctx.textAlign = 'center';
+      gctx.fillText('音を鳴らすとピッチの推移が表示されます', gW / 2, gH / 2);
+      return;
+    }
+
+    const loHz = refHz * Math.pow(2, -GRAPH_CENTS_SPAN / 1200);
+    const hiHz = refHz * Math.pow(2, GRAPH_CENTS_SPAN / 1200);
+    const yOf = hz => {
+      const c = Math.max(loHz, Math.min(hiHz, hz));
+      return gH * (1 - (c - loHz) / (hiHz - loHz));
+    };
+    const xOf = t => gW * (1 - (now - t) / GRAPH_WINDOW_MS);
+
+    const colBorder = cssVar('--border-2', '#f0ece5');
+    const colText   = cssVar('--text-3', '#b0a9a1');
+    const colAccent = cssVar('--accent', '#c0511f');
+    const colGreen  = cssVar('--green', '#16a34a');
+
+    // 補助線（±25 / ±50 cents 相当）
+    gctx.lineWidth = 1; gctx.strokeStyle = colBorder;
+    [-50, -25, 25, 50].forEach(c => {
+      const y = yOf(refHz * Math.pow(2, c / 1200));
+      gctx.beginPath(); gctx.moveTo(0, y); gctx.lineTo(gW, y); gctx.stroke();
+    });
+    // 中心線（緑＝ジャスト）
+    const yc = yOf(refHz);
+    gctx.strokeStyle = colGreen; gctx.lineWidth = 1.5;
+    gctx.beginPath(); gctx.moveTo(0, yc); gctx.lineTo(gW, yc); gctx.stroke();
+
+    // 縦軸ラベル（Hz）
+    gctx.fillStyle = colText; gctx.font = '10px sans-serif'; gctx.textAlign = 'left';
+    gctx.fillText(`${hiHz.toFixed(1)}Hz`, 4, 11);
+    gctx.fillText(`${refHz.toFixed(1)}Hz`, 4, Math.max(20, yc - 3));
+    gctx.fillText(`${loHz.toFixed(1)}Hz`, 4, gH - 4);
+
+    // ピッチ推移ライン（検出が途切れた区間はギャップ）
+    gctx.strokeStyle = colAccent; gctx.lineWidth = 2;
+    gctx.lineJoin = 'round'; gctx.lineCap = 'round';
+    gctx.beginPath();
+    let pen = false;
+    for (const s of history) {
+      if (s.hz == null) { pen = false; continue; }
+      const x = xOf(s.t);
+      if (x < 0) { pen = false; continue; }
+      const y = yOf(s.hz);
+      if (!pen) { gctx.moveTo(x, y); pen = true; } else gctx.lineTo(x, y);
+    }
+    gctx.stroke();
+  }
+
+  function resetGraph() {
+    history = [];
+    refHz = null;
+    if (gctx && gW > 0) gctx.clearRect(0, 0, gW, gH);
   }
 
   // マイク取得。生信号がほしいので補正を切るが、端末が拒否(Overconstrained/NotReadable)した
@@ -236,6 +339,8 @@ export function initTuner(store) {
     // 開くたびにアプリの現在楽器に追随（ユーザーが途中で変えていれば尊重）。
     setInstrument(store.get().edit?.instrument === 'bass' ? 'bass' : 'guitar');
     overlay.classList.remove('hidden');
+    resetGraph();
+    resizeGraph(); // オーバーレイ表示後にレイアウト確定 → canvas 実寸を取得
     track('tuner_open', { instrument: instr }); // [removable-analytics]
     start();
   }
@@ -245,6 +350,7 @@ export function initTuner(store) {
     overlay.classList.add('hidden');
     retryBtn?.classList.add('hidden');
     stop();
+    resetGraph();
   }
 
   // ── イベント配線 ──
@@ -257,6 +363,7 @@ export function initTuner(store) {
     if (btn) setInstrument(btn.dataset.instr);
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) close(); });
+  window.addEventListener('resize', () => { if (isOpen()) resizeGraph(); });
 
   // 初期描画（閉じている状態の弦ピル）。
   setInstrument(instr);

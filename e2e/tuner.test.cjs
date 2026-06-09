@@ -83,6 +83,19 @@ async function runCase(tmpDir, c) {
       fail(`${c.label}: ${c.freq}Hz → 期待 ${c.expect} / 実際 "${detected}" (${cents})`);
     }
 
+    // ピッチ推移グラフが描画されている（canvas に非透明ピクセルがある）こと
+    await page.waitForTimeout(300);
+    const graphDrawn = await page.evaluate(() => {
+      const cv = document.getElementById('tunerGraph');
+      if (!cv || !cv.width || !cv.height) return false;
+      const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) { if (++n > 50) return true; }
+      return false;
+    });
+    graphDrawn ? pass(`${c.label}: ピッチ推移グラフが描画されている`)
+               : fail(`${c.label}: グラフが描画されていない`);
+
     // 閉じるボタン: オーバーレイに hidden クラスが付くこと（display:none なので
     // visible 待ちは不可。attached + クラス確認で判定）。
     await page.click('#tunerCloseBtn');

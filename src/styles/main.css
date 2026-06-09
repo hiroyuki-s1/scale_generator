@@ -1715,6 +1715,14 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-string.target { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 .tuner-string.in-tune { border-color: var(--green); color: #fff; background: var(--green); }
 
+.tuner-retry {
+  margin-top: 18px; padding: 10px 20px; flex-shrink: 0;
+  border: none; border-radius: 999px; background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+  box-shadow: var(--shadow-sm); transition: filter .12s;
+}
+.tuner-retry:hover { filter: brightness(1.06); }
+.tuner-retry.hidden { display: none; }
 .tuner-hint { margin-top: 16px; font-size: 13px; color: var(--text-3); text-align: center; min-height: 18px; flex-shrink: 0; }
 
 @media (max-width: 767px) {

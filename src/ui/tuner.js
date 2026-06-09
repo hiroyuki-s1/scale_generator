@@ -42,6 +42,7 @@ export function initTuner(store) {
   const centsEl  = document.getElementById('tunerCents');
   const stringsEl = document.getElementById('tunerStrings');
   const hintEl   = document.getElementById('tunerHint');
+  const retryBtn = document.getElementById('tunerRetryBtn');
   const openTrigger = document.querySelector('[data-act="tuner"]');
   if (!overlay || !openTrigger) return;
 
@@ -142,6 +143,40 @@ export function initTuner(store) {
     render(r);
   }
 
+  // マイク取得。生信号がほしいので補正を切るが、端末が拒否(Overconstrained/NotReadable)した
+  // 場合は素の audio:true に後退して再取得する。
+  async function acquireMic() {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false },
+      });
+    } catch (e) {
+      if (e && (e.name === 'OverconstrainedError' || e.name === 'NotReadableError')) {
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      throw e;
+    }
+  }
+
+  // 失敗理由ごとに案内を出し、「再試行」ボタンを表示する。
+  function showMicError(e) {
+    const name = e && e.name;
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      showIdle('マイク未許可');
+      hintEl.textContent = 'マイクがブロックされています。アドレスバーのマイクアイコンから「許可」して再試行してください。';
+    } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+      showIdle('マイクなし');
+      hintEl.textContent = 'マイクが見つかりません。デバイスの接続を確認してください。';
+    } else if (name === 'NotReadableError') {
+      showIdle('使用中');
+      hintEl.textContent = '他のアプリがマイクを使用中の可能性があります。閉じてから再試行してください。';
+    } else {
+      showIdle('エラー');
+      hintEl.textContent = 'マイクを使用できませんでした。許可状況を確認して再試行してください。';
+    }
+    retryBtn?.classList.remove('hidden');
+  }
+
   async function start() {
     if (active) return;
     active = true;
@@ -151,16 +186,13 @@ export function initTuner(store) {
       active = false;
       return;
     }
+    retryBtn?.classList.add('hidden');
     let stream;
     try {
-      // チューナーは生の信号がほしいので各種補正は切る。
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false },
-      });
+      stream = await acquireMic();
     } catch (e) {
       console.error('チューナー: マイク取得に失敗', e);
-      hintEl.textContent = 'マイクを使用できません。ブラウザのマイク許可を確認してください。';
-      showIdle('マイク未許可');
+      showMicError(e);
       active = false;
       return;
     }
@@ -211,12 +243,14 @@ export function initTuner(store) {
   function close() {
     if (!isOpen()) return;
     overlay.classList.add('hidden');
+    retryBtn?.classList.add('hidden');
     stop();
   }
 
   // ── イベント配線 ──
   openTrigger.addEventListener('click', open);
   closeBtn?.addEventListener('click', close);
+  retryBtn?.addEventListener('click', () => { if (!active) start(); });
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   instrBox?.addEventListener('click', e => {
     const btn = e.target.closest('.tuner-instr-btn');

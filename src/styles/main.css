@@ -609,23 +609,27 @@ body {
   text-align: center; font-family: 'Courier New', monospace; color: var(--purple);
 }
 .mask-stepper-sep { font-size: 16px; color: var(--text-3); margin-top: 20px; flex-shrink: 0; }
-/* ── ソングファイル状態表示 (ヘッダ左・ソングファイル全体の新規/編集) ── */
+/* ── ソングファイル状態表示 (ヘッダ左・“今どのファイルか”の静かなコンテキスト) ──
+   役割で分離: こちらは持続的コンテキストなので無地・アニメ無し・控えめ配色。
+   緑/橙はスケール編集バッジ専用にし、こちらは藍(保存済)/グレー(未保存)で別系統にする。 */
 .songfile-indicator {
   flex: 0 1 auto; min-width: 0;
   display: flex; align-items: center; gap: 6px;
-  height: 28px; padding: 0 12px; max-width: 320px;
-  font-size: 11px; font-weight: 800; letter-spacing: 0.3px;
-  font-family: inherit; border-radius: 20px;
+  height: 28px; padding: 0 4px; max-width: 340px;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-2); font-family: inherit;
 }
-.songfile-indicator-icon { font-size: 12px; flex-shrink: 0; }
-.songfile-indicator-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.songfile-indicator.sf-new {
-  background: linear-gradient(135deg, #e8f5e9, #dcedc8);
-  color: #2e7d32; border: 1.5px solid #a5d6a7;
+.songfile-indicator-icon { font-size: 13px; flex-shrink: 0; opacity: .85; }
+.songfile-indicator-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.songfile-indicator-tag {
+  flex-shrink: 0; font-size: 10px; font-weight: 800; letter-spacing: 0.3px;
+  padding: 2px 8px; border-radius: 20px; line-height: 1.4;
 }
-.songfile-indicator.sf-edit {
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-  color: #bf360c; border: 1.5px solid #ffab66;
+.songfile-indicator.sf-new .songfile-indicator-tag {
+  background: var(--bg); color: var(--text-3); border: 1px solid var(--border);
+}
+.songfile-indicator.sf-edit .songfile-indicator-tag {
+  background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; /* 落ち着いた藍 — スケールの緑橙とは別系統 */
 }
 
 /* ── エディターモードバナー (スケール編集モード・エディタ画面上部に移設) ── */

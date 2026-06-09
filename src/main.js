@@ -598,18 +598,18 @@ if (songfileTitleEl) {
 const songfileIndicatorEl     = document.getElementById('songfileIndicator');
 const songfileIndicatorIconEl = document.getElementById('songfileIndicatorIcon');
 const songfileIndicatorTextEl = document.getElementById('songfileIndicatorText');
+const songfileIndicatorTagEl  = document.getElementById('songfileIndicatorTag');
 function updateSongfileIndicator(s) {
   if (!songfileIndicatorEl) return;
-  const bound = !!s.songfileSource?.publicId;
+  const bound = !!s.songfileSource?.publicId; // 自分のソングブックを読込中（保存で上書き）
   const title = (s.songfileTitle || '').trim();
   songfileIndicatorEl.classList.toggle('sf-edit', bound);
   songfileIndicatorEl.classList.toggle('sf-new', !bound);
-  if (songfileIndicatorIconEl) songfileIndicatorIconEl.textContent = bound ? '✏️' : '✨';
+  if (songfileIndicatorIconEl) songfileIndicatorIconEl.textContent = bound ? '📁' : '📄';
   if (songfileIndicatorTextEl) {
-    songfileIndicatorTextEl.textContent = bound
-      ? `編集中：${title || '無題のソングブック'}`
-      : (title ? `新規作成中：${title}` : '新規作成中');
+    songfileIndicatorTextEl.textContent = title || (bound ? '無題のソングブック' : '新規ファイル');
   }
+  if (songfileIndicatorTagEl) songfileIndicatorTagEl.textContent = bound ? '保存済' : '未保存';
 }
 updateSongfileIndicator(store.get());
 store.subscribe((s, p) => {

@@ -575,7 +575,9 @@ const applyCloudSongfile = (savedArray, title, source = null) => {
   tabNav.querySelector('[data-tab="saved"]')?.click();
 };
 const shareUi = initShareUi(store, applyCloudSongfile);
-initSongbookTab(store, applyCloudSongfile, (book) => shareUi.shareSongbook(book));
+// onAfterSave: ソングブック保存完了後はソングファイルをリセットして新規状態へ戻す
+// （束縛＝編集状態は「読み込み」時のみ。保存後は新規登録状態にする要望）。
+initSongbookTab(store, applyCloudSongfile, (book) => shareUi.shareSongbook(book), resetSongfileToNew);
 // 起動時の共有URL（?share=<id>）受け取り
 shareUi.checkUrlParam();
 
@@ -617,6 +619,13 @@ store.subscribe((s, p) => {
   updateSongfileIndicator(s);
 });
 
+// ── ソングファイルを新規状態へ初期化（スケール編集も新規登録へ） ──────────
+// 「新規作成」ボタン / ソングブック保存完了後の両方で使う共通処理。
+function resetSongfileToNew() {
+  clearEditMode();
+  store.set(s => ({ ...s, saved: [], songfileTitle: '', songfileSource: null }));
+}
+
 // ── ソングファイル「新規作成」ボタン（全クリアして新規開始） ──────────────
 document.getElementById('songfileNewBtn')?.addEventListener('click', () => {
   const { saved, songfileTitle, songfileSource } = store.get();
@@ -624,9 +633,7 @@ document.getElementById('songfileNewBtn')?.addEventListener('click', () => {
   if (dirty && !confirm(
     '新しいソングファイルを作成します。\n現在の登録スケール・ソングファイル名はすべてクリアされます。\nよろしいですか？',
   )) return;
-  // スケール単位の編集状態も解除してから、ソングファイル全体を初期化する。
-  clearEditMode();
-  store.set(s => ({ ...s, saved: [], songfileTitle: '', songfileSource: null }));
+  resetSongfileToNew();
   showToast('新しいソングファイルを開始しました');
 });
 

@@ -19,8 +19,10 @@ const NS = 'http://www.w3.org/2000/svg';
  *
  * @param {object} store
  * @param {(savedArray:Array)=>void} onLoadSongbook 読込確定時：store.saved を置換しタブ切替
+ * @param {(book:object)=>void} [onShare] 共有ボタン
+ * @param {()=>void} [onAfterSave] 保存(新規作成/上書き)成功後：ソングファイルを新規状態へリセット
  */
-export function initSongbookTab(store, onLoadSongbook, onShare = null) {
+export function initSongbookTab(store, onLoadSongbook, onShare = null, onAfterSave = null) {
   const tabBtn   = document.getElementById('songbookTabBtn');
   const locked   = document.getElementById('songbookLocked');
   const main     = document.getElementById('songbookMain');
@@ -206,6 +208,8 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
         await updateSongbook(source.publicId, name, state);
         showToast('上書き保存しました');
         await refresh();
+        // 保存完了 → ソングファイルを新規状態へリセット（編集状態は読み込み時のみ）。
+        onAfterSave?.();
       } catch (e) {
         if (e.status === 404) {
           // 元が削除済み/自分のものでない → 束縛を切って新規保存に切替（共有元は不変なので安全）。
@@ -239,13 +243,11 @@ export function initSongbookTab(store, onLoadSongbook, onShare = null) {
     if (trimmed === '') { showToast('名前を入力してください'); return; }
     if (saveTopBtn) saveTopBtn.disabled = true;
     try {
-      const res = await createSongbook(trimmed, store.get());
-      // 以後の保存はこのソングブックへ上書き（公開IDを束縛）。
-      if (res?.public_id) {
-        store.set(s => ({ ...s, songfileTitle: trimmed, songfileSource: { publicId: res.public_id } }));
-      }
+      await createSongbook(trimmed, store.get());
       showToast('ソングブックに保存しました');
       await refresh();
+      // 保存完了 → ソングファイルを新規状態へリセット（編集状態は読み込み時のみ）。
+      onAfterSave?.();
     } catch (e) {
       console.error('ソングブック保存に失敗:', e);
       showToast(e.status === 400 ? (e.message || '保存できません') : '保存に失敗しました');

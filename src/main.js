@@ -592,6 +592,44 @@ if (songfileTitleEl) {
   });
 }
 
+// ── ヘッダのソングファイル状態表示 ────────────────────────────────────
+// 未束縛(songfileSource=null)=新規作成中(緑/new) / 自分のソングブック読込中=編集中(橙/edit)。
+// スケール単位のバナー(editorModeBanner)とは別レイヤー（こちらはソングファイル全体の状態）。
+const songfileIndicatorEl     = document.getElementById('songfileIndicator');
+const songfileIndicatorIconEl = document.getElementById('songfileIndicatorIcon');
+const songfileIndicatorTextEl = document.getElementById('songfileIndicatorText');
+function updateSongfileIndicator(s) {
+  if (!songfileIndicatorEl) return;
+  const bound = !!s.songfileSource?.publicId;
+  const title = (s.songfileTitle || '').trim();
+  songfileIndicatorEl.classList.toggle('sf-edit', bound);
+  songfileIndicatorEl.classList.toggle('sf-new', !bound);
+  if (songfileIndicatorIconEl) songfileIndicatorIconEl.textContent = bound ? '✏️' : '✨';
+  if (songfileIndicatorTextEl) {
+    songfileIndicatorTextEl.textContent = bound
+      ? `編集中：${title || '無題のソングブック'}`
+      : (title ? `新規作成中：${title}` : '新規作成中');
+  }
+}
+updateSongfileIndicator(store.get());
+store.subscribe((s, p) => {
+  if (p && s.songfileSource === p.songfileSource && s.songfileTitle === p.songfileTitle) return;
+  updateSongfileIndicator(s);
+});
+
+// ── ソングファイル「新規作成」ボタン（全クリアして新規開始） ──────────────
+document.getElementById('songfileNewBtn')?.addEventListener('click', () => {
+  const { saved, songfileTitle, songfileSource } = store.get();
+  const dirty = saved.length > 0 || (songfileTitle || '').trim() !== '' || !!songfileSource;
+  if (dirty && !confirm(
+    '新しいソングファイルを作成します。\n現在の登録スケール・ソングファイル名はすべてクリアされます。\nよろしいですか？',
+  )) return;
+  // スケール単位の編集状態も解除してから、ソングファイル全体を初期化する。
+  clearEditMode();
+  store.set(s => ({ ...s, saved: [], songfileTitle: '', songfileSource: null }));
+  showToast('新しいソングファイルを開始しました');
+});
+
 
 // ── 保存済みバッジ + 全削除ボタン表示制御 ─────────────────────────────
 const savedBadgeEl    = document.getElementById('savedBadge');

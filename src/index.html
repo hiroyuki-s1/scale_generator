@@ -77,9 +77,9 @@
     <img class="app-logo" src="%BASE_URL%icon-192.png" alt="神スケールトレーナー" draggable="false">
     <span class="brand-name">神スケールトレーナー</span>
   </div>
-  <div class="editor-mode-banner new-mode" id="editorModeBanner">
-    <span id="editorModeLabel"><span class="editor-mode-label-icon">✨</span>新規登録</span>
-    <button class="editor-mode-cancel hidden" id="editorModeCancel" aria-label="編集をキャンセル" title="編集をキャンセル">✕ キャンセル</button>
+  <div class="songfile-indicator sf-new" id="songfileIndicator" title="現在編集中のソングファイル">
+    <span class="songfile-indicator-icon" id="songfileIndicatorIcon">✨</span>
+    <span class="songfile-indicator-text" id="songfileIndicatorText">新規作成中</span>
   </div>
   <div class="header-spacer"></div>
   <span class="app-ver" id="appVer"></span>
@@ -155,6 +155,14 @@
 
 <!-- ── エディターパネル ────────────────────────────────────────────── -->
 <div class="tab-panel" id="panelEditor">
+
+  <!-- スケール編集モード (新規登録 / 編集中) — ヘッダから移設 -->
+  <div class="editor-mode-bar">
+    <div class="editor-mode-banner new-mode" id="editorModeBanner">
+      <span id="editorModeLabel"><span class="editor-mode-label-icon">✨</span>新規登録</span>
+      <button class="editor-mode-cancel hidden" id="editorModeCancel" aria-label="編集をキャンセル" title="編集をキャンセル">✕ キャンセル</button>
+    </div>
+  </div>
 
   <!-- ── スケールエディター ──────────────────────────────────────────── -->
   <div class="editor">
@@ -270,6 +278,10 @@
 <div class="tab-panel hidden" id="panelSaved">
   <!-- ソングファイル上部: タイトル(任意・いつでも編集可) + クラウド保存(ログイン時) -->
   <div class="songfile-top" id="songfileTop">
+    <button class="btn-songfile-new" id="songfileNewBtn" type="button" title="登録スケール・名前をすべてクリアして新しいソングファイルを始める">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1a.5.5 0 0 1 .5.5V7.5h6a.5.5 0 0 1 0 1h-6V14.5a.5.5 0 0 1-1 0V8.5h-6a.5.5 0 0 1 0-1h6V1.5A.5.5 0 0 1 8 1z"/></svg>
+      新規作成
+    </button>
     <input class="songfile-title-input" id="songfileTitleInput" placeholder="ソングファイル名" maxlength="100" autocomplete="off" spellcheck="false">
     <button class="btn-save-songbook" id="songbookSaveTopBtn" type="button" style="display:none">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>

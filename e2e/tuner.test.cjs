@@ -308,6 +308,38 @@ async function runOffsetEditor(tmpDir) {
   } finally { await browser.close(); }
 }
 
+// テーマ切替: ライト/ダークでクラス付与＆localStorage永続。
+async function runTheme(tmpDir) {
+  console.log('--- テーマ: ライト/ダーク切替 ---');
+  const wav = path.join(tmpDir, 'tone-th.wav');
+  writeToneWav(wav, 110, { seconds: 2 });
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    const page = await context.newPage();
+    await openTuner(page); // 設定ドロワーを開く
+    // 既定はダーク（theme-light クラスなし）
+    let isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
+    !isLight ? pass('テーマ: 既定はダーク') : fail('テーマ: 既定がダークでない');
+    // ライトへ
+    await page.click('.tuner-theme-btn[data-theme="light"]');
+    await page.waitForTimeout(150);
+    isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
+    const saved = await page.evaluate(() => localStorage.getItem('sg.v1.tunerTheme'));
+    (isLight && saved === 'light') ? pass('テーマ: ライト適用＋localStorage保存')
+                                   : fail(`テーマ: ライト不正 class=${isLight} ls=${saved}`);
+    // ダークへ戻す
+    await page.click('.tuner-theme-btn[data-theme="dark"]');
+    await page.waitForTimeout(150);
+    isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
+    const saved2 = await page.evaluate(() => localStorage.getItem('sg.v1.tunerTheme'));
+    (!isLight && saved2 === 'dark') ? pass('テーマ: ダークに戻る＋保存')
+                                    : fail(`テーマ: ダーク不正 class=${isLight} ls=${saved2}`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
 async function main() {
   console.log('チューナー E2E（fake audio capture シミュレータ）\n');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuner-wav-'));
@@ -325,6 +357,8 @@ async function main() {
     catch (e) { fail(`甘い調弦: 例外 ${e.message}`); }
     try { await runOffsetEditor(tmpDir); }
     catch (e) { fail(`オフセット編集: 例外 ${e.message}`); }
+    try { await runTheme(tmpDir); }
+    catch (e) { fail(`テーマ: 例外 ${e.message}`); }
     try { await runPolyphonic(tmpDir); }
     catch (e) { fail(`ポリフォニック: 例外 ${e.message}`); }
   } finally {

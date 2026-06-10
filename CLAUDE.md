@@ -182,6 +182,9 @@ main.js → orchestrates all
 - `src/domain/noteDetect.js` — 音名分類 + `StableNoteTracker`（安定音検出・再利用/クイズ用、pure）
 - `src/audio/{pitchEngine,pitchProcessor.worklet,workletUrl}.js` — `PitchEngine` クラス(mono/poly・再利用可)
 - `src/state/tunerOffsets.js` — 甘い調弦の弦ごと±¢（local + D1 同期。pure な sanitize/clamp 同梱）
+- `src/state/tunerTheme.js` — チューナー表示テーマ('dark'暖色/'light'本体一致)。local + D1 同期。
+  ライトは本体（スケール設定画面）と同色（`--tk-*` を `.theme-light` で本体パレットに上書き）。緑は合致サイン専用。
+  ※ユーザー設定の D1 同期は `cloudSync.patchSettings(get→merge→put)` で `user_settings.settings` に複数キー（tunerOffsets/tunerTheme）をマージ。
 - `src/domain/title.js` / `src/domain/i18n.js` — タイトル生成 / カタカナ対訳
 - `src/state/{store,persist,snapshot,savedList}.js` — 状態管理
 - `src/ui/fretboardSvg.js` — SVG 描画、diff-apply、マスクオーバーレイ

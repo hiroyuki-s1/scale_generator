@@ -194,11 +194,18 @@ export async function setProfile(displayName) {
 export async function getSettings() {
   return asJsonOrThrow(await authedFetch('api/settings'));
 }
-/** 設定オブジェクト全体を保存（upsert・置換）。部分更新は呼び出し側で get→merge→put する。 */
+/** 設定オブジェクト全体を保存（upsert・置換）。部分更新は patchSettings を使う。 */
 export async function putSettings(obj) {
   return asJsonOrThrow(await authedFetch('api/settings', {
     method: 'PUT', body: JSON.stringify(obj),
   }));
+}
+/** 設定を部分更新（get→merge→put）。他のキーは保持。プリファレンス用途。 */
+export async function patchSettings(partial) {
+  let cur = {};
+  try { cur = await getSettings(); } catch { cur = {}; }
+  const merged = { ...(cur && typeof cur === 'object' ? cur : {}), ...partial };
+  return putSettings(merged);
 }
 
 // ── 行動記録 (起動イベント・migration 0004) ─────────────────────────

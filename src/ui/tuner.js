@@ -8,6 +8,9 @@ import { advanceStrobePhase } from '../domain/strobe.js';
 import {
   loadOffsets, saveOffsetsLocal, pullOffsets, pushOffsets, clampOffset,
 } from '../state/tunerOffsets.js';
+import {
+  loadTheme, saveThemeLocal, pullTheme, pushTheme, normalizeTheme,
+} from '../state/tunerTheme.js';
 import { onAuthChange } from '../state/cloudSync.js';
 import { track } from '../state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 
@@ -73,6 +76,7 @@ export function initTuner(store) {
   const sweetenBtn= document.getElementById('tunerSweeten');
   const offsetEditor = document.getElementById('tunerOffsetEditor');
   const viewTabs  = document.getElementById('tunerViewTabs');
+  const themeBox  = document.getElementById('tunerThemeTabs');
   const settingsToggle = document.getElementById('tunerSettingsToggle');
   const settingsPanel = document.getElementById('tunerSettings');
   const noteRow   = document.getElementById('tunerNoteRow');
@@ -120,6 +124,7 @@ export function initTuner(store) {
   let tuningIds = loadTuningIds();
   let sweeten = loadSweeten();
   let viewMode = loadView();
+  let theme = loadTheme(); // 'dark' | 'light'（チューナー表示テーマ）
   let currentMidi = null;   // ギター/ベース時の弦 MIDI 配列（ノーマルは null）
   let currentLabels = [];
   let offsets = [];
@@ -375,6 +380,22 @@ export function initTuner(store) {
     if (isOpen()) resizeStrobe();
   }
 
+  // ── テーマ（ライト/ダーク） ──
+  function applyTheme() {
+    overlay.classList.toggle('theme-light', theme === 'light');
+    themeBox?.querySelectorAll('.tuner-theme-btn').forEach(b => {
+      const on = b.dataset.theme === theme;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+  }
+  function setTheme(t) {
+    theme = normalizeTheme(t);
+    saveThemeLocal(theme);
+    pushTheme(theme); // ログイン中なら D1 へ
+    applyTheme();
+  }
+
   // ── エンジン同期（レンジ/目標/モード） ──
   function syncEngine() {
     if (!engine) return;
@@ -548,12 +569,13 @@ export function initTuner(store) {
     const dt = strobeLastT ? Math.min(0.1, Math.max(0, (now - strobeLastT) / 1000)) : 0;
     strobeLastT = now;
 
-    const bg = '#16191d';
-    sctx.fillStyle = bg; sctx.fillRect(0, 0, sW, sH);
+    const light = theme === 'light';
+    sctx.fillStyle = light ? '#f3ede3' : '#16191d';
+    sctx.fillRect(0, 0, sW, sH);
     const present = strobePresent && strobeTargetHz > 0 && strobeDetectedHz > 0
       && lastResult && now - lastResultT <= HOLD_MS;
     if (!present) {
-      sctx.fillStyle = 'rgba(255,255,255,0.4)';
+      sctx.fillStyle = light ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)';
       sctx.font = '12px sans-serif'; sctx.textAlign = 'center';
       sctx.fillText('音を鳴らすと縞が表示されます', sW / 2, sH / 2);
       return;
@@ -664,6 +686,7 @@ export function initTuner(store) {
   function open() {
     if (isOpen()) return;
     buildMeterDom();
+    applyTheme();
     setInstrument(store.get().edit?.instrument === 'bass' ? 'bass' : 'guitar');
     renderA4();
     setView(viewMode); // 保存モードを復元（表示の出し分け）
@@ -699,10 +722,15 @@ export function initTuner(store) {
     const btn = e.target.closest('.tuner-offset-btn');
     if (btn) setOffset(Number(btn.dataset.i), Number(btn.dataset.off));
   });
-  // ログイン状態が変わったら（=ログイン時）サーバ保存のオフセットを取り込む。
+  themeBox?.addEventListener('click', e => {
+    const btn = e.target.closest('.tuner-theme-btn');
+    if (btn) setTheme(btn.dataset.theme);
+  });
+  // ログイン状態が変わったら（=ログイン時）サーバ保存のオフセット/テーマを取り込む。
   onAuthChange(user => {
     if (!user) return;
     pullOffsets().then(adoptCloudOffsets).catch(() => {});
+    pullTheme().then(t => { if (t) { theme = t; saveThemeLocal(theme); applyTheme(); } }).catch(() => {});
   });
   viewTabs?.addEventListener('click', e => {
     const btn = e.target.closest('.tuner-view-btn');
@@ -718,6 +746,7 @@ export function initTuner(store) {
 
   // 初期描画。
   buildMeterDom();
+  applyTheme();
   setInstrument(instr);
   setView(viewMode);
   renderA4();

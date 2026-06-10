@@ -1629,6 +1629,19 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   background: var(--tk-bg); color: var(--tk-text);
   display: flex; flex-direction: column; animation: fadeUp .18s ease both;
 }
+/* ライトテーマ: 本体（スケール設定画面）と同じクリーム/オレンジ。緑は合致サイン。 */
+.tuner-overlay.theme-light {
+  --tk-bg: #f7f5f1; --tk-bg2: #ffffff;
+  --tk-text: #18170f; --tk-muted: #6b6560; --tk-muted2: #b0a9a1;
+  --tk-seg: #e8e3da;
+  --tk-orange: #e8702b; --tk-yellow: #e0a400; --tk-green: #16a34a;
+  --tk-accent: #c0511f;
+  --tk-border: #e8e3da;
+}
+/* ライトでは緑の radial グローが弱いので、緑の縁取り/塗りで合致を伝える */
+.tuner-overlay.theme-light .tuner-lock-glow { background: radial-gradient(ellipse 78% 46% at 50% 30%, rgba(22,163,74,0.14), transparent 72%); }
+.tuner-overlay.theme-light.is-locked .tuner-bars .tk-bar { box-shadow: 0 0 8px rgba(22,163,74,.45); }
+.tuner-overlay.theme-light.is-locked .tuner-id-name { text-shadow: none; }
 .tuner-overlay.hidden { display: none; }
 .tuner-inner {
   position: relative; z-index: 1; /* ロック発光レイヤーの上に内容を描く */
@@ -1709,6 +1722,12 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-offset-btn:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
 .tuner-offset-btn:active { transform: scale(.92); }
 .tuner-offset-val { min-width: 48px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tk-muted); font-variant-numeric: tabular-nums; }
+
+/* テーマ切替（ライト/ダーク） */
+.tuner-theme { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tuner-theme-label { font-size: 12px; font-weight: 700; color: var(--tk-muted); }
+.tuner-theme-btn { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
+.tuner-theme-btn.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
 
 .tuner-views { display: flex; justify-content: center; gap: 8px; }
 .tuner-view-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }

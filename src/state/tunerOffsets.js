@@ -1,5 +1,5 @@
 import { SWEETENED } from '../domain/tunings.js';
-import { getUser, getSettings, putSettings } from './cloudSync.js';
+import { getUser, getSettings, patchSettings } from './cloudSync.js';
 
 /**
  * チューナーの「甘い調弦」オフセット（弦ごと ±cents）の保存層。
@@ -68,10 +68,6 @@ export async function pullOffsets() {
 /** ログイン中なら D1 設定へマージ保存（他の設定キーは保持）。失敗は握りつぶす。 */
 export async function pushOffsets(map) {
   if (!getUser()) return;
-  try {
-    let cur = {};
-    try { cur = await getSettings(); } catch { cur = {}; }
-    const merged = { ...(cur && typeof cur === 'object' ? cur : {}), tunerOffsets: sanitizeOffsetsMap(map) };
-    await putSettings(merged);
-  } catch (e) { console.error('tunerOffsets push failed', e); }
+  try { await patchSettings({ tunerOffsets: sanitizeOffsetsMap(map) }); }
+  catch (e) { console.error('tunerOffsets push failed', e); }
 }

@@ -29,8 +29,6 @@ const NORMAL = { minHz: 40, maxHz: 2000 };
 const IN_TUNE_CENTS = 5;      // ±これ以内で「合っている（緑）」
 const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
-const GRAPH_WINDOW_MS = 6000;
-const GRAPH_CENTS_SPAN = 50;
 const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
@@ -82,6 +80,8 @@ export function initTuner(store) {
   const a4ValEl   = document.getElementById('tunerA4Val');
   const a4DownBtn = document.getElementById('tunerA4Down');
   const a4UpBtn   = document.getElementById('tunerA4Up');
+  const instrNameEl = document.getElementById('tunerInstrName');
+  const tuningNameEl = document.getElementById('tunerTuningName');
   const graphWrap = document.getElementById('tunerGraphWrap');
   const graphCanvas = document.getElementById('tunerGraph');
   const gctx = graphCanvas ? graphCanvas.getContext('2d') : null;
@@ -104,8 +104,7 @@ export function initTuner(store) {
   let engine = null, mediaStream = null;
   let rafId = 0, active = false;
   let lastResult = null, lastResultT = 0;
-  let history = [];
-  let refHz = null;
+  let meterCents = null;   // 針メーターの現在のズレ（cents）。null=無信号
   let gW = 0, gH = 0;
   // ストロボ
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
@@ -138,6 +137,23 @@ export function initTuner(store) {
       offsets = sweeten ? (SWEETENED[instr] || zeroOffsets(t.midi.length)) : zeroOffsets(t.midi.length);
     } else {
       currentMidi = null; currentLabels = []; offsets = [];
+    }
+    updateIdLabel();
+  }
+
+  // ヘッダの「ギター 6弦 / スタンダード」表示を現在状態に同期。
+  function updateIdLabel() {
+    if (instrNameEl) {
+      instrNameEl.textContent = instr === 'bass' ? `ベース ${currentLabels.length}弦`
+        : instr === 'normal' ? 'クロマチック'
+          : `ギター ${currentLabels.length || 6}弦`;
+    }
+    if (tuningNameEl) {
+      if (!isStringInstr()) tuningNameEl.textContent = '全音検出';
+      else {
+        const t = findTuning(instr, tuningIds[instr]);
+        tuningNameEl.textContent = sweeten ? `${t.name} · 甘い調弦` : t.name;
+      }
     }
   }
 
@@ -183,21 +199,37 @@ export function initTuner(store) {
     syncEngine();
   }
 
-  // ── 弦ピル（低音→高音に左→右。ノーマルでは非表示） ──
+  // ── 開放弦（ヘッドストック風 3+3 / 2+2。実機ヘッドストックと同じ左右配置） ──
+  // 左列 = 低音側（高index）を上→下、右列 = 高音側（低index）を上→下。中央に簡易ネック。
+  // 領域は CSS の min-height で全楽器ぶん予約（ノーマルは空）→ 楽器切替で位置がずれない。
   function renderStrings() {
     if (!stringsEl) return;
     stringsEl.innerHTML = '';
-    // 弦ピルは全モード・全楽器で領域を確保（min-height で1行ぶん予約）→ 位置がずれない。
-    // ノーマルは中身を空にするだけ（高さは維持）。ハイライトは mono の string 楽器のみ。
     stringsEl.style.display = '';
     if (!isStringInstr()) return;
-    for (let i = currentLabels.length - 1; i >= 0; i--) {
-      const pill = document.createElement('div');
-      pill.className = 'tuner-string';
-      pill.dataset.index = String(i);
-      pill.textContent = currentLabels[i];
-      stringsEl.appendChild(pill);
-    }
+    const N = currentLabels.length;
+    const mid = Math.floor(N / 2);
+    const leftIdx = [];   // mid..N-1（上→下）
+    for (let i = mid; i < N; i++) leftIdx.push(i);
+    const rightIdx = [];  // mid-1..0（上→下）
+    for (let i = mid - 1; i >= 0; i--) rightIdx.push(i);
+
+    const mkPeg = (i) => {
+      const p = document.createElement('div');
+      p.className = 'tuner-string';
+      p.dataset.index = String(i);
+      p.textContent = currentLabels[i];
+      return p;
+    };
+    const hs = document.createElement('div'); hs.className = 'tuner-hs';
+    const colL = document.createElement('div'); colL.className = 'tuner-hs-col tuner-hs-left';
+    const colR = document.createElement('div'); colR.className = 'tuner-hs-col tuner-hs-right';
+    leftIdx.forEach(i => colL.appendChild(mkPeg(i)));
+    rightIdx.forEach(i => colR.appendChild(mkPeg(i)));
+    const neck = document.createElement('div'); neck.className = 'tuner-hs-neck'; neck.setAttribute('aria-hidden', 'true');
+    for (let s = 0; s < N; s++) { const ln = document.createElement('span'); ln.className = 'tuner-hs-string'; neck.appendChild(ln); }
+    hs.appendChild(colL); hs.appendChild(neck); hs.appendChild(colR);
+    stringsEl.appendChild(hs);
   }
   function clearStringHighlight() {
     stringsEl?.querySelectorAll('.tuner-string').forEach(el => el.classList.remove('target', 'in-tune'));
@@ -314,6 +346,7 @@ export function initTuner(store) {
     dirFlatEl?.classList.remove('on');
     dirSharpEl?.classList.remove('on');
     strobePresent = false;
+    meterCents = null;
     clearStringHighlight();
   }
 
@@ -338,7 +371,7 @@ export function initTuner(store) {
     }
 
     const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
-    refHz = target;
+    meterCents = cents;
     strobeDetectedHz = result.hz; strobeTargetHz = target; strobePresent = true;
 
     noteEl.textContent = label;
@@ -360,7 +393,7 @@ export function initTuner(store) {
   function loop(ts) {
     rafId = requestAnimationFrame(loop);
     const now = ts || 0;
-    if (viewMode === 'needle') drawGraph(now);
+    if (viewMode === 'needle') drawMeter();
     else if (viewMode === 'strobe') drawStrobe(now);
   }
 
@@ -370,14 +403,11 @@ export function initTuner(store) {
     if (sample && sample.hz != null) {
       lastResult = sample; lastResultT = now;
       render(sample, false);
-      pushHistory(now, sample.hz);
     } else if (lastResult && now - lastResultT <= HOLD_MS) {
       render(lastResult, true);
-      pushHistory(now, lastResult.hz);
     } else {
       lastResult = null;
       render(null, false);
-      pushHistory(now, null);
     }
   }
 
@@ -385,13 +415,6 @@ export function initTuner(store) {
   function onPoly(payload) {
     if (viewMode !== 'poly') return;
     renderPoly(payload && payload.strings);
-  }
-
-  // ── ピッチ推移グラフ ──────────────────────────
-  function pushHistory(t, hz) {
-    history.push({ t, hz });
-    const cutoff = t - GRAPH_WINDOW_MS - 200;
-    while (history.length && history[0].t < cutoff) history.shift();
   }
 
   function resizeCanvas(canvas, ctx) {
@@ -412,47 +435,52 @@ export function initTuner(store) {
     return (v && v.trim()) || fallback;
   }
 
-  function drawGraph(now) {
+  // 針メーター: グリッド + 中央ガイド + ±50¢ 目盛 + 円形ニードル（左=♭ / 右=♯）。
+  function drawMeter() {
     if (!gctx) return;
     if (gW === 0) { resizeGraph(); if (gW === 0) return; }
     gctx.clearRect(0, 0, gW, gH);
-    if (!refHz) {
-      gctx.fillStyle = cssVar('--text-3', '#b0a9a1');
-      gctx.font = '12px sans-serif'; gctx.textAlign = 'center';
-      gctx.fillText('音を鳴らすとピッチの推移が表示されます', gW / 2, gH / 2);
-      return;
-    }
-    const loHz = refHz * Math.pow(2, -GRAPH_CENTS_SPAN / 1200);
-    const hiHz = refHz * Math.pow(2, GRAPH_CENTS_SPAN / 1200);
-    const yOf = hz => { const c = Math.max(loHz, Math.min(hiHz, hz)); return gH * (1 - (c - loHz) / (hiHz - loHz)); };
-    const xOf = t => gW * (1 - (now - t) / GRAPH_WINDOW_MS);
-    const colBorder = cssVar('--border-2', '#f0ece5');
-    const colText   = cssVar('--text-3', '#b0a9a1');
-    const colAccent = cssVar('--accent', '#c0511f');
-    const colGreen  = cssVar('--green', '#16a34a');
-    gctx.lineWidth = 1; gctx.strokeStyle = colBorder;
+    const cx = gW / 2;
+    const topY = Math.round(gH * 0.30); // ニードルの行（音名表示と重ならない上寄り）
+    const span = gW * 0.40;             // ±50¢ に対応する半幅
+    const line = 'rgba(255,255,255,0.06)';
+    const faint = 'rgba(255,255,255,0.10)';
+    const accent = cssVar('--accent', '#c0511f');
+    const green = '#2fd27a';
+
+    // 背景グリッド
+    gctx.strokeStyle = line; gctx.lineWidth = 1;
+    for (let gx = cx % 40; gx < gW; gx += 40) { gctx.beginPath(); gctx.moveTo(gx, 0); gctx.lineTo(gx, gH); gctx.stroke(); }
+    for (let gy = 0; gy < gH; gy += 40) { gctx.beginPath(); gctx.moveTo(0, gy); gctx.lineTo(gW, gy); gctx.stroke(); }
+
+    // 中央ガイド（縦）
+    gctx.strokeStyle = faint; gctx.lineWidth = 1;
+    gctx.beginPath(); gctx.moveTo(cx, 6); gctx.lineTo(cx, gH - 6); gctx.stroke();
+
+    // ±50/±25 目盛（ニードル行）
+    gctx.strokeStyle = faint;
     [-50, -25, 25, 50].forEach(c => {
-      const y = yOf(refHz * Math.pow(2, c / 1200));
-      gctx.beginPath(); gctx.moveTo(0, y); gctx.lineTo(gW, y); gctx.stroke();
+      const x = cx + (c / 50) * span;
+      gctx.beginPath(); gctx.moveTo(x, topY - 8); gctx.lineTo(x, topY + 8); gctx.stroke();
     });
-    const yc = yOf(refHz);
-    gctx.strokeStyle = colGreen; gctx.lineWidth = 1.5;
-    gctx.beginPath(); gctx.moveTo(0, yc); gctx.lineTo(gW, yc); gctx.stroke();
-    gctx.fillStyle = colText; gctx.font = '10px sans-serif'; gctx.textAlign = 'left';
-    gctx.fillText(`${hiHz.toFixed(1)}Hz`, 4, 11);
-    gctx.fillText(`${refHz.toFixed(1)}Hz`, 4, Math.max(20, yc - 3));
-    gctx.fillText(`${loHz.toFixed(1)}Hz`, 4, gH - 4);
-    gctx.strokeStyle = colAccent; gctx.lineWidth = 2; gctx.lineJoin = 'round'; gctx.lineCap = 'round';
-    gctx.beginPath();
-    let pen = false;
-    for (const s of history) {
-      if (s.hz == null) { pen = false; continue; }
-      const x = xOf(s.t);
-      if (x < 0) { pen = false; continue; }
-      const y = yOf(s.hz);
-      if (!pen) { gctx.moveTo(x, y); pen = true; } else gctx.lineTo(x, y);
+
+    // ニードル
+    const r = Math.min(20, gH * 0.10);
+    if (meterCents == null) {
+      gctx.strokeStyle = 'rgba(255,255,255,0.5)'; gctx.lineWidth = 2.5;
+      gctx.beginPath(); gctx.arc(cx, topY, r, 0, Math.PI * 2); gctx.stroke();
+    } else {
+      const cl = Math.max(-50, Math.min(50, meterCents));
+      const x = cx + (cl / 50) * span;
+      const inTune = Math.abs(meterCents) <= IN_TUNE_CENTS;
+      const col = inTune ? green : accent;
+      gctx.strokeStyle = 'rgba(255,255,255,0.18)'; gctx.lineWidth = 2;
+      gctx.beginPath(); gctx.moveTo(cx, topY); gctx.lineTo(x, topY); gctx.stroke();
+      gctx.fillStyle = col;
+      gctx.beginPath(); gctx.arc(x, topY, r, 0, Math.PI * 2); gctx.fill();
+      gctx.fillStyle = 'rgba(255,255,255,0.92)';
+      gctx.beginPath(); gctx.arc(x, topY, Math.max(2.5, r * 0.18), 0, Math.PI * 2); gctx.fill();
     }
-    gctx.stroke();
   }
 
   // ストロボ: 合っていれば縞が静止、ずれていれば流れる（右=高い/左=低い）。
@@ -462,11 +490,12 @@ export function initTuner(store) {
     const dt = strobeLastT ? Math.min(0.1, Math.max(0, (now - strobeLastT) / 1000)) : 0;
     strobeLastT = now;
 
-    sctx.clearRect(0, 0, sW, sH);
+    const bg = '#16191d';
+    sctx.fillStyle = bg; sctx.fillRect(0, 0, sW, sH);
     const present = strobePresent && strobeTargetHz > 0 && strobeDetectedHz > 0
       && lastResult && now - lastResultT <= HOLD_MS;
     if (!present) {
-      sctx.fillStyle = cssVar('--text-3', '#b0a9a1');
+      sctx.fillStyle = 'rgba(255,255,255,0.4)';
       sctx.font = '12px sans-serif'; sctx.textAlign = 'center';
       sctx.fillText('音を鳴らすと縞が表示されます', sW / 2, sH / 2);
       return;
@@ -474,9 +503,7 @@ export function initTuner(store) {
     strobePhase = advanceStrobePhase(strobePhase, strobeDetectedHz, strobeTargetHz, dt);
     const cents = 1200 * Math.log2(strobeDetectedHz / strobeTargetHz);
     const locked = Math.abs(cents) <= IN_TUNE_CENTS;
-    const bar = locked ? cssVar('--green', '#16a34a') : cssVar('--accent', '#c0511f');
-    const bg = cssVar('--surface-2', '#fbf7f0');
-    sctx.fillStyle = bg; sctx.fillRect(0, 0, sW, sH);
+    const bar = locked ? '#2fd27a' : cssVar('--accent', '#c0511f');
     const off = strobePhase * STROBE_PERIOD_PX;
     sctx.fillStyle = bar;
     for (let x = -STROBE_PERIOD_PX; x < sW + STROBE_PERIOD_PX; x += STROBE_PERIOD_PX) {
@@ -485,7 +512,7 @@ export function initTuner(store) {
   }
 
   function resetGraph() {
-    history = []; refHz = null;
+    meterCents = null;
     if (gctx && gW > 0) gctx.clearRect(0, 0, gW, gH);
   }
   function resetStrobe() {

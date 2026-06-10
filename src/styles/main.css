@@ -1616,206 +1616,206 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 
 /* ── チューナー（全画面オーバーレイ） ───────────────────────────────── */
+/* ===== チューナー（ダーク・ヘッドストック風リデザイン） ===== */
 .tuner-overlay {
   position: fixed; inset: 0; z-index: 320;
-  background: var(--bg);
+  /* ダーク専用配色（アプリ本体は明るいテーマ。チューナーだけ没入型ダーク） */
+  --tk-bg: #0d0f12; --tk-panel: #16191d; --tk-panel-2: #1c2025;
+  --tk-border: rgba(255,255,255,.09); --tk-line: rgba(255,255,255,.055);
+  --tk-text: #e8eaed; --tk-text-2: #a7adb4; --tk-text-3: #71777e;
+  --tk-accent: var(--accent); --tk-green: #2fd27a;
+  background: var(--tk-bg); color: var(--tk-text);
   display: flex; flex-direction: column;
   animation: fadeUp .18s ease both;
 }
 .tuner-overlay.hidden { display: none; }
 .tuner-inner {
-  flex: 1; min-height: 0; overflow-y: auto; /* 行が増えても重ならず、入り切らなければスクロール */
+  flex: 1; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column; align-items: center;
   width: 100%; max-width: 520px; margin: 0 auto;
-  padding: 14px 20px 28px;
+  padding: 14px 18px 24px;
 }
-.tuner-hdr {
-  width: 100%; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-}
-.tuner-title { font-size: 18px; font-weight: 700; letter-spacing: -.4px; color: var(--text-2); flex: 1; text-align: right; }
-/* 戻るボタン（大きめ・このオーバーレイはこのボタンでのみ閉じる） */
-.tuner-back {
-  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
-  padding: 11px 20px; border-radius: 999px;
-  border: 1.5px solid var(--border); background: var(--surface);
-  color: var(--text); font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer;
-  transition: all .12s; box-shadow: var(--shadow-sm);
-}
-.tuner-back:hover { border-color: var(--accent); color: var(--accent); }
-.tuner-back:active { transform: scale(.97); }
-.tuner-back svg { display: block; }
 
-/* モードセグメント（ギター/ベース/ノーマル） */
+/* ヘッダ: 戻る / 楽器・チューニング名 / 基準A */
+.tuner-hdr { width: 100%; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.tuner-back {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--tk-border); background: var(--tk-panel);
+  color: var(--tk-text); cursor: pointer; transition: all .12s;
+}
+.tuner-back:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
+.tuner-back:active { transform: scale(.95); }
+.tuner-back svg { display: block; }
+.tuner-id { flex: 1; min-width: 0; line-height: 1.2; }
+.tuner-id-name { font-size: 19px; font-weight: 800; letter-spacing: -.3px; color: var(--tk-text); }
+.tuner-id-tuning { font-size: 12px; font-weight: 600; color: var(--tk-text-3); margin-top: 1px; }
+.tuner-a4 { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tuner-a4-btn {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid var(--tk-border); background: var(--tk-panel); color: var(--tk-text);
+  font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all .12s;
+}
+.tuner-a4-btn:hover:not(:disabled) { border-color: var(--tk-accent); color: var(--tk-accent); }
+.tuner-a4-btn:disabled { opacity: .35; cursor: default; }
+.tuner-a4-val { min-width: 60px; text-align: center; font-size: 13px; font-weight: 700; color: var(--tk-text-2); font-variant-numeric: tabular-nums; }
+
+/* コントロール群 */
+.tuner-controls {
+  width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  margin-top: 16px; flex-shrink: 0;
+}
 .tuner-instr {
-  display: inline-flex; margin-top: 18px; padding: 4px;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+  display: inline-flex; padding: 4px;
+  background: var(--tk-panel); border: 1px solid var(--tk-border); border-radius: 999px;
 }
 .tuner-instr-btn {
   border: none; background: transparent; cursor: pointer;
   padding: 8px 22px; border-radius: 999px;
-  font-size: 14px; font-weight: 700; font-family: inherit; color: var(--text-2);
+  font-size: 14px; font-weight: 700; font-family: inherit; color: var(--tk-text-2);
   transition: all .12s;
 }
-.tuner-instr-btn.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
-
-/* 基準ピッチ A（430〜450Hz） */
-.tuner-a4 { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; flex-shrink: 0; }
-.tuner-a4-label { font-size: 12px; font-weight: 700; color: var(--text-2); }
-.tuner-a4-btn {
-  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-  border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
-  font-size: 18px; font-weight: 700; font-family: inherit; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; transition: all .12s;
-}
-.tuner-a4-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-.tuner-a4-btn:disabled { opacity: .4; cursor: default; }
-.tuner-a4-val { min-width: 76px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
-
-/* メイン表示 */
-.tuner-display {
-  width: 100%; flex: 1 0 auto; /* 縮まない＝中身が views 行へはみ出して重ならない（短い画面は inner がスクロール） */
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; /* 上揃え＝モード切替で再センタリングしない */
-  gap: 18px;
-}
-
-/* デジタル表示（LCD 風・粗くチェック用） */
-.tuner-digital {
-  width: 100%; max-width: 380px; margin: 8px auto 0;
-  background: #15171a; border-radius: 16px; padding: 18px 20px 16px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow-md);
-  text-align: center;
-}
-.tuner-note {
-  font-size: 80px; font-weight: 800; line-height: 1; letter-spacing: 1px;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  color: #9aa0a6; transition: color .12s, text-shadow .12s;
-  font-variant-numeric: tabular-nums;
-}
-.tuner-digital.in-tune .tuner-note { color: #37d67a; text-shadow: 0 0 16px rgba(55,214,122,.55); }
-.tuner-digital.held { opacity: .5; }
-.tuner-digital-sub { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; }
-.tuner-cents {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 20px; font-weight: 700; color: #c8cdd2; font-variant-numeric: tabular-nums;
-  min-width: 70px;
-}
-.tuner-digital.in-tune .tuner-cents { color: #37d67a; }
-.tuner-dir { font-size: 22px; font-weight: 700; color: #3a3f45; transition: color .12s; }
-.tuner-dir.on { color: #e0a33c; }
-.tuner-freq { margin-top: 10px; font-size: 13px; color: #7c828a; font-variant-numeric: tabular-nums; min-height: 16px; }
-
-/* 開放弦ピル */
-.tuner-strings {
-  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
-  margin-top: 22px; flex-shrink: 0; min-height: 44px; /* 空(ノーマル)でも1行ぶん予約＝位置固定 */
-}
-.tuner-string {
-  min-width: 46px; padding: 10px 12px; border-radius: 10px;
-  border: 1.5px solid var(--border); background: var(--surface);
-  font-size: 15px; font-weight: 700; color: var(--text-2); text-align: center;
-  font-variant-numeric: tabular-nums; transition: all .12s;
-}
-.tuner-string.target { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-.tuner-string.in-tune { border-color: var(--green); color: #fff; background: var(--green); }
-
-/* ピッチ推移グラフ */
-/* 可視化スロット（グラフ/ストロボ/ポリ）は全モード同一の固定高さ＝モード切替で周囲が動かない */
-.tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 178px; box-sizing: border-box; }
-.tuner-graph-wrap { width: 100%; margin-top: 22px; }
-.tuner-graph {
-  width: 100%; height: 150px; display: block;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
-}
-.tuner-graph-cap { margin-top: 6px; font-size: 11px; color: var(--text-3); text-align: center; }
-
-/* チューニング選択 + 甘い調弦 */
-.tuner-tuning {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  flex-wrap: wrap; margin-top: 14px; flex-shrink: 0;
-}
-.tuner-tuning-label { font-size: 13px; color: var(--text-3); }
+.tuner-instr-btn.active { background: var(--tk-accent); color: #fff; }
+.tuner-tuning { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .tuner-tuning-select {
-  padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border);
-  background: var(--surface); color: var(--text-1); font-family: inherit;
+  padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tk-border);
+  background: var(--tk-panel); color: var(--tk-text); font-family: inherit;
   font-size: 14px; font-weight: 600; cursor: pointer;
 }
 .tuner-sweeten {
-  padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--border);
-  background: var(--surface); color: var(--text-2); font-family: inherit;
+  padding: 8px 14px; border-radius: 999px; border: 1px solid var(--tk-border);
+  background: var(--tk-panel); color: var(--tk-text-2); font-family: inherit;
   font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
 }
-.tuner-sweeten.active { border-color: var(--accent); background: var(--accent); color: #fff; }
-.tuner-sweeten:disabled { opacity: .4; cursor: default; }
-
-/* 表示モード（メーター/ストロボ/ポリ） */
-.tuner-views {
-  display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-shrink: 0;
-}
+.tuner-sweeten.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
+.tuner-sweeten:disabled { opacity: .35; cursor: default; }
+.tuner-views { display: flex; justify-content: center; gap: 8px; }
 .tuner-view-btn {
-  padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--border);
-  background: var(--surface); color: var(--text-2); font-family: inherit;
+  padding: 7px 16px; border-radius: 999px; border: 1px solid var(--tk-border);
+  background: var(--tk-panel); color: var(--tk-text-2); font-family: inherit;
   font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
 }
-.tuner-view-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
-.tuner-view-btn:disabled { opacity: .4; cursor: default; }
+.tuner-view-btn.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
+.tuner-view-btn:disabled { opacity: .35; cursor: default; }
+
+/* メイン表示（メーター/ストロボ/ポリ。固定高さ＝モード切替で動かない） */
+.tuner-display {
+  width: 100%; flex: 1 0 auto; margin-top: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+}
+.tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly {
+  width: 100%; height: 224px; box-sizing: border-box;
+  border-radius: 16px; border: 1px solid var(--tk-border); background: var(--tk-panel-2);
+  overflow: hidden;
+}
+
+/* 針メーター */
+.tuner-graph-wrap { position: relative; }
+.tuner-graph { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tuner-acc {
+  position: absolute; top: 14px; font-size: 30px; font-weight: 800; color: var(--tk-text-3);
+  pointer-events: none; opacity: .7;
+}
+.tuner-acc-flat { left: 18px; }
+.tuner-acc-sharp { right: 18px; }
+.tuner-digital {
+  position: absolute; left: 0; right: 0; bottom: 30px; text-align: center; pointer-events: none;
+}
+.tuner-note {
+  font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: 1px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color: var(--tk-text); transition: color .12s, text-shadow .12s; font-variant-numeric: tabular-nums;
+}
+.tuner-digital.in-tune .tuner-note { color: var(--tk-green); text-shadow: 0 0 18px rgba(47,210,122,.5); }
+.tuner-digital.held { opacity: .45; }
+.tuner-digital-sub { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 4px; }
+.tuner-cents {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 18px; font-weight: 700; color: var(--tk-text-2); font-variant-numeric: tabular-nums; min-width: 64px;
+}
+.tuner-digital.in-tune .tuner-cents { color: var(--tk-green); }
+.tuner-dir { font-size: 20px; font-weight: 700; color: #3a3f45; transition: color .12s; }
+.tuner-dir.on { color: var(--tk-accent); }
 
 /* ストロボ */
-.tuner-strobe-wrap { width: 100%; margin-top: 22px; }
 .tuner-strobe-wrap.hidden { display: none; }
-.tuner-strobe {
-  width: 100%; height: 150px; display: block;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
-}
+.tuner-strobe { width: 100%; height: 100%; display: block; }
 
-/* ポリフォニック（全弦同時）。固定高さ内で縦中央寄せ・必要ならスクロール */
+/* ポリフォニック */
 .tuner-poly {
-  width: 100%; margin-top: 22px; display: flex; flex-direction: column;
-  justify-content: center; gap: 10px; overflow-y: auto;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  padding: 14px 18px; overflow-y: auto;
 }
 .tuner-poly.hidden { display: none; }
 .tuner-poly-row { display: flex; align-items: center; gap: 12px; }
-.tuner-poly-name {
-  width: 40px; flex-shrink: 0; font-size: 15px; font-weight: 800;
-  color: var(--text-2); font-variant-numeric: tabular-nums; text-align: right;
-}
-.tuner-poly-bar {
-  position: relative; flex: 1; height: 14px; border-radius: 999px;
-  background: var(--surface-2); border: 1px solid var(--border); overflow: hidden;
-}
-.tuner-poly-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--border-2); transform: translateX(-1px); }
-.tuner-poly-dot {
-  position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%;
-  background: var(--text-3); transform: translate(-50%, -50%); transition: left .1s, background .1s;
-}
-.tuner-poly-row.in-tune .tuner-poly-dot { background: var(--green); }
-.tuner-poly-row.off .tuner-poly-dot { background: var(--accent); }
+.tuner-poly-name { width: 40px; flex-shrink: 0; font-size: 15px; font-weight: 800; color: var(--tk-text-2); font-variant-numeric: tabular-nums; text-align: right; }
+.tuner-poly-bar { position: relative; flex: 1; height: 14px; border-radius: 999px; background: var(--tk-bg); border: 1px solid var(--tk-border); overflow: hidden; }
+.tuner-poly-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--tk-line); transform: translateX(-1px); }
+.tuner-poly-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--tk-text-3); transform: translate(-50%, -50%); transition: left .1s, background .1s; }
+.tuner-poly-row.in-tune .tuner-poly-dot { background: var(--tk-green); }
+.tuner-poly-row.off .tuner-poly-dot { background: var(--tk-accent); }
 .tuner-poly-row.absent .tuner-poly-dot { opacity: .35; }
-.tuner-poly-cents {
-  width: 52px; flex-shrink: 0; font-size: 14px; font-weight: 700; text-align: left;
-  color: var(--text-2); font-variant-numeric: tabular-nums;
+.tuner-poly-cents { width: 52px; flex-shrink: 0; font-size: 14px; font-weight: 700; text-align: left; color: var(--tk-text-2); font-variant-numeric: tabular-nums; }
+.tuner-poly-row.in-tune .tuner-poly-cents { color: var(--tk-green); }
+.tuner-poly-row.off .tuner-poly-cents { color: var(--tk-accent); }
+.tuner-poly-row.absent .tuner-poly-cents { color: var(--tk-text-3); }
+
+/* ヒント（ピル）＋周波数 */
+.tuner-hint-pill {
+  margin-top: 16px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 999px; background: var(--tk-panel); border: 1px solid var(--tk-border);
+  max-width: 100%;
 }
-.tuner-poly-row.in-tune .tuner-poly-cents { color: var(--green); }
-.tuner-poly-row.off .tuner-poly-cents { color: var(--accent); }
-.tuner-poly-row.absent .tuner-poly-cents { color: var(--text-3); }
+.tuner-hint { font-size: 13px; font-weight: 600; color: var(--tk-text-2); text-align: center; }
+.tuner-freq { font-size: 12px; color: var(--tk-text-3); font-variant-numeric: tabular-nums; }
+.tuner-freq:empty { display: none; }
+
+/* 開放弦（ヘッドストック風 3+3 / 2+2。空でも領域確保） */
+.tuner-strings {
+  width: 100%; display: flex; justify-content: center; align-items: center;
+  margin-top: 22px; flex-shrink: 0; min-height: 196px;
+}
+.tuner-hs {
+  display: grid; grid-template-columns: 1fr 56px 1fr; align-items: stretch; justify-items: center;
+  gap: 14px; width: 100%; max-width: 340px;
+}
+.tuner-hs-col { display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+.tuner-hs-left { align-items: flex-start; }
+.tuner-hs-right { align-items: flex-end; }
+.tuner-hs-neck {
+  position: relative; width: 56px; align-self: stretch;
+  border-radius: 16px 16px 10px 10px;
+  background: linear-gradient(180deg, #2a2f35, #191d21);
+  border: 1px solid rgba(255,255,255,.07);
+  display: flex; justify-content: space-evenly; padding: 14px 11px;
+}
+.tuner-hs-string { width: 2px; border-radius: 1px; background: linear-gradient(180deg, #5f656c, #b9bec3 45%, #5f656c); }
+.tuner-string {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--tk-border); background: var(--tk-panel);
+  font-size: 16px; font-weight: 800; color: var(--tk-text-2);
+  font-variant-numeric: tabular-nums; transition: all .12s;
+}
+.tuner-string.target { border-color: var(--tk-accent); color: #fff; background: var(--tk-accent); }
+.tuner-string.in-tune { border-color: var(--tk-green); color: #06210f; background: var(--tk-green); }
 
 .tuner-retry {
-  margin-top: 18px; padding: 10px 20px; flex-shrink: 0;
-  border: none; border-radius: 999px; background: var(--accent); color: #fff;
-  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
-  box-shadow: var(--shadow-sm); transition: filter .12s;
+  margin-top: 16px; padding: 10px 20px; flex-shrink: 0;
+  border: none; border-radius: 999px; background: var(--tk-accent); color: #fff;
+  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: filter .12s;
 }
 .tuner-retry:hover { filter: brightness(1.06); }
 .tuner-retry.hidden { display: none; }
-.tuner-hint { margin-top: 16px; font-size: 13px; color: var(--text-3); text-align: center; min-height: 18px; flex-shrink: 0; }
 
 @media (max-width: 767px) {
-  .tuner-back { padding: 12px 22px; font-size: 17px; }
-  .tuner-note { font-size: 68px; }
-  .tuner-instr-btn { padding: 10px 18px; font-size: 14px; }
-  .tuner-string { min-width: 48px; padding: 11px 12px; font-size: 14px; }
-  .tuner-graph, .tuner-strobe { height: 120px; }
-  .tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 148px; }
-  .tuner-view-btn, .tuner-sweeten { padding: 9px 14px; font-size: 13px; }
+  .tuner-note { font-size: 56px; }
+  .tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 200px; }
+  .tuner-string { width: 48px; height: 48px; font-size: 15px; }
+  .tuner-strings { min-height: 180px; }
+  .tuner-hs { grid-template-columns: 1fr 48px 1fr; max-width: 300px; }
+  .tuner-hs-neck { width: 48px; }
 }
 
 

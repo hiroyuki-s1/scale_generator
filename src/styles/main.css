@@ -1706,8 +1706,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* 開放弦ピル */
 .tuner-strings {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-  margin-top: 22px; flex-shrink: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
+  margin-top: 22px; flex-shrink: 0; min-height: 44px; /* 空(ノーマル)でも1行ぶん予約＝位置固定 */
 }
 .tuner-string {
   min-width: 46px; padding: 10px 12px; border-radius: 10px;

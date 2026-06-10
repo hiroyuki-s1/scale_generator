@@ -134,10 +134,11 @@ async function runStructural(tmpDir) {
     const bStrings = await page.$$eval('#tunerStrings .tuner-string', els => els.length);
     bStrings === 4 ? pass('ベース: 開放弦4本表示') : fail(`ベース: 開放弦本数が不正 ${bStrings}`);
 
-    // ノーマル: 開放弦は非表示（12音クロマチック）
+    // ノーマル: 開放弦ピルは無し（12音クロマチック）。ただし領域は予約され位置は固定。
     await page.click('.tuner-instr-btn[data-instr="normal"]');
-    const normalHidden = await page.$eval('#tunerStrings', el => el.style.display === 'none');
-    normalHidden ? pass('ノーマル: 開放弦ピルは非表示') : fail('ノーマル: 開放弦ピルが表示されている');
+    const normalPills = await page.$$eval('#tunerStrings .tuner-string', els => els.length);
+    normalPills === 0 ? pass('ノーマル: 開放弦ピルは無し（領域は予約）')
+                      : fail(`ノーマル: 開放弦ピルが残っている ${normalPills}`);
 
     // 背景クリックでは閉じない
     await page.mouse.click(6, 300); // オーバーレイ左端（中身の外＝背景）
@@ -247,8 +248,11 @@ async function runPolyphonic(tmpDir) {
     const allDetected = cents.length === 6 && cents.every(c => c !== '—');
     allDetected ? pass(`ポリ: 全6弦検出 [${cents.join(' ')}]`)
                 : fail(`ポリ: 検出できない弦がある [${cents.join(' ')}]`);
-    // 全弦ジャストなので各 |cents| は小さい（±15¢以内）
-    const num = s => Math.abs(parseInt(String(s).replace(/[^\-0-9]/g, ''), 10) || 99);
+    // 全弦ジャストなので各 |cents| は小さい（±15¢以内）。±0¢ を 0 として正しく扱う。
+    const num = s => {
+      const n = parseInt(String(s).replace(/[^\-0-9]/g, ''), 10);
+      return Number.isNaN(n) ? 99 : Math.abs(n);
+    };
     const allClose = allDetected && cents.every(c => num(c) <= 15);
     allClose ? pass('ポリ: 全弦が ±15¢ 以内（ジャスト和音）')
              : fail(`ポリ: ジャストのはずが外れている [${cents.join(' ')}]`);

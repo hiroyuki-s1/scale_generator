@@ -143,8 +143,9 @@ export function initTuner(store) {
 
   function populateTuningSelect() {
     if (!tuningSel || !tuningRow) return;
-    if (!isStringInstr()) { tuningRow.style.display = 'none'; return; }
-    tuningRow.style.display = '';
+    // ノーマルは visibility:hidden で「消さず高さだけ予約」→ 楽器切替で位置がずれない。
+    if (!isStringInstr()) { tuningRow.style.visibility = 'hidden'; return; }
+    tuningRow.style.visibility = 'visible';
     tuningSel.innerHTML = '';
     for (const t of tuningsFor(instr)) {
       const opt = document.createElement('option');
@@ -186,9 +187,10 @@ export function initTuner(store) {
   function renderStrings() {
     if (!stringsEl) return;
     stringsEl.innerHTML = '';
-    // 弦ピルは全モードで常時表示（ポリでも位置固定。ハイライトは mono のみ）。ノーマルのみ非表示。
-    if (!isStringInstr()) { stringsEl.style.display = 'none'; return; }
+    // 弦ピルは全モード・全楽器で領域を確保（min-height で1行ぶん予約）→ 位置がずれない。
+    // ノーマルは中身を空にするだけ（高さは維持）。ハイライトは mono の string 楽器のみ。
     stringsEl.style.display = '';
+    if (!isStringInstr()) return;
     for (let i = currentLabels.length - 1; i >= 0; i--) {
       const pill = document.createElement('div');
       pill.className = 'tuner-string';

@@ -450,7 +450,10 @@ export function initTuner(store) {
     }
   }
 
-  // バーメーター: クラスタを cents ぶん左右シフト＋近さで色付け。
+  // 中心側=緑 / ずれ側=橙 のカラフルなグラデーション（左→右）。
+  const METER_GRADIENT = ['var(--tk-orange)', 'var(--tk-yellow)', 'var(--tk-yellow)', 'var(--tk-green)', 'var(--tk-green)'];
+
+  // バーメーター: クラスタを cents ぶん左右シフト＋グラデーション色。合致時は全緑（ロック）。
   function updateMeter(cents) {
     if (!barsEl) return;
     if (cents == null) {
@@ -460,9 +463,13 @@ export function initTuner(store) {
     }
     const cl = Math.max(-50, Math.min(50, cents));
     barsEl.style.setProperty('--shift', `${(cl / 50) * 70}px`);
-    const a = Math.abs(cents);
-    const col = a <= IN_TUNE_CENTS ? 'var(--tk-green)' : a <= 18 ? 'var(--tk-yellow)' : 'var(--tk-orange)';
-    for (const b of barEls) b.style.background = col;
+    if (Math.abs(cents) <= IN_TUNE_CENTS) {
+      for (const b of barEls) b.style.background = 'var(--tk-green)';
+      return;
+    }
+    // ♭(低い)=左がずれ→左を橙 / ♯(高い)=右がずれ→右を橙（グラデを反転）。
+    const colors = cents < 0 ? METER_GRADIENT : METER_GRADIENT.slice().reverse();
+    barEls.forEach((b, i) => { b.style.background = colors[i]; });
   }
 
   // クロマチック・ルーラー: 現在音を中央セルに、ニードルを cents ぶんオフセット。

@@ -1998,6 +1998,14 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .stg-allowed-chip { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1.5px solid var(--border); font-size: 14px; font-weight: 800; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .stg-allowed-chip.root { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 .stg-allowed-chip.lit { background: var(--green); border-color: var(--green); color: #fff; }
+/* 次のスケール（先出し） */
+.stg-next { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; min-height: 30px; opacity: .85; }
+.stg-next-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #fff; background: var(--text-3); border-radius: 999px; padding: 3px 9px; }
+.stg-next-name { font-size: 15px; font-weight: 800; color: var(--text-2); }
+.stg-next-chips { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+.stg-next-chip { min-width: 24px; height: 24px; padding: 0 5px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.stg-next-chip.root { border-color: var(--accent); color: var(--accent); }
+
 .stg-verdict { text-align: center; font-size: 64px; font-weight: 800; line-height: 1; min-height: 72px; margin-top: 10px; transition: color .08s; }
 .stg-verdict.ok { color: var(--green); }
 .stg-verdict.ng { color: #d1342b; }

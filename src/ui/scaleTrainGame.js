@@ -38,7 +38,7 @@ export function initScaleTrainGame(store) {
     tempo: $('stgTempo'), loops: $('stgLoops'),
     progression: $('stgProgression'), start: $('stgStartBtn'), setupNote: $('stgSetupNote'),
     progressFill: $('stgProgressFill'), now: $('stgNow'), scaleName: $('stgScaleName'),
-    beats: $('stgBeats'), allowed: $('stgAllowed'), verdict: $('stgVerdict'), played: $('stgPlayedNote'),
+    beats: $('stgBeats'), allowed: $('stgAllowed'), next: $('stgNext'), verdict: $('stgVerdict'), played: $('stgPlayedNote'),
     scoreOk: $('stgScoreOk'), scoreNg: $('stgScoreNg'), scoreCombo: $('stgScoreCombo'),
     rank: $('stgRank'), accuracy: $('stgAccuracy'), resultStats: $('stgResultStats'),
     retry: $('stgRetryBtn'), close: $('stgCloseBtn'), hint: $('stgHint'), retryMic: $('stgRetryMicBtn'),
@@ -105,6 +105,27 @@ export function initScaleTrainGame(store) {
       els.allowed.appendChild(c);
     }
   }
+  // 次のスケールを先に提示（準備できるように）。
+  function renderNextScale(stepIndex) {
+    if (!els.next) return;
+    const nextStep = stepIndex + 1;
+    if (nextStep >= game.totalSteps) {
+      els.next.innerHTML = '<span class="stg-next-label">つぎ</span><span class="stg-next-name">― おわり ―</span>';
+      return;
+    }
+    const ni = nextStep % game.scaleCount;
+    const s = game.scales[ni];
+    const set = game.scaleSets[ni];
+    const root = (((s.rootIndex % 12) + 12) % 12);
+    let chips = '';
+    for (let pc = 0; pc < 12; pc++) {
+      if (!set.has(pc)) continue;
+      chips += `<span class="stg-next-chip${pc === root ? ' root' : ''}">${NOTES[pc]}</span>`;
+    }
+    els.next.innerHTML = `<span class="stg-next-label">つぎ</span>`
+      + `<span class="stg-next-name">${s.title || `${NOTES[root]} スケール`}</span>`
+      + `<span class="stg-next-chips">${chips}</span>`;
+  }
   function flashChip(pc) {
     const c = els.allowed.querySelector(`.stg-allowed-chip[data-pc="${pc}"]`);
     if (!c) return;
@@ -168,7 +189,7 @@ export function initScaleTrainGame(store) {
       els.progressFill.style.width = `${Math.min(100, (t / game.totalMs) * 100)}%`;
       const loopNum = Math.floor(s.stepIndex / game.scaleCount) + 1;
       els.now.textContent = `${loopNum} / ${game.loops} ループ`;
-      if (s.stepIndex !== lastStepIndex) { lastStepIndex = s.stepIndex; renderPlayScale(s.scaleIndex); }
+      if (s.stepIndex !== lastStepIndex) { lastStepIndex = s.stepIndex; renderPlayScale(s.scaleIndex); renderNextScale(s.stepIndex); }
       renderBeats(s.beatInStep);
       if (s.beatIndex !== lastBeatIndex) { lastBeatIndex = s.beatIndex; clicker?.click(s.beatInStep === 0); }
     }

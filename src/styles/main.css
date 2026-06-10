@@ -1744,6 +1744,15 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-poly-row.in-tune .tuner-poly-cents { color: var(--tk-green); }
 .tuner-poly-row.off .tuner-poly-cents { color: var(--tk-orange); }
 
+/* ポリ専用フルエリア・レイアウト: 音名/セント/ルーラーを隠し、6弦一覧を広く出す */
+.tuner-overlay.is-poly .tuner-note-row,
+.tuner-overlay.is-poly .tuner-cents-box,
+.tuner-overlay.is-poly .tuner-ruler { display: none; }
+.tuner-overlay.is-poly .tuner-display { position: static; height: auto; flex: 1 1 auto; min-height: 0; display: flex; margin-top: 18px; }
+.tuner-overlay.is-poly .tuner-poly { position: static; flex: 1 1 auto; height: auto; min-height: 0; padding: 16px 16px; gap: 14px; }
+.tuner-overlay.is-poly .tuner-poly-bar { height: 12px; }
+.tuner-overlay.is-poly .tuner-lower { flex: 0 0 auto; }
+
 /* セント */
 .tuner-cents-box { flex: 0 0 auto; text-align: center; margin-top: 8px; }
 .tuner-cents { font-size: 28px; font-weight: 700; letter-spacing: 4px; color: var(--tk-text); font-variant-numeric: tabular-nums; transition: color .12s; }
@@ -1782,8 +1791,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 @media (max-width: 767px) {
   .tuner-note { font-size: 76px; }
   .tuner-inner { padding: 12px 14px 20px; }
-  /* スマホはタップ目標を大きく（最低 ~48px） */
-  .tuner-string { width: 52px; height: 52px; font-size: 16px; }
+  /* スマホはタップ目標を大きく（最低 ~48px）。弦チップは6個1段に収まるよう調整 */
+  .tuner-strings { gap: 8px; padding: 0 4px 22px; }
+  .tuner-string { width: 48px; height: 48px; font-size: 15px; }
   .tuner-instr-btn { padding: 11px 22px; font-size: 15px; }
   .tuner-view-btn { padding: 11px 20px; font-size: 14px; }
   .tuner-sweeten { padding: 11px 20px; font-size: 14px; }

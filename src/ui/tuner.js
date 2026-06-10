@@ -362,7 +362,9 @@ export function initTuner(store) {
     if (view === 'poly' && !isStringInstr()) view = 'needle';
     viewMode = view; saveView(view);
     updateViewTabs();
-    // ステージの3表示（メーター/ストロボ/ポリ）を同枠で入れ替え。音名行/セント/弦/ルーラーは常時表示。
+    // poly は専用フルエリア・レイアウト（音名/セント/ルーラーを隠し poly 一覧を広く）。
+    overlay.classList.toggle('is-poly', view === 'poly');
+    // ステージの3表示（メーター/ストロボ/ポリ）を同枠で入れ替え。
     meterEl?.classList.toggle('hidden', view !== 'needle');
     strobeWrap?.classList.toggle('hidden', view !== 'strobe');
     polyEl?.classList.toggle('hidden', view !== 'poly');

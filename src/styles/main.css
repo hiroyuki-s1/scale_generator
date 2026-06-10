@@ -1619,11 +1619,13 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 /* ===== チューナー（モック v2 準拠・ダーク／バーメーター／クロマチックルーラー） ===== */
 .tuner-overlay {
   position: fixed; inset: 0; z-index: 320;
-  --tk-bg: #0a0b0c; --tk-bg2: #111315;
-  --tk-text: #f6f7f8; --tk-muted: #7c8085; --tk-muted2: #4a4e53;
-  --tk-seg: rgba(255,255,255,0.10);
+  /* 暖色ダーク（本体の"夜版"。寒色→焦げ茶チャコール＋ブランドのオレンジ。緑は合致サイン専用） */
+  --tk-bg: #14100b; --tk-bg2: #1f1812;
+  --tk-text: #f4eee5; --tk-muted: #9d9087; --tk-muted2: #5b5048;
+  --tk-seg: rgba(255,232,205,0.10);
   --tk-orange: #ff7a3a; --tk-yellow: #ffce3d; --tk-green: #46e35b;
-  --tk-border: rgba(255,255,255,0.10);
+  --tk-accent: #e8702b; /* 操作系アクセント（本体オレンジの夜版） */
+  --tk-border: rgba(255,232,205,0.11);
   background: var(--tk-bg); color: var(--tk-text);
   display: flex; flex-direction: column; animation: fadeUp .18s ease both;
 }
@@ -1661,7 +1663,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   border: 1px solid var(--tk-border); background: var(--tk-bg2); color: var(--tk-text);
   cursor: pointer; transition: all .12s;
 }
-.tuner-back:hover { border-color: var(--tk-green); color: var(--tk-green); }
+.tuner-back:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
 .tuner-back:active { transform: scale(.95); }
 .tuner-back svg { display: block; }
 .tuner-id { flex: 1; min-width: 0; line-height: 1.2; text-align: center; }
@@ -1685,11 +1687,11 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-settings.hidden { display: none; }
 .tuner-instr { display: inline-flex; padding: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--tk-border); border-radius: 999px; }
 .tuner-instr-btn { border: none; background: transparent; cursor: pointer; padding: 7px 18px; border-radius: 999px; font-size: 13px; font-weight: 700; font-family: inherit; color: var(--tk-muted); transition: all .12s; }
-.tuner-instr-btn.active { background: var(--tk-green); color: #04230b; }
+.tuner-instr-btn.active { background: var(--tk-accent); color: #fff; }
 .tuner-tuning { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .tuner-tuning-select { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-text); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .tuner-sweeten { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
-.tuner-sweeten.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
+.tuner-sweeten.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
 .tuner-sweeten:disabled { opacity: .35; cursor: default; }
 
 /* 弦ごとオフセット・エディタ（甘い調弦） */
@@ -1704,18 +1706,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   font-size: 18px; font-weight: 700; font-family: inherit; cursor: pointer;
   display: flex; align-items: center; justify-content: center; transition: all .12s;
 }
-.tuner-offset-btn:hover { border-color: var(--tk-green); color: var(--tk-green); }
+.tuner-offset-btn:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
 .tuner-offset-btn:active { transform: scale(.92); }
 .tuner-offset-val { min-width: 48px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tk-muted); font-variant-numeric: tabular-nums; }
 
 .tuner-views { display: flex; justify-content: center; gap: 8px; }
 .tuner-view-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
-.tuner-view-btn.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
+.tuner-view-btn.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
 .tuner-view-btn:disabled { opacity: .35; cursor: default; }
 .tuner-a4 { display: inline-flex; align-items: center; gap: 8px; }
 .tuner-a4-label { font-size: 12px; font-weight: 700; color: var(--tk-muted); }
 .tuner-a4-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-text); font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; }
-.tuner-a4-btn:hover:not(:disabled) { border-color: var(--tk-green); color: var(--tk-green); }
+.tuner-a4-btn:hover:not(:disabled) { border-color: var(--tk-accent); color: var(--tk-accent); }
 .tuner-a4-btn:disabled { opacity: .35; cursor: default; }
 .tuner-a4-val { min-width: 64px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tk-text); font-variant-numeric: tabular-nums; }
 
@@ -1803,7 +1805,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-hint { font-size: 12px; font-weight: 600; color: var(--tk-muted); text-align: center; }
 .tuner-freq { font-size: 11px; color: var(--tk-muted2); font-variant-numeric: tabular-nums; }
 .tuner-freq:empty { display: none; }
-.tuner-retry { align-self: center; margin-top: 14px; padding: 10px 20px; border: none; border-radius: 999px; background: var(--tk-green); color: #04230b; font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; transition: filter .12s; }
+.tuner-retry { align-self: center; margin-top: 14px; padding: 10px 20px; border: none; border-radius: 999px; background: var(--tk-accent); color: #fff; font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; transition: filter .12s; }
 .tuner-retry:hover { filter: brightness(1.06); }
 .tuner-retry.hidden { display: none; }
 

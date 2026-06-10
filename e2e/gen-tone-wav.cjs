@@ -57,6 +57,44 @@ function writeToneWav(outPath, freq, opts = {}) {
   return outPath;
 }
 
+/**
+ * 複数周波数（和音）の 16-bit PCM mono WAV を書き出す。ポリフォニック検証用。
+ * @param {string} outPath
+ * @param {number[]} freqs 同時に鳴らす周波数(Hz)の配列
+ * @param {object} [opts]
+ * @param {number} [opts.seconds=3]
+ * @param {number} [opts.sampleRate=44100]
+ * @param {number} [opts.amplitude=0.5]
+ * @param {number[]} [opts.harmonics=[1]]
+ */
+function writeChordWav(outPath, freqs, opts = {}) {
+  const { seconds = 3, sampleRate = 44100, amplitude = 0.5, harmonics = [1] } = opts;
+  const n = Math.floor(seconds * sampleRate);
+  const bytesPerSample = 2;
+  const dataLen = n * bytesPerSample;
+  const buf = Buffer.alloc(44 + dataLen);
+  buf.write('RIFF', 0); buf.writeUInt32LE(36 + dataLen, 4); buf.write('WAVE', 8);
+  buf.write('fmt ', 12); buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(sampleRate, 24); buf.writeUInt32LE(sampleRate * bytesPerSample, 28);
+  buf.writeUInt16LE(bytesPerSample, 32); buf.writeUInt16LE(16, 34);
+  buf.write('data', 36); buf.writeUInt32LE(dataLen, 40);
+
+  const hsum = harmonics.reduce((a, b) => a + Math.abs(b), 0) || 1;
+  const count = freqs.length || 1;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    let s = 0;
+    for (const f of freqs) {
+      for (let h = 0; h < harmonics.length; h++) s += harmonics[h] * Math.sin(2 * Math.PI * f * (h + 1) * t);
+    }
+    s = (s / hsum / count) * amplitude; // 弦数で割ってクリップ回避
+    const v = Math.max(-1, Math.min(1, s));
+    buf.writeInt16LE(Math.round(v * 32767), 44 + i * bytesPerSample);
+  }
+  fs.writeFileSync(outPath, buf);
+  return outPath;
+}
+
 if (require.main === module) {
   const [, , freqArg, outArg, secArg, srArg] = process.argv;
   if (!freqArg || !outArg) {
@@ -70,4 +108,4 @@ if (require.main === module) {
   console.log(`wrote ${outArg} (${freqArg} Hz)`);
 }
 
-module.exports = { writeToneWav };
+module.exports = { writeToneWav, writeChordWav };

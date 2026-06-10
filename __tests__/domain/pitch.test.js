@@ -83,6 +83,56 @@ describe('detectPitchYIN', () => {
   });
 });
 
+// AudioWorklet 経路で使う useFFT を「実行経路＝テスト経路」にするためのパリティ確認。
+describe('detectPitchYIN useFFT path parity', () => {
+  const golden = [
+    ['E1', 41.2, 8192, 35, 400],
+    ['E2', 82.41, 4096, 70, 700],
+    ['A2', 110.0, 4096, 70, 700],
+    ['D3', 146.83, 4096, 70, 700],
+    ['E4', 329.63, 4096, 70, 700],
+    ['A4', 440.0, 2048, 70, 1200],
+  ];
+
+  for (const [name, f, size, minHz, maxHz] of golden) {
+    for (const cents of [0, 20, -35]) {
+      const detuned = f * Math.pow(2, cents / 1200);
+      it(`${name} ${cents >= 0 ? '+' : ''}${cents}¢ (sine, useFFT)`, () => {
+        const r = detectPitchYIN(sine(detuned, size), SR, { minHz, maxHz, useFFT: true });
+        expect(r, `${name} ${cents}`).not.toBeNull();
+        expect(Math.abs(centsDiff(r.hz, detuned)), `${name} ${cents}`).toBeLessThan(5);
+      });
+    }
+  }
+
+  it('picks the fundamental on harmonic-rich signal (useFFT)', () => {
+    const r = detectPitchYIN(harmonic(110, 4096), SR, { minHz: 70, maxHz: 700, useFFT: true });
+    expect(r).not.toBeNull();
+    expect(Math.abs(centsDiff(r.hz, 110))).toBeLessThan(5);
+  });
+
+  it('FFT path agrees with time-domain path within 0.5 cents', () => {
+    for (const [name, f, size, minHz, maxHz] of golden) {
+      const buf = sine(f, size);
+      const a = detectPitchYIN(buf, SR, { minHz, maxHz, useFFT: false });
+      const b = detectPitchYIN(buf, SR, { minHz, maxHz, useFFT: true });
+      expect(a, name).not.toBeNull();
+      expect(b, name).not.toBeNull();
+      expect(Math.abs(centsDiff(a.hz, b.hz)), name).toBeLessThan(0.5);
+    }
+  });
+
+  it('rejects white noise on the FFT path too', () => {
+    const buf = new Float32Array(2048);
+    let s = 12345;
+    for (let i = 0; i < buf.length; i++) {
+      s = (s * 1103515245 + 12345) & 0x7fffffff;
+      buf[i] = (s / 0x3fffffff) - 1;
+    }
+    expect(detectPitchYIN(buf, SR, { minHz: 70, maxHz: 700, useFFT: true })).toBeNull();
+  });
+});
+
 describe('freqToNote', () => {
   it('A4 = 440 → A4, 0 cents', () => {
     const n = freqToNote(440);

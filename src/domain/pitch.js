@@ -1,4 +1,5 @@
 import { NOTES } from './constants.js';
+import { differenceFunctionFFT } from './dsp/autocorr.js';
 
 /**
  * チューナー用のピッチ検出ドメイン（pure・DOM 非依存・Node でテスト可）。
@@ -22,10 +23,14 @@ export const A4 = 440;
  * @param {number} [opts.minHz=38]  検出下限（これ以下の周期は探索しない＝サブハーモニクス抑制）
  * @param {number} [opts.maxHz=1200] 検出上限
  * @param {number} [opts.rmsGate=0.005] これ未満の RMS は「無音」として null を返す
+ * @param {boolean} [opts.useFFT=false] 差分関数を FFT 自己相関で計算（O(N log N)）。
+ *   既定の時間領域版と数値誤差内で一致する。リアルタイム（AudioWorklet）経路で有効化する。
  * @returns {{ hz:number, clarity:number, rms:number } | null} 検出不能時 null
  */
 export function detectPitchYIN(buf, sampleRate, opts = {}) {
-  const { threshold = 0.12, minHz = 38, maxHz = 1200, rmsGate = 0.005 } = opts;
+  const {
+    threshold = 0.12, minHz = 38, maxHz = 1200, rmsGate = 0.005, useFFT = false,
+  } = opts;
   const SIZE = buf.length;
   if (SIZE < 4 || !(sampleRate > 0)) return null;
 
@@ -44,15 +49,21 @@ export function detectPitchYIN(buf, sampleRate, opts = {}) {
   const W = SIZE - tauMax;
   if (W < 2) return null;
 
-  // 2) 差分関数 d(tau)（tau は 1..tauMax を素直に計算 → 累積正規化を正しく出すため）。
-  const d = new Float32Array(tauMax + 1);
-  for (let tau = 1; tau <= tauMax; tau++) {
-    let sum = 0;
-    for (let j = 0; j < W; j++) {
-      const diff = buf[j] - buf[j + tau];
-      sum += diff * diff;
+  // 2) 差分関数 d(tau)（tau は 1..tauMax）。useFFT なら O(N log N) の FFT 自己相関、
+  //    既定は O(W·tauMax) の素直な時間領域版（両者は数値誤差内で一致）。
+  let d;
+  if (useFFT) {
+    d = differenceFunctionFFT(buf, tauMax);
+  } else {
+    d = new Float32Array(tauMax + 1);
+    for (let tau = 1; tau <= tauMax; tau++) {
+      let sum = 0;
+      for (let j = 0; j < W; j++) {
+        const diff = buf[j] - buf[j + tau];
+        sum += diff * diff;
+      }
+      d[tau] = sum;
     }
-    d[tau] = sum;
   }
 
   // 3) 累積平均正規化差分 d'(tau) = d(tau) * tau / Σ_{1..tau} d。

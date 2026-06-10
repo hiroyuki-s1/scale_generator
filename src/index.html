@@ -492,12 +492,27 @@
       <button class="tuner-instr-btn" data-instr="normal" role="tab" aria-selected="false">ノーマル</button>
     </div>
 
+    <!-- チューニング選択（オルタネート）＋ 甘い調弦（スウィートンド/オフセット）。ノーマルでは隠す -->
+    <div class="tuner-tuning" id="tunerTuningRow">
+      <label class="tuner-tuning-label" for="tunerTuning">チューニング</label>
+      <select class="tuner-tuning-select" id="tunerTuning" aria-label="チューニング"></select>
+      <button class="tuner-sweeten" id="tunerSweeten" type="button" aria-pressed="false"
+              title="弦ごとの実音の癖を補正し、開放和音の濁りを抑えます">甘い調弦</button>
+    </div>
+
     <!-- 基準ピッチ A（430〜450Hz / 既定440） -->
     <div class="tuner-a4">
       <span class="tuner-a4-label">基準ピッチ A</span>
       <button class="tuner-a4-btn" id="tunerA4Down" type="button" aria-label="基準ピッチを下げる">−</button>
       <span class="tuner-a4-val" id="tunerA4Val">440 Hz</span>
       <button class="tuner-a4-btn" id="tunerA4Up" type="button" aria-label="基準ピッチを上げる">＋</button>
+    </div>
+
+    <!-- 表示モード: メーター / ストロボ（高精度） / ポリ（全弦同時） -->
+    <div class="tuner-views" id="tunerViewTabs" role="tablist" aria-label="表示モード">
+      <button class="tuner-view-btn active" data-view="needle" role="tab" aria-selected="true">メーター</button>
+      <button class="tuner-view-btn" data-view="strobe" role="tab" aria-selected="false">ストロボ</button>
+      <button class="tuner-view-btn" data-view="poly" role="tab" aria-selected="false">ポリ</button>
     </div>
 
     <!-- メイン表示 -->
@@ -513,14 +528,23 @@
         <div class="tuner-freq" id="tunerFreq">マイクの準備中…</div>
       </div>
 
-      <!-- ピッチ推移グラフ（細かく調整）: 横=時間 / 縦=周波数 -->
-      <div class="tuner-graph-wrap">
+      <!-- ピッチ推移グラフ（メーター時）: 横=時間 / 縦=周波数 -->
+      <div class="tuner-graph-wrap" id="tunerGraphWrap">
         <canvas class="tuner-graph" id="tunerGraph"></canvas>
         <div class="tuner-graph-cap">ピッチ推移 — 横軸:時間（直近6秒） / 縦軸:周波数（中心線=ジャスト）</div>
       </div>
+
+      <!-- ストロボ（高精度）: 合っていれば縞が静止・ずれていれば流れる -->
+      <div class="tuner-strobe-wrap hidden" id="tunerStrobeWrap">
+        <canvas class="tuner-strobe" id="tunerStrobe"></canvas>
+        <div class="tuner-graph-cap">ストロボ — 縞が止まれば合致 / 右へ流れる=高い・左へ流れる=低い</div>
+      </div>
+
+      <!-- ポリフォニック: ジャラーンと1回で全弦の過不足 -->
+      <div class="tuner-poly hidden" id="tunerPoly"></div>
     </div>
 
-    <!-- 開放弦（ギター/ベース時のみ） -->
+    <!-- 開放弦（ギター/ベース・メーター/ストロボ時のみ） -->
     <div class="tuner-strings" id="tunerStrings"></div>
 
     <button class="tuner-retry hidden" id="tunerRetryBtn" type="button">マイクを許可して再試行</button>

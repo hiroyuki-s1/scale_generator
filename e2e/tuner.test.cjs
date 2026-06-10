@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const { writeToneWav } = require('./gen-tone-wav.cjs');
+const { writeToneWav, writeChordWav } = require('./gen-tone-wav.cjs');
 
 const URL = 'http://localhost:5173/';
 
@@ -157,6 +157,105 @@ async function runStructural(tmpDir) {
   }
 }
 
+// オルタネートチューニング: Drop D を選ぶと 73.42Hz が D2（6弦）として合う。
+async function runAlternateTuning(tmpDir) {
+  console.log('--- オルタネート: Drop D で D2 ---');
+  const wav = path.join(tmpDir, 'tone-d2.wav');
+  writeToneWav(wav, 73.42, { seconds: 3 });
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    const page = await context.newPage();
+    await openTuner(page);
+    await page.click('.tuner-instr-btn[data-instr="guitar"]');
+    await page.selectOption('#tunerTuning', 'drop-d');
+    // 6弦ラベルが D2 になっている
+    const sixth = await page.$$eval('#tunerStrings .tuner-string', els =>
+      els.map(e => e.textContent.trim()));
+    sixth.includes('D2') ? pass(`Drop D: 6弦ラベル D2 [${sixth.join(' ')}]`)
+                         : fail(`Drop D: 6弦ラベルが D2 でない [${sixth.join(' ')}]`);
+    let detected = '';
+    for (let i = 0; i < 40; i++) {
+      detected = await page.$eval('#tunerNote', el => el.textContent.trim());
+      if (detected === 'D2') break;
+      await page.waitForTimeout(100);
+    }
+    detected === 'D2' ? pass('Drop D: 73.42Hz → D2')
+                      : fail(`Drop D: 73.42Hz → 期待 D2 / 実際 "${detected}"`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
+// 甘い調弦(スウィートンド): B3 を有効化すると目標が下がり、同じ入力が +側にずれて見える。
+async function runSweetened(tmpDir) {
+  console.log('--- 甘い調弦: オフセットで cents が変わる ---');
+  const wav = path.join(tmpDir, 'tone-b3.wav');
+  writeToneWav(wav, 246.94, { seconds: 3 }); // 平均律 B3 ぴったり
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    const page = await context.newPage();
+    await openTuner(page);
+    await page.click('.tuner-instr-btn[data-instr="guitar"]');
+    // 標準: B3 ≈ ±0¢
+    let centsStd = '';
+    for (let i = 0; i < 40; i++) {
+      const n = await page.$eval('#tunerNote', el => el.textContent.trim());
+      centsStd = await page.$eval('#tunerCents', el => el.textContent.trim());
+      if (n === 'B3') break;
+      await page.waitForTimeout(100);
+    }
+    // 甘い調弦 ON → B3 の目標が -4¢ 下がるので同じ音が +側に
+    await page.click('#tunerSweeten');
+    let centsSweet = '';
+    for (let i = 0; i < 30; i++) {
+      await page.waitForTimeout(100);
+      centsSweet = await page.$eval('#tunerCents', el => el.textContent.trim());
+      if (/\+/.test(centsSweet)) break;
+    }
+    const num = s => parseInt(String(s).replace(/[^\-0-9]/g, ''), 10) || 0;
+    (num(centsStd) <= 1 && num(centsSweet) >= 3)
+      ? pass(`甘い調弦: 標準 ${centsStd} → 甘い ${centsSweet}（+側へ）`)
+      : fail(`甘い調弦: 変化が不正 標準 ${centsStd} / 甘い ${centsSweet}`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
+// ポリフォニック: 全弦ジャストの和音 → ポリ表示で全弦が ±0 付近・「—」でない。
+async function runPolyphonic(tmpDir) {
+  console.log('--- ポリフォニック: 和音で全弦同時 ---');
+  const targets = [329.63, 246.94, 196.0, 146.83, 110.0, 82.41]; // E4 B3 G3 D3 A2 E2（全てジャスト）
+  const wav = path.join(tmpDir, 'chord-std.wav');
+  writeChordWav(wav, targets, { seconds: 3, harmonics: [1, 0.25] });
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    const page = await context.newPage();
+    await openTuner(page);
+    await page.click('.tuner-instr-btn[data-instr="guitar"]');
+    await page.click('.tuner-view-btn[data-view="poly"]');
+    // ポリ行が全弦で「—」でない値になるまで待つ
+    let cents = [];
+    for (let i = 0; i < 60; i++) {
+      cents = await page.$$eval('#tunerPoly .tuner-poly-cents', els => els.map(e => e.textContent.trim()));
+      if (cents.length === 6 && cents.every(c => c !== '—')) break;
+      await page.waitForTimeout(100);
+    }
+    const allDetected = cents.length === 6 && cents.every(c => c !== '—');
+    allDetected ? pass(`ポリ: 全6弦検出 [${cents.join(' ')}]`)
+                : fail(`ポリ: 検出できない弦がある [${cents.join(' ')}]`);
+    // 全弦ジャストなので各 |cents| は小さい（±15¢以内）
+    const num = s => Math.abs(parseInt(String(s).replace(/[^\-0-9]/g, ''), 10) || 99);
+    const allClose = allDetected && cents.every(c => num(c) <= 15);
+    allClose ? pass('ポリ: 全弦が ±15¢ 以内（ジャスト和音）')
+             : fail(`ポリ: ジャストのはずが外れている [${cents.join(' ')}]`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
 async function main() {
   console.log('チューナー E2E（fake audio capture シミュレータ）\n');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuner-wav-'));
@@ -168,6 +267,12 @@ async function main() {
     }
     try { await runStructural(tmpDir); }
     catch (e) { fail(`構造検証: 例外 ${e.message}`); }
+    try { await runAlternateTuning(tmpDir); }
+    catch (e) { fail(`オルタネート: 例外 ${e.message}`); }
+    try { await runSweetened(tmpDir); }
+    catch (e) { fail(`甘い調弦: 例外 ${e.message}`); }
+    try { await runPolyphonic(tmpDir); }
+    catch (e) { fail(`ポリフォニック: 例外 ${e.message}`); }
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

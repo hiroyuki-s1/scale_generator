@@ -1624,7 +1624,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .tuner-overlay.hidden { display: none; }
 .tuner-inner {
-  flex: 1; min-height: 0;
+  flex: 1; min-height: 0; overflow-y: auto; /* 行が増えても重ならず、入り切らなければスクロール */
   display: flex; flex-direction: column; align-items: center;
   width: 100%; max-width: 520px; margin: 0 auto;
   padding: 14px 20px 28px;
@@ -1673,7 +1673,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* メイン表示 */
 .tuner-display {
-  width: 100%; flex: 1; min-height: 0;
+  width: 100%; flex: 1 0 auto; /* 縮まない＝中身が views 行へはみ出して重ならない（短い画面は inner がスクロール） */
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 18px;
 }
@@ -1726,6 +1726,73 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .tuner-graph-cap { margin-top: 6px; font-size: 11px; color: var(--text-3); text-align: center; }
 
+/* チューニング選択 + 甘い調弦 */
+.tuner-tuning {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap; margin-top: 14px; flex-shrink: 0;
+}
+.tuner-tuning-label { font-size: 13px; color: var(--text-3); }
+.tuner-tuning-select {
+  padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-1); font-family: inherit;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.tuner-sweeten {
+  padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-2); font-family: inherit;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
+}
+.tuner-sweeten.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.tuner-sweeten:disabled { opacity: .4; cursor: default; }
+
+/* 表示モード（メーター/ストロボ/ポリ） */
+.tuner-views {
+  display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-shrink: 0;
+}
+.tuner-view-btn {
+  padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-2); font-family: inherit;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
+}
+.tuner-view-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+.tuner-view-btn:disabled { opacity: .4; cursor: default; }
+
+/* ストロボ */
+.tuner-strobe-wrap { width: 100%; margin-top: 22px; }
+.tuner-strobe-wrap.hidden { display: none; }
+.tuner-strobe {
+  width: 100%; height: 150px; display: block;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+}
+
+/* ポリフォニック（全弦同時） */
+.tuner-poly { width: 100%; margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+.tuner-poly.hidden { display: none; }
+.tuner-poly-row { display: flex; align-items: center; gap: 12px; }
+.tuner-poly-name {
+  width: 40px; flex-shrink: 0; font-size: 15px; font-weight: 800;
+  color: var(--text-2); font-variant-numeric: tabular-nums; text-align: right;
+}
+.tuner-poly-bar {
+  position: relative; flex: 1; height: 14px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border); overflow: hidden;
+}
+.tuner-poly-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--border-2); transform: translateX(-1px); }
+.tuner-poly-dot {
+  position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--text-3); transform: translate(-50%, -50%); transition: left .1s, background .1s;
+}
+.tuner-poly-row.in-tune .tuner-poly-dot { background: var(--green); }
+.tuner-poly-row.off .tuner-poly-dot { background: var(--accent); }
+.tuner-poly-row.absent .tuner-poly-dot { opacity: .35; }
+.tuner-poly-cents {
+  width: 52px; flex-shrink: 0; font-size: 14px; font-weight: 700; text-align: left;
+  color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.tuner-poly-row.in-tune .tuner-poly-cents { color: var(--green); }
+.tuner-poly-row.off .tuner-poly-cents { color: var(--accent); }
+.tuner-poly-row.absent .tuner-poly-cents { color: var(--text-3); }
+
 .tuner-retry {
   margin-top: 18px; padding: 10px 20px; flex-shrink: 0;
   border: none; border-radius: 999px; background: var(--accent); color: #fff;
@@ -1741,7 +1808,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tuner-note { font-size: 68px; }
   .tuner-instr-btn { padding: 10px 18px; font-size: 14px; }
   .tuner-string { min-width: 48px; padding: 11px 12px; font-size: 14px; }
-  .tuner-graph { height: 120px; }
+  .tuner-graph, .tuner-strobe { height: 120px; }
+  .tuner-view-btn, .tuner-sweeten { padding: 9px 14px; font-size: 13px; }
 }
 
 

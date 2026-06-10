@@ -26,6 +26,9 @@ releases/
 # But allow icon assets in public/
 !public/*.jpg
 !public/*.png
+
+# generated: esbuild-bundled AudioWorklet (built by vite pitchWorkletPlugin)
+public/pitchProcessor.worklet.js
 # Exclude HTML files except index.html
 *.html
 !index.html

@@ -1,42 +1,44 @@
+import { freqToNote, midiToFreq } from '../domain/pitch.js';
+import { createPitchEngine, isPitchEngineSupported } from '../audio/pitchEngine.js';
 import {
-  detectPitchYIN, freqToNote, nearestOpenString, midiToFreq, noteLabelFromMidi,
-} from '../domain/pitch.js';
-import {
-  TUNING_GUITAR, TUNING_BASS, STRING_LABELS_GUITAR, STRING_LABELS_BASS,
-} from '../domain/constants.js';
+  tuningsFor, findTuning, labelsForMidi, nearestStringWithOffset, tuningRange,
+  targetsHz, SWEETENED, zeroOffsets,
+} from '../domain/tunings.js';
+import { advanceStrobePhase } from '../domain/strobe.js';
 import { track } from '../state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 
 /**
  * チューナー（全画面オーバーレイ）。`…` メニューの「チューナー」から開く。
  *
- *  - getUserMedia → AudioContext → AnalyserNode を rAF ループで読み、
- *    domain/pitch.js（純 YIN）で F0 を推定。
- *  - モード:
- *      ギター/ベース … 対応する開放弦のみを対象（最寄り開放弦に合わせる。Eの次はA）
- *      ノーマル       … 12 音クロマチック（最寄り平均律音に合わせる。Eの次はF）
- *  - 上部はデジタル表示（粗くチェック）、下部のグラフでピッチの揺れを細かく確認。
- *  - 基準ピッチ A は 430〜450Hz（既定440）で可変。localStorage に保存。
- *  - 音が一瞬途切れても表示は HOLD_MS（3秒）まで維持し、グラフもその間は線を繋ぐ。
- *  - このオーバーレイは「戻る」ボタン（と Esc）でのみ閉じる（背景クリックでは閉じない）。
- *  - 閉じる時にマイク（MediaStreamTrack）と AudioContext を確実に解放する。
+ *  - getUserMedia → audio/pitchEngine（AudioWorklet）でオーディオスレッド上で検出。
+ *  - 楽器: ギター/ベース（チューニング対応・開放弦に合わせる）/ ノーマル（12音クロマチック）。
+ *  - チューニング: スタンダード＋オルタネート（Drop D, DADGAD, Open G/D, 半音/1音下げ…）を無料提供。
+ *  - 甘い調弦（スウィートンド/オフセット）: 弦ごとに目標を ±¢ 補正し開放和音の濁りを抑える。
+ *  - 表示モード3種:
+ *      メーター … 音名/セント + ピッチ推移グラフ（mono・低レイテンシ）
+ *      ストロボ … 縞の流れで高精度に合わせる（mono・位相積分で高感度）
+ *      ポリ     … ジャラーンと1回で全弦の過不足を同時表示（poly）
+ *  - 基準ピッチ A は 430〜450Hz（既定440）。チューニング/甘い調弦/モードは localStorage 保存。
+ *  - 「戻る」/ Esc でのみ閉じる（背景クリックでは閉じない）。閉じる時にマイク/AudioContext を解放。
  *
- * 落とさない方針: マイク不可・未対応ブラウザでもアプリ本体は継続（オーバーレイ内で案内）。
+ * 落とさない方針: マイク不可・未対応でもアプリ本体は継続（オーバーレイ内で案内）。
+ * AudioWorklet 非対応端末は検出せず案内のみ（メインスレッド・フォールバックは持たない）。
  */
 
-const INSTR = {
-  guitar: { mode: 'string',    tuning: TUNING_GUITAR, labels: STRING_LABELS_GUITAR, minHz: 70, maxHz: 700,  fftSize: 4096 },
-  bass:   { mode: 'string',    tuning: TUNING_BASS,   labels: STRING_LABELS_BASS,   minHz: 35, maxHz: 400,  fftSize: 8192 }, // E1=41Hz は長い窓が必要
-  normal: { mode: 'chromatic', tuning: null,          labels: [],                   minHz: 40, maxHz: 2000, fftSize: 8192 },
-};
-
+const NORMAL = { minHz: 40, maxHz: 2000 };
 const IN_TUNE_CENTS = 5;      // ±これ以内で「合っている（緑）」
-const ANALYZE_MS = 40;        // 解析の最小間隔（≈25fps。低音の重い解析でも CPU を抑える）
+const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
-const GRAPH_WINDOW_MS = 6000; // ピッチ推移グラフの時間窓（横軸）
-const GRAPH_CENTS_SPAN = 50;  // 縦軸の上下レンジ（基準音 ±この cents 相当の Hz）
+const GRAPH_WINDOW_MS = 6000;
+const GRAPH_CENTS_SPAN = 50;
+const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
+const TUNING_KEY = 'sg.v1.tunerTuning';   // { guitar:id, bass:id }
+const SWEETEN_KEY = 'sg.v1.tunerSweeten'; // '1' | '0'
+const VIEW_KEY = 'sg.v1.tunerView';       // 'needle' | 'strobe' | 'poly'
+
 function loadA4() {
   try {
     const v = parseInt(localStorage.getItem(A4_KEY), 10);
@@ -45,11 +47,29 @@ function loadA4() {
   return A4_DEFAULT;
 }
 function saveA4(v) { try { localStorage.setItem(A4_KEY, String(v)); } catch { /* noop */ } }
+function loadTuningIds() {
+  try { return JSON.parse(localStorage.getItem(TUNING_KEY)) || {}; } catch { return {}; }
+}
+function saveTuningIds(m) { try { localStorage.setItem(TUNING_KEY, JSON.stringify(m)); } catch { /* noop */ } }
+function loadSweeten() { try { return localStorage.getItem(SWEETEN_KEY) === '1'; } catch { return false; } }
+function saveSweeten(v) { try { localStorage.setItem(SWEETEN_KEY, v ? '1' : '0'); } catch { /* noop */ } }
+function loadView() {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    if (v === 'needle' || v === 'strobe' || v === 'poly') return v;
+  } catch { /* noop */ }
+  return 'needle';
+}
+function saveView(v) { try { localStorage.setItem(VIEW_KEY, v); } catch { /* noop */ } }
 
 export function initTuner(store) {
   const overlay   = document.getElementById('tunerOverlay');
   const backBtn   = document.getElementById('tunerBackBtn');
   const instrBox  = document.getElementById('tunerInstr');
+  const tuningRow = document.getElementById('tunerTuningRow');
+  const tuningSel = document.getElementById('tunerTuning');
+  const sweetenBtn= document.getElementById('tunerSweeten');
+  const viewTabs  = document.getElementById('tunerViewTabs');
   const digitalEl = document.getElementById('tunerDigital');
   const noteEl    = document.getElementById('tunerNote');
   const freqEl    = document.getElementById('tunerFreq');
@@ -62,21 +82,37 @@ export function initTuner(store) {
   const a4ValEl   = document.getElementById('tunerA4Val');
   const a4DownBtn = document.getElementById('tunerA4Down');
   const a4UpBtn   = document.getElementById('tunerA4Up');
+  const graphWrap = document.getElementById('tunerGraphWrap');
   const graphCanvas = document.getElementById('tunerGraph');
   const gctx = graphCanvas ? graphCanvas.getContext('2d') : null;
+  const strobeWrap = document.getElementById('tunerStrobeWrap');
+  const strobeCanvas = document.getElementById('tunerStrobe');
+  const sctx = strobeCanvas ? strobeCanvas.getContext('2d') : null;
+  const polyEl = document.getElementById('tunerPoly');
   const openTrigger = document.querySelector('[data-act="tuner"]');
   if (!overlay || !openTrigger) return;
 
   let instr = store.get().edit?.instrument === 'bass' ? 'bass' : 'guitar';
   let a4 = loadA4();
-  let audioCtx = null, analyser = null, mediaStream = null, buf = null;
-  let rafId = 0, lastTs = 0, active = false;
-  let lastResult = null, lastResultT = 0;  // 直近の有効検出（ホールド用）
-  let history = [];   // ピッチ推移: { t:ms, hz:number|null } の時系列（直近 GRAPH_WINDOW_MS）
-  let refHz = null;   // グラフ縦軸の基準周波数（対象音の周波数）
-  let gW = 0, gH = 0; // canvas の論理サイズ(px)
+  let tuningIds = loadTuningIds();
+  let sweeten = loadSweeten();
+  let viewMode = loadView();
+  let currentMidi = null;   // ギター/ベース時の弦 MIDI 配列（ノーマルは null）
+  let currentLabels = [];
+  let offsets = [];
+
+  let engine = null, mediaStream = null;
+  let rafId = 0, active = false;
+  let lastResult = null, lastResultT = 0;
+  let history = [];
+  let refHz = null;
+  let gW = 0, gH = 0;
+  // ストロボ
+  let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
+  let sW = 0, sH = 0;
 
   const isOpen = () => !overlay.classList.contains('hidden');
+  const isStringInstr = () => instr !== 'normal';
 
   // ── 基準ピッチ A ───────────────────────────────────────────────
   function renderA4() {
@@ -88,21 +124,75 @@ export function initTuner(store) {
     const n = Math.max(A4_MIN, Math.min(A4_MAX, Math.round(v)));
     if (n === a4) return;
     a4 = n; saveA4(a4); renderA4();
-    resetGraph(); // 基準が変わると縦軸が変わるため推移はリセット
+    resetGraph(); resetStrobe();
+    syncEngine(); // 目標周波数が全体的に移調する
   }
 
-  // ── 弦ピル（演奏順 = 低音→高音に左→右で並べる。ノーマルでは非表示） ──
+  // ── チューニング/オフセット ───────────────────────────────────
+  function recomputeTuning() {
+    if (isStringInstr()) {
+      const t = findTuning(instr, tuningIds[instr]);
+      if (tuningIds[instr] !== t.id) tuningIds = { ...tuningIds, [instr]: t.id };
+      currentMidi = t.midi;
+      currentLabels = labelsForMidi(t.midi);
+      offsets = sweeten ? (SWEETENED[instr] || zeroOffsets(t.midi.length)) : zeroOffsets(t.midi.length);
+    } else {
+      currentMidi = null; currentLabels = []; offsets = [];
+    }
+  }
+
+  function populateTuningSelect() {
+    if (!tuningSel || !tuningRow) return;
+    if (!isStringInstr()) { tuningRow.style.display = 'none'; return; }
+    tuningRow.style.display = '';
+    tuningSel.innerHTML = '';
+    for (const t of tuningsFor(instr)) {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.name;
+      tuningSel.appendChild(opt);
+    }
+    tuningSel.value = tuningIds[instr] || 'standard';
+    renderSweeten();
+  }
+
+  function renderSweeten() {
+    if (!sweetenBtn) return;
+    sweetenBtn.classList.toggle('active', sweeten && isStringInstr());
+    sweetenBtn.setAttribute('aria-pressed', String(sweeten && isStringInstr()));
+    sweetenBtn.disabled = !isStringInstr();
+  }
+
+  function setTuning(id) {
+    if (!isStringInstr()) return;
+    tuningIds = { ...tuningIds, [instr]: id }; saveTuningIds(tuningIds);
+    recomputeTuning();
+    renderStrings(); renderPolyScaffold();
+    resetGraph(); resetStrobe();
+    lastResult = null;
+    showIdle(); // 旧チューニングの音名が一瞬残らないよう即クリア（次サンプルで再表示）
+    syncEngine();
+  }
+
+  function setSweeten(on) {
+    sweeten = !!on; saveSweeten(sweeten);
+    recomputeTuning(); renderSweeten();
+    resetGraph(); resetStrobe();
+    lastResult = null;
+    showIdle();
+    syncEngine();
+  }
+
+  // ── 弦ピル（低音→高音に左→右。ノーマルでは非表示） ──
   function renderStrings() {
     if (!stringsEl) return;
-    const cfg = INSTR[instr];
     stringsEl.innerHTML = '';
-    if (cfg.mode !== 'string') { stringsEl.style.display = 'none'; return; }
+    if (!isStringInstr() || viewMode === 'poly') { stringsEl.style.display = 'none'; return; }
     stringsEl.style.display = '';
-    for (let i = cfg.labels.length - 1; i >= 0; i--) {
+    for (let i = currentLabels.length - 1; i >= 0; i--) {
       const pill = document.createElement('div');
       pill.className = 'tuner-string';
-      pill.dataset.index = String(i); // tuning 配列上の index
-      pill.textContent = cfg.labels[i];
+      pill.dataset.index = String(i);
+      pill.textContent = currentLabels[i];
       stringsEl.appendChild(pill);
     }
   }
@@ -110,21 +200,107 @@ export function initTuner(store) {
     stringsEl?.querySelectorAll('.tuner-string').forEach(el => el.classList.remove('target', 'in-tune'));
   }
 
+  // ── ポリフォニック行（低音→高音） ──
+  function renderPolyScaffold() {
+    if (!polyEl) return;
+    polyEl.innerHTML = '';
+    if (!isStringInstr()) return;
+    for (let i = currentLabels.length - 1; i >= 0; i--) {
+      const row = document.createElement('div');
+      row.className = 'tuner-poly-row'; row.dataset.index = String(i);
+      row.innerHTML =
+        `<span class="tuner-poly-name">${currentLabels[i]}</span>`
+        + '<div class="tuner-poly-bar"><span class="tuner-poly-mid"></span><span class="tuner-poly-dot"></span></div>'
+        + '<span class="tuner-poly-cents">—</span>';
+      polyEl.appendChild(row);
+    }
+  }
+
+  function renderPoly(strings) {
+    if (!polyEl || !Array.isArray(strings)) return;
+    for (const s of strings) {
+      const row = polyEl.querySelector(`.tuner-poly-row[data-index="${s.index}"]`);
+      if (!row) continue;
+      const dot = row.querySelector('.tuner-poly-dot');
+      const val = row.querySelector('.tuner-poly-cents');
+      if (s.hz == null || s.cents == null) {
+        row.classList.remove('in-tune', 'off');
+        row.classList.add('absent');
+        if (val) val.textContent = '—';
+        if (dot) dot.style.left = '50%';
+        continue;
+      }
+      row.classList.remove('absent');
+      const cents = Math.round(s.cents);
+      const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
+      row.classList.toggle('in-tune', inTune);
+      row.classList.toggle('off', !inTune);
+      if (val) val.textContent = cents === 0 ? '±0¢' : `${cents > 0 ? '+' : ''}${cents}¢`;
+      if (dot) {
+        const clamped = Math.max(-50, Math.min(50, s.cents));
+        dot.style.left = `${50 + clamped}%`;
+      }
+    }
+  }
+
   function setInstrument(next) {
-    if (!INSTR[next]) return;
+    if (next !== 'guitar' && next !== 'bass' && next !== 'normal') return;
     instr = next;
     instrBox?.querySelectorAll('.tuner-instr-btn').forEach(b => {
       const on = b.dataset.instr === instr;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', String(on));
     });
-    renderStrings();
-    resetGraph();          // 音域が変わるので推移はリセット
+    if (!isStringInstr() && viewMode === 'poly') setView('needle'); // ノーマルはポリ不可
+    recomputeTuning();
+    populateTuningSelect();
+    updateViewTabs();
+    renderStrings(); renderPolyScaffold();
+    resetGraph(); resetStrobe();
     lastResult = null;
-    if (analyser) {
-      analyser.fftSize = INSTR[instr].fftSize;
-      buf = new Float32Array(analyser.fftSize);
+    showIdle(); // 楽器切替で旧音名が残らないよう即クリア
+    syncEngine();
+  }
+
+  // ── 表示モード ───────────────────────────────────────────────
+  function updateViewTabs() {
+    viewTabs?.querySelectorAll('.tuner-view-btn').forEach(b => {
+      const v = b.dataset.view;
+      const disabled = v === 'poly' && !isStringInstr();
+      b.disabled = disabled;
+      const on = v === viewMode && !disabled;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+  }
+
+  function setView(view) {
+    if (view === 'poly' && !isStringInstr()) view = 'needle';
+    viewMode = view; saveView(view);
+    updateViewTabs();
+    graphWrap?.classList.toggle('hidden', view !== 'needle');
+    strobeWrap?.classList.toggle('hidden', view !== 'strobe');
+    polyEl?.classList.toggle('hidden', view !== 'poly');
+    digitalEl?.classList.toggle('hidden', view === 'poly');
+    renderStrings(); // poly では隠す
+    resetStrobe();
+    if (view === 'poly') showIdle('ジャラーンと弾いてください');
+    syncEngine();
+    if (isOpen()) { resizeGraph(); resizeStrobe(); }
+  }
+
+  // ── エンジン同期（レンジ/目標/モード） ──
+  function syncEngine() {
+    if (!engine) return;
+    if (isStringInstr()) {
+      const r = tuningRange(currentMidi, a4);
+      engine.setRange(r.minHz, r.maxHz);
+      engine.setTargets(targetsHz(currentMidi, { a4, offsets }));
+    } else {
+      engine.setRange(NORMAL.minHz, NORMAL.maxHz);
+      engine.setTargets([]);
     }
+    engine.setMode(viewMode === 'poly' ? 'poly' : 'mono');
   }
 
   function showIdle(message) {
@@ -134,98 +310,99 @@ export function initTuner(store) {
     centsEl.textContent = '--';
     dirFlatEl?.classList.remove('on');
     dirSharpEl?.classList.remove('on');
+    strobePresent = false;
     clearStringHighlight();
   }
 
-  /**
-   * 検出結果を表示。
-   * @param {{hz:number}|null} result detectPitchYIN の戻り
-   * @param {boolean} held ホールド（直近値の維持）表示か
-   */
+  /** mono 検出結果を表示（メーター/ストロボ共通の数値・弦ハイライト・ストロボ目標）。 */
   function render(result, held) {
     if (!result) { showIdle(); return; }
-    const cfg = INSTR[instr];
-    let label, cents, targetMidi, nearIndex = -1;
+    let label, cents, nearIndex = -1, target;
 
-    if (cfg.mode === 'string') {
-      // 対応する開放弦のうち最寄りに合わせる（Eの次はA…）。
-      const near = nearestOpenString(result.hz, cfg.tuning, a4);
+    if (isStringInstr()) {
+      const near = nearestStringWithOffset(result.hz, currentMidi, { a4, offsets });
       if (!near) { showIdle(); return; }
-      targetMidi = near.midi;
       nearIndex = near.index;
       cents = Math.round(near.cents);
-      label = noteLabelFromMidi(near.midi).label;
+      label = currentLabels[near.index];
+      target = near.targetHz;
     } else {
-      // 12 音クロマチック（Eの次はF…）。
       const note = freqToNote(result.hz, a4);
       if (!note) { showIdle(); return; }
-      targetMidi = note.midi;
       cents = note.cents;
       label = note.label;
+      target = midiToFreq(note.midi, a4);
     }
 
     const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
-    refHz = midiToFreq(targetMidi, a4);
+    refHz = target;
+    strobeDetectedHz = result.hz; strobeTargetHz = target; strobePresent = true;
 
     noteEl.textContent = label;
     centsEl.textContent = cents === 0 ? '±0¢' : `${cents > 0 ? '+' : ''}${cents}¢`;
     freqEl.textContent = `${result.hz.toFixed(1)} Hz`;
     digitalEl?.classList.toggle('in-tune', inTune && !held);
     digitalEl?.classList.toggle('held', !!held);
-    dirFlatEl?.classList.toggle('on', cents < -IN_TUNE_CENTS);   // 低い → ♭ を点灯（上げる）
-    dirSharpEl?.classList.toggle('on', cents > IN_TUNE_CENTS);   // 高い → ♯ を点灯（下げる）
+    dirFlatEl?.classList.toggle('on', cents < -IN_TUNE_CENTS);
+    dirSharpEl?.classList.toggle('on', cents > IN_TUNE_CENTS);
 
     clearStringHighlight();
-    if (cfg.mode === 'string' && nearIndex >= 0 && Math.abs(cents) < 50) {
+    if (isStringInstr() && nearIndex >= 0 && Math.abs(cents) < 50) {
       const pill = stringsEl?.querySelector(`.tuner-string[data-index="${nearIndex}"]`);
       if (pill) { pill.classList.add('target'); pill.classList.toggle('in-tune', inTune); }
     }
   }
 
+  // rAF はアクティブな表示の再描画専用（検出はオーディオスレッド）。
   function loop(ts) {
     rafId = requestAnimationFrame(loop);
-    if (!analyser || !audioCtx) return;
     const now = ts || 0;
-    // 解析は ANALYZE_MS 間隔（重い低音解析を抑制）。描画は毎フレームで滑らかにスクロール。
-    if (now - lastTs >= ANALYZE_MS) {
-      lastTs = now;
-      analyser.getFloatTimeDomainData(buf);
-      const cfg = INSTR[instr];
-      const r = detectPitchYIN(buf, audioCtx.sampleRate, { minHz: cfg.minHz, maxHz: cfg.maxHz });
-      if (r) {
-        lastResult = r; lastResultT = now;
-        render(r, false);
-        pushHistory(now, r.hz);
-      } else if (lastResult && now - lastResultT <= HOLD_MS) {
-        // 一瞬の途切れ: 直近値を維持（表示は薄く）。グラフも直近値で線を繋ぐ。
-        render(lastResult, true);
-        pushHistory(now, lastResult.hz);
-      } else {
-        lastResult = null;
-        render(null, false);
-        pushHistory(now, null);
-      }
-    }
-    drawGraph(now);
+    if (viewMode === 'needle') drawGraph(now);
+    else if (viewMode === 'strobe') drawStrobe(now);
   }
 
-  // ── ピッチ推移グラフ（横:時間 / 縦:周波数） ──────────────────────────
+  // mono サンプル（≈66Hz）。poly モードでは届かない（worklet が mono を出さない）。
+  function onPitch(sample) {
+    const now = (typeof performance !== 'undefined' ? performance.now() : 0);
+    if (sample && sample.hz != null) {
+      lastResult = sample; lastResultT = now;
+      render(sample, false);
+      pushHistory(now, sample.hz);
+    } else if (lastResult && now - lastResultT <= HOLD_MS) {
+      render(lastResult, true);
+      pushHistory(now, lastResult.hz);
+    } else {
+      lastResult = null;
+      render(null, false);
+      pushHistory(now, null);
+    }
+  }
+
+  // poly サンプル（≈8Hz）。
+  function onPoly(payload) {
+    if (viewMode !== 'poly') return;
+    renderPoly(payload && payload.strings);
+  }
+
+  // ── ピッチ推移グラフ ──────────────────────────
   function pushHistory(t, hz) {
     history.push({ t, hz });
     const cutoff = t - GRAPH_WINDOW_MS - 200;
     while (history.length && history[0].t < cutoff) history.shift();
   }
 
-  function resizeGraph() {
-    if (!graphCanvas || !gctx) return;
-    const rect = graphCanvas.getBoundingClientRect();
-    if (rect.width === 0) return; // 非表示中は 0 → 後で再試行
+  function resizeCanvas(canvas, ctx) {
+    if (!canvas || !ctx) return [0, 0];
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return [0, 0];
     const dpr = window.devicePixelRatio || 1;
-    graphCanvas.width = Math.round(rect.width * dpr);
-    graphCanvas.height = Math.round(rect.height * dpr);
-    gW = rect.width; gH = rect.height;
-    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return [rect.width, rect.height];
   }
+  function resizeGraph() { [gW, gH] = resizeCanvas(graphCanvas, gctx); }
+  function resizeStrobe() { [sW, sH] = resizeCanvas(strobeCanvas, sctx); }
 
   function cssVar(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name);
@@ -236,48 +413,33 @@ export function initTuner(store) {
     if (!gctx) return;
     if (gW === 0) { resizeGraph(); if (gW === 0) return; }
     gctx.clearRect(0, 0, gW, gH);
-
     if (!refHz) {
       gctx.fillStyle = cssVar('--text-3', '#b0a9a1');
-      gctx.font = '12px sans-serif';
-      gctx.textAlign = 'center';
+      gctx.font = '12px sans-serif'; gctx.textAlign = 'center';
       gctx.fillText('音を鳴らすとピッチの推移が表示されます', gW / 2, gH / 2);
       return;
     }
-
     const loHz = refHz * Math.pow(2, -GRAPH_CENTS_SPAN / 1200);
     const hiHz = refHz * Math.pow(2, GRAPH_CENTS_SPAN / 1200);
-    const yOf = hz => {
-      const c = Math.max(loHz, Math.min(hiHz, hz));
-      return gH * (1 - (c - loHz) / (hiHz - loHz));
-    };
+    const yOf = hz => { const c = Math.max(loHz, Math.min(hiHz, hz)); return gH * (1 - (c - loHz) / (hiHz - loHz)); };
     const xOf = t => gW * (1 - (now - t) / GRAPH_WINDOW_MS);
-
     const colBorder = cssVar('--border-2', '#f0ece5');
     const colText   = cssVar('--text-3', '#b0a9a1');
     const colAccent = cssVar('--accent', '#c0511f');
     const colGreen  = cssVar('--green', '#16a34a');
-
-    // 補助線（±25 / ±50 cents 相当）
     gctx.lineWidth = 1; gctx.strokeStyle = colBorder;
     [-50, -25, 25, 50].forEach(c => {
       const y = yOf(refHz * Math.pow(2, c / 1200));
       gctx.beginPath(); gctx.moveTo(0, y); gctx.lineTo(gW, y); gctx.stroke();
     });
-    // 中心線（緑＝ジャスト）
     const yc = yOf(refHz);
     gctx.strokeStyle = colGreen; gctx.lineWidth = 1.5;
     gctx.beginPath(); gctx.moveTo(0, yc); gctx.lineTo(gW, yc); gctx.stroke();
-
-    // 縦軸ラベル（Hz）
     gctx.fillStyle = colText; gctx.font = '10px sans-serif'; gctx.textAlign = 'left';
     gctx.fillText(`${hiHz.toFixed(1)}Hz`, 4, 11);
     gctx.fillText(`${refHz.toFixed(1)}Hz`, 4, Math.max(20, yc - 3));
     gctx.fillText(`${loHz.toFixed(1)}Hz`, 4, gH - 4);
-
-    // ピッチ推移ライン（検出が完全に途切れた区間＝null はギャップ）
-    gctx.strokeStyle = colAccent; gctx.lineWidth = 2;
-    gctx.lineJoin = 'round'; gctx.lineCap = 'round';
+    gctx.strokeStyle = colAccent; gctx.lineWidth = 2; gctx.lineJoin = 'round'; gctx.lineCap = 'round';
     gctx.beginPath();
     let pen = false;
     for (const s of history) {
@@ -290,15 +452,45 @@ export function initTuner(store) {
     gctx.stroke();
   }
 
+  // ストロボ: 合っていれば縞が静止、ずれていれば流れる（右=高い/左=低い）。
+  function drawStrobe(now) {
+    if (!sctx) return;
+    if (sW === 0) { resizeStrobe(); if (sW === 0) return; }
+    const dt = strobeLastT ? Math.min(0.1, Math.max(0, (now - strobeLastT) / 1000)) : 0;
+    strobeLastT = now;
+
+    sctx.clearRect(0, 0, sW, sH);
+    const present = strobePresent && strobeTargetHz > 0 && strobeDetectedHz > 0
+      && lastResult && now - lastResultT <= HOLD_MS;
+    if (!present) {
+      sctx.fillStyle = cssVar('--text-3', '#b0a9a1');
+      sctx.font = '12px sans-serif'; sctx.textAlign = 'center';
+      sctx.fillText('音を鳴らすと縞が表示されます', sW / 2, sH / 2);
+      return;
+    }
+    strobePhase = advanceStrobePhase(strobePhase, strobeDetectedHz, strobeTargetHz, dt);
+    const cents = 1200 * Math.log2(strobeDetectedHz / strobeTargetHz);
+    const locked = Math.abs(cents) <= IN_TUNE_CENTS;
+    const bar = locked ? cssVar('--green', '#16a34a') : cssVar('--accent', '#c0511f');
+    const bg = cssVar('--surface-2', '#fbf7f0');
+    sctx.fillStyle = bg; sctx.fillRect(0, 0, sW, sH);
+    const off = strobePhase * STROBE_PERIOD_PX;
+    sctx.fillStyle = bar;
+    for (let x = -STROBE_PERIOD_PX; x < sW + STROBE_PERIOD_PX; x += STROBE_PERIOD_PX) {
+      sctx.fillRect(x + off, 0, STROBE_PERIOD_PX / 2, sH);
+    }
+  }
+
   function resetGraph() {
-    history = [];
-    refHz = null;
+    history = []; refHz = null;
     if (gctx && gW > 0) gctx.clearRect(0, 0, gW, gH);
+  }
+  function resetStrobe() {
+    strobePhase = 0; strobeLastT = 0; strobeDetectedHz = 0; strobeTargetHz = 0; strobePresent = false;
+    if (sctx && sW > 0) sctx.clearRect(0, 0, sW, sH);
   }
 
   // ── マイク取得 ───────────────────────────────────────────────
-  // 生信号がほしいので補正を切るが、端末が拒否(Overconstrained/NotReadable)した場合は
-  // 素の audio:true に後退して再取得する。
   async function acquireMic() {
     try {
       return await navigator.mediaDevices.getUserMedia({
@@ -312,7 +504,6 @@ export function initTuner(store) {
     }
   }
 
-  // 失敗理由ごとに案内を出し、「再試行」ボタンを表示する。
   function showMicError(e) {
     const name = e && e.name;
     if (name === 'NotAllowedError' || name === 'SecurityError') {
@@ -335,10 +526,13 @@ export function initTuner(store) {
     if (active) return;
     active = true;
     showIdle('マイクの準備中…');
-    if (!navigator.mediaDevices?.getUserMedia || !(window.AudioContext || window.webkitAudioContext)) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       hintEl.textContent = 'お使いのブラウザはマイク入力に対応していません。';
-      active = false;
-      return;
+      active = false; return;
+    }
+    if (!isPitchEngineSupported()) {
+      hintEl.textContent = 'お使いのブラウザは AudioWorklet 非対応のため、チューナーを利用できません。';
+      active = false; return;
     }
     retryBtn?.classList.add('hidden');
     let stream;
@@ -346,31 +540,25 @@ export function initTuner(store) {
       stream = await acquireMic();
     } catch (e) {
       console.error('チューナー: マイク取得に失敗', e);
-      showMicError(e);
-      active = false;
-      return;
+      showMicError(e); active = false; return;
     }
-    // await 中にユーザーが閉じていたら、取得したマイクを即解放して中断。
-    if (!active || !isOpen()) {
-      stream.getTracks().forEach(t => t.stop());
-      return;
-    }
+    if (!active || !isOpen()) { stream.getTracks().forEach(t => t.stop()); return; }
     mediaStream = stream;
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume(); // iOS: ユーザー操作直後に resume
-      const srcNode = audioCtx.createMediaStreamSource(mediaStream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = INSTR[instr].fftSize;
-      buf = new Float32Array(analyser.fftSize);
-      // analyser は destination に繋がない（ハウリング/エコー回避）。
-      srcNode.connect(analyser);
-      hintEl.textContent = '近くで1音ずつ鳴らしてください';
-      lastTs = 0;
+      const r = isStringInstr() ? tuningRange(currentMidi, a4) : NORMAL;
+      engine = createPitchEngine({ minHz: r.minHz, maxHz: r.maxHz, hopMs: HOP_MS });
+      await engine.start(mediaStream);
+      if (!active || !isOpen()) { stop(); return; }
+      engine.onPitch(onPitch);
+      engine.onPoly(onPoly);
+      syncEngine();
+      hintEl.textContent = viewMode === 'poly'
+        ? '全弦を1回ジャラーンと鳴らしてください'
+        : '近くで1音ずつ鳴らしてください';
       lastResult = null;
       rafId = requestAnimationFrame(loop);
     } catch (e) {
-      console.error('チューナー: AudioContext 初期化に失敗', e);
+      console.error('チューナー: オーディオ初期化に失敗', e);
       hintEl.textContent = 'オーディオの初期化に失敗しました。';
       stop();
     }
@@ -380,20 +568,18 @@ export function initTuner(store) {
     active = false;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = 0;
+    if (engine) { engine.stop(); engine = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-    if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
-    analyser = null;
-    buf = null;
   }
 
   function open() {
     if (isOpen()) return;
-    // 開くたびにアプリの現在楽器に追随（ユーザーが途中で変えていれば尊重）。
     setInstrument(store.get().edit?.instrument === 'bass' ? 'bass' : 'guitar');
     renderA4();
+    setView(viewMode); // 保存モードを復元（表示の出し分け）
     overlay.classList.remove('hidden');
-    resetGraph();
-    resizeGraph(); // オーバーレイ表示後にレイアウト確定 → canvas 実寸を取得
+    resetGraph(); resetStrobe();
+    resizeGraph(); resizeStrobe();
     track('tuner_open', { instrument: instr }); // [removable-analytics]
     start();
   }
@@ -403,7 +589,7 @@ export function initTuner(store) {
     overlay.classList.add('hidden');
     retryBtn?.classList.add('hidden');
     stop();
-    resetGraph();
+    resetGraph(); resetStrobe();
   }
 
   // ── イベント配線 ──
@@ -416,12 +602,18 @@ export function initTuner(store) {
     const btn = e.target.closest('.tuner-instr-btn');
     if (btn) setInstrument(btn.dataset.instr);
   });
-  // 背景クリックでは閉じない（このオーバーレイは「戻る」ボタン / Esc でのみ閉じる）。
+  tuningSel?.addEventListener('change', e => setTuning(e.target.value));
+  sweetenBtn?.addEventListener('click', () => setSweeten(!sweeten));
+  viewTabs?.addEventListener('click', e => {
+    const btn = e.target.closest('.tuner-view-btn');
+    if (btn && !btn.disabled) setView(btn.dataset.view);
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) close(); });
-  window.addEventListener('resize', () => { if (isOpen()) resizeGraph(); });
+  window.addEventListener('resize', () => { if (isOpen()) { resizeGraph(); resizeStrobe(); } });
 
-  // 初期描画（閉じている状態の弦ピル・A4 表示）。
+  // 初期描画。
   setInstrument(instr);
+  setView(viewMode);
   renderA4();
 
   return { open, close };

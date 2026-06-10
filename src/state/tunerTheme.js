@@ -2,21 +2,27 @@ import { getUser, getSettings, patchSettings } from './cloudSync.js';
 
 /**
  * チューナーの表示テーマ（'dark' | 'light'）の保存層。
- *  - 'dark'  … 暖色ダーク（既定。チューナー没入型）
- *  - 'light' … 本体（スケール設定画面）と同じクリーム/オレンジのライト
+ *  - 'light' … 本体（スケール設定画面）と同じクリーム/オレンジのライト（**既定**・本体と一体）
+ *  - 'dark'  … 暖色ダーク（チューナー没入型）
  *
  * localStorage に常時保存。ログイン時は D1 (user_settings.settings.tunerTheme) にも同期。
  */
 
 const KEY = 'sg.v1.tunerTheme';
+const DEFAULT_THEME = 'light';
 
-/** 正規化（'light' 以外は 'dark'）。 */
+/** 'dark' を明示選択 → 'dark'、それ以外（'light'/不正）→ 'light'。 */
 export function normalizeTheme(t) {
-  return t === 'light' ? 'light' : 'dark';
+  return t === 'dark' ? 'dark' : 'light';
 }
 
+/** 保存値があればそれ、無ければ既定（ライト）。 */
 export function loadTheme() {
-  try { return normalizeTheme(localStorage.getItem(KEY)); } catch { return 'dark'; }
+  try {
+    const v = localStorage.getItem(KEY);
+    if (v === 'light' || v === 'dark') return v;
+  } catch { /* private mode */ }
+  return DEFAULT_THEME;
 }
 
 export function saveThemeLocal(t) {

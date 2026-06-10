@@ -319,23 +319,23 @@ async function runTheme(tmpDir) {
     await context.grantPermissions(['microphone'], { origin: URL });
     const page = await context.newPage();
     await openTuner(page); // 設定ドロワーを開く
-    // 既定はダーク（theme-light クラスなし）
+    // 既定はライト（theme-light クラスあり）
     let isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
-    !isLight ? pass('テーマ: 既定はダーク') : fail('テーマ: 既定がダークでない');
-    // ライトへ
-    await page.click('.tuner-theme-btn[data-theme="light"]');
-    await page.waitForTimeout(150);
-    isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
-    const saved = await page.evaluate(() => localStorage.getItem('sg.v1.tunerTheme'));
-    (isLight && saved === 'light') ? pass('テーマ: ライト適用＋localStorage保存')
-                                   : fail(`テーマ: ライト不正 class=${isLight} ls=${saved}`);
-    // ダークへ戻す
+    isLight ? pass('テーマ: 既定はライト') : fail('テーマ: 既定がライトでない');
+    // ダークへ
     await page.click('.tuner-theme-btn[data-theme="dark"]');
     await page.waitForTimeout(150);
     isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
+    const saved = await page.evaluate(() => localStorage.getItem('sg.v1.tunerTheme'));
+    (!isLight && saved === 'dark') ? pass('テーマ: ダーク適用＋localStorage保存')
+                                   : fail(`テーマ: ダーク不正 class=${isLight} ls=${saved}`);
+    // ライトへ戻す
+    await page.click('.tuner-theme-btn[data-theme="light"]');
+    await page.waitForTimeout(150);
+    isLight = await page.$eval('#tunerOverlay', el => el.classList.contains('theme-light'));
     const saved2 = await page.evaluate(() => localStorage.getItem('sg.v1.tunerTheme'));
-    (!isLight && saved2 === 'dark') ? pass('テーマ: ダークに戻る＋保存')
-                                    : fail(`テーマ: ダーク不正 class=${isLight} ls=${saved2}`);
+    (isLight && saved2 === 'light') ? pass('テーマ: ライトに戻る＋保存')
+                                    : fail(`テーマ: ライト不正 class=${isLight} ls=${saved2}`);
     await context.close();
   } finally { await browser.close(); }
 }

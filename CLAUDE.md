@@ -102,6 +102,15 @@ R, b9, 9, m3, M3, 11, #11, 5, b13, 13, m7, M7
 - **モジュール責務**: `audio/pitchEngine.js`(公開API・複数購読・AudioContext所有・mono/poly切替) /
   `audio/pitchProcessor.worklet.js`(mono=リング+ホップ+ダウンサンプル+YIN / poly=生波形長窓+FFTピーク) /
   `audio/workletUrl.js`(URL解決)。**音名判定は consumer 側**(engine は生F0/弦ズレのみ)。
+- **再利用API（チューナー以外＝将来のスケールあてクイズ等でも流用）**:
+  - `class PitchEngine`（`audio/pitchEngine.js`）— 設定柔軟。`new PitchEngine(cfg)` →
+    `await start(stream?)`（stream 省略でマイク内蔵取得・stop で解放）/ `onPitch`/`onPoly`/
+    `configure(partial)`（minHz/maxHz/threshold/rmsGate/hopMs/mode/targets を**起動中でも**変更）/
+    `setRange`/`setMode`/`setTargets`/`stop`/`get config`。`createPitchEngine()` は互換ラッパ（既存tuner用）。
+  - `domain/noteDetect.js`（pure）— `classifyNote(hz,a4)` ＋ `StableNoteTracker`（F0列を push し、
+    同音が `stableMs` 続いたら「確定」イベント／無音 `releaseMs` で解放）。クイズの「いまGを鳴らした」判定に使う。
+    時刻は ms を外から渡す純粋設計（Nodeでテスト可）。
+  - 典型: `engine.onPitch(s => tracker.push(s.hz, performance.now(), s.clarity))` で確定音を拾う。
 - **差別化機能（競合が課金で隠す/高級機専用を無料Webで）**:
   - **オルタネートチューニング**(`domain/tunings.js`): Drop D/DADGAD/Open G・D/半音下げ等を MIDI 配列で持つ。
     指板表示もそのまま追従。`nearestStringWithOffset` で開放弦判定。
@@ -170,7 +179,9 @@ main.js → orchestrates all
 - `src/domain/pitch.js` — YIN F0 推定 (`detectPitchYIN`, `useFFT` 対応)・音名判定 (`freqToNote` 等)
 - `src/domain/dsp/{fft,downsample,autocorr}.js` — FFT/IFFT・ダウンサンプル・FFT自己相関 (pure)
 - `src/domain/{tunings,polyphonic,strobe}.js` — チューニング/オフセット・ポリフォニック検出・ストロボ位相 (pure)
-- `src/audio/{pitchEngine,pitchProcessor.worklet,workletUrl}.js` — AudioWorklet ピッチ検出エンジン(mono/poly)
+- `src/domain/noteDetect.js` — 音名分類 + `StableNoteTracker`（安定音検出・再利用/クイズ用、pure）
+- `src/audio/{pitchEngine,pitchProcessor.worklet,workletUrl}.js` — `PitchEngine` クラス(mono/poly・再利用可)
+- `src/state/tunerOffsets.js` — 甘い調弦の弦ごと±¢（local + D1 同期。pure な sanitize/clamp 同梱）
 - `src/domain/title.js` / `src/domain/i18n.js` — タイトル生成 / カタカナ対訳
 - `src/state/{store,persist,snapshot,savedList}.js` — 状態管理
 - `src/ui/fretboardSvg.js` — SVG 描画、diff-apply、マスクオーバーレイ

@@ -54,8 +54,12 @@ class PitchProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (e) => {
       const m = e.data;
       if (!m) return;
-      if (m.type === 'config') this._configure(m.minHz, m.maxHz);
-      else if (m.type === 'mode') {
+      if (m.type === 'config') {
+        if (m.threshold != null) this._threshold = m.threshold;
+        if (m.rmsGate != null) this._rmsGate = m.rmsGate;
+        if (m.hopMs != null) this._hopMs = m.hopMs;
+        this._configure(m.minHz != null ? m.minHz : this._minHz, m.maxHz != null ? m.maxHz : this._maxHz);
+      } else if (m.type === 'mode') {
         const next = m.mode === 'poly' ? 'poly' : 'mono';
         if (next !== this._mode) { this._mode = next; this._flushMono(); }
       } else if (m.type === 'targets') this._targets = Array.isArray(m.targets) ? m.targets : null;

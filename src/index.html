@@ -120,6 +120,10 @@
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 0 1 .5.5v1.293l1.146-1.147a.5.5 0 0 1 .708.708L8.5 4.207V11.5a2.5 2.5 0 1 1-1-2V1.5A.5.5 0 0 1 8 1zM6.5 11.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"/></svg>
       チューナー
     </button>
+    <button class="more-item" data-act="scaletrain" role="menuitem">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm5.5-1v12h1V2h-1zm5 0v12h1V2h-1zM3 2v12h.5V2H3zm9.5 0v12h.5V2h-.5z"/></svg>
+      スケールトレーニング
+    </button>
     <button class="more-item" data-act="reload" role="menuitem">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
       更新（リロード）
@@ -592,6 +596,79 @@
 
     <div class="strainer-hint" id="strainerHint">スケールの音を1音ずつ弾いてみよう（外れた音はバツ）</div>
     <button class="strainer-retry hidden" id="strainerRetryBtn" type="button">マイクを許可して再試行</button>
+  </div>
+</div>
+
+<!-- ── スケールトレーニング（全画面・テンポ同期ゲーム） ──────────────── -->
+<div class="stg-overlay hidden" id="stgOverlay" role="dialog" aria-modal="true" aria-label="スケールトレーニング">
+  <div class="stg-inner">
+    <div class="stg-hdr">
+      <button class="stg-back" id="stgBackBtn" type="button" aria-label="戻る">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+      </button>
+      <div class="stg-hdr-title">スケールトレーニング</div>
+    </div>
+
+    <!-- 設定 -->
+    <div class="stg-screen" id="stgSetup">
+      <div class="stg-setup-card">
+        <div class="stg-setup-row">
+          <span class="stg-setup-label">テンポ（BPM）</span>
+          <div class="stg-stepper">
+            <button class="stg-step-btn" data-tempo="-5" type="button" aria-label="テンポを下げる">−</button>
+            <span class="stg-step-val" id="stgTempo">120</span>
+            <button class="stg-step-btn" data-tempo="5" type="button" aria-label="テンポを上げる">＋</button>
+          </div>
+        </div>
+        <div class="stg-setup-row">
+          <span class="stg-setup-label">ループ回数</span>
+          <div class="stg-stepper">
+            <button class="stg-step-btn" data-loop="-1" type="button" aria-label="ループを減らす">−</button>
+            <span class="stg-step-val" id="stgLoops">2</span>
+            <button class="stg-step-btn" data-loop="1" type="button" aria-label="ループを増やす">＋</button>
+          </div>
+        </div>
+        <div class="stg-setup-row stg-setup-row--info">
+          <span class="stg-setup-label">1スケール</span>
+          <span class="stg-setup-info">4拍で切替</span>
+        </div>
+      </div>
+      <div class="stg-prog-label">進行（ソングファイル順）</div>
+      <div class="stg-progression" id="stgProgression"></div>
+      <button class="stg-start" id="stgStartBtn" type="button">START</button>
+      <div class="stg-setup-note" id="stgSetupNote"></div>
+    </div>
+
+    <!-- プレイ -->
+    <div class="stg-screen hidden" id="stgPlay">
+      <div class="stg-progress-bar"><span class="stg-progress-fill" id="stgProgressFill"></span></div>
+      <div class="stg-now" id="stgNow">1 / 2 ループ</div>
+      <div class="stg-scale-name" id="stgScaleName">–</div>
+      <div class="stg-beats" id="stgBeats"></div>
+      <div class="stg-allowed" id="stgAllowed"></div>
+      <div class="stg-verdict" id="stgVerdict" aria-live="polite"></div>
+      <div class="stg-played" id="stgPlayedNote"></div>
+      <div class="stg-score">
+        <span class="stg-score-ok" id="stgScoreOk">正解 0</span>
+        <span class="stg-score-ng" id="stgScoreNg">ミス 0</span>
+        <span class="stg-score-combo" id="stgScoreCombo">コンボ 0</span>
+      </div>
+    </div>
+
+    <!-- リザルト -->
+    <div class="stg-screen hidden" id="stgResult">
+      <div class="stg-result-head">RESULT</div>
+      <div class="stg-rank" id="stgRank">S</div>
+      <div class="stg-accuracy" id="stgAccuracy">100%</div>
+      <div class="stg-result-stats" id="stgResultStats"></div>
+      <div class="stg-result-actions">
+        <button class="stg-retry" id="stgRetryBtn" type="button">もう一度</button>
+        <button class="stg-close" id="stgCloseBtn" type="button">閉じる</button>
+      </div>
+    </div>
+
+    <div class="stg-hint" id="stgHint"></div>
+    <button class="stg-retry-mic hidden" id="stgRetryMicBtn" type="button">マイクを許可して再試行</button>
   </div>
 </div>
 

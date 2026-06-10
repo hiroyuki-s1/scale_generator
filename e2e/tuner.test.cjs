@@ -382,6 +382,46 @@ async function runScaleTrainer(tmpDir) {
   await onePractice(tmpDir, 369.99, 'F#', '✕', 'F#=外→バツ'); // F# は C メジャー外
 }
 
+// スケールトレーニング（ゲーム）: …メニュー→START→プレイ→リザルト。
+async function runScaleTrainGame(tmpDir) {
+  console.log('--- スケールトレーニング: 起動→プレイ→リザルト ---');
+  const wav = path.join(tmpDir, 'stg-e.wav');
+  writeToneWav(wav, 329.63, { seconds: 8 }); // E（C メジャー内）を継続
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    await context.addInitScript((s) => {
+      try {
+        localStorage.setItem('sg.v1.state', s);
+        localStorage.setItem('sg.v1.stgTempo', '240'); // 速くして短時間で終わらせる
+        localStorage.setItem('sg.v1.stgLoops', '1');
+      } catch { /* noop */ }
+    }, SCALE_STATE);
+    const page = await context.newPage();
+    await page.goto(URL, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.getElementById('alphaNotice')?.classList.add('hidden'));
+    await page.click('#moreTrigger');
+    await page.click('[data-act="scaletrain"]');
+    await page.waitForSelector('#stgOverlay:not(.hidden)', { timeout: 3000 });
+    const hasProg = await page.$eval('#stgProgression', e => e.textContent.includes('C メジャー'));
+    hasProg ? pass('STG: 進行にスケール表示') : fail('STG: 進行が空');
+
+    await page.click('#stgStartBtn');
+    await page.waitForSelector('#stgPlay:not(.hidden)', { timeout: 3000 });
+    pass('STG: プレイ画面へ遷移');
+
+    await page.waitForSelector('#stgResult:not(.hidden)', { timeout: 20000 });
+    const rank = await page.$eval('#stgRank', e => e.textContent.trim());
+    const acc = await page.$eval('#stgAccuracy', e => e.textContent.trim());
+    /^[SABCD]$/.test(rank) ? pass(`STG: リザルト表示 rank=${rank} acc=${acc}`)
+                           : fail(`STG: リザルトのランク異常 "${rank}"`);
+    const stats = await page.$eval('#stgResultStats', e => e.textContent);
+    /正解/.test(stats) ? pass('STG: スコア集計表示') : fail('STG: スコア未表示');
+    await context.close();
+  } finally { await browser.close(); }
+}
+
 async function main() {
   console.log('チューナー E2E（fake audio capture シミュレータ）\n');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuner-wav-'));
@@ -403,6 +443,8 @@ async function main() {
     catch (e) { fail(`テーマ: 例外 ${e.message}`); }
     try { await runScaleTrainer(tmpDir); }
     catch (e) { fail(`スケール練習: 例外 ${e.message}`); }
+    try { await runScaleTrainGame(tmpDir); }
+    catch (e) { fail(`スケールトレーニング: 例外 ${e.message}`); }
     try { await runPolyphonic(tmpDir); }
     catch (e) { fail(`ポリフォニック: 例外 ${e.message}`); }
   } finally {

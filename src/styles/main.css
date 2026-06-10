@@ -1616,206 +1616,156 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 
 /* ── チューナー（全画面オーバーレイ） ───────────────────────────────── */
-/* ===== チューナー（ダーク・ヘッドストック風リデザイン） ===== */
+/* ===== チューナー（モック v2 準拠・ダーク／バーメーター／クロマチックルーラー） ===== */
 .tuner-overlay {
   position: fixed; inset: 0; z-index: 320;
-  /* ダーク専用配色（アプリ本体は明るいテーマ。チューナーだけ没入型ダーク） */
-  --tk-bg: #0d0f12; --tk-panel: #16191d; --tk-panel-2: #1c2025;
-  --tk-border: rgba(255,255,255,.09); --tk-line: rgba(255,255,255,.055);
-  --tk-text: #e8eaed; --tk-text-2: #a7adb4; --tk-text-3: #71777e;
-  --tk-accent: var(--accent); --tk-green: #2fd27a;
+  --tk-bg: #0a0b0c; --tk-bg2: #111315;
+  --tk-text: #f6f7f8; --tk-muted: #7c8085; --tk-muted2: #4a4e53;
+  --tk-seg: rgba(255,255,255,0.10);
+  --tk-orange: #ff7a3a; --tk-yellow: #ffce3d; --tk-green: #46e35b;
+  --tk-border: rgba(255,255,255,0.10);
   background: var(--tk-bg); color: var(--tk-text);
-  display: flex; flex-direction: column;
-  animation: fadeUp .18s ease both;
+  display: flex; flex-direction: column; animation: fadeUp .18s ease both;
 }
 .tuner-overlay.hidden { display: none; }
 .tuner-inner {
   flex: 1; min-height: 0; overflow-y: auto;
-  display: flex; flex-direction: column; align-items: center;
-  width: 100%; max-width: 520px; margin: 0 auto;
-  padding: 14px 18px 24px;
+  display: flex; flex-direction: column; align-items: stretch;
+  width: 100%; max-width: 460px; margin: 0 auto; padding: 12px 20px 22px;
 }
 
-/* ヘッダ: 戻る / 楽器・チューニング名 / 基準A */
-.tuner-hdr { width: 100%; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+/* 上部バー */
+.tuner-topbar { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 .tuner-back {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 1px solid var(--tk-border); background: var(--tk-panel);
-  color: var(--tk-text); cursor: pointer; transition: all .12s;
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--tk-border); background: var(--tk-bg2); color: var(--tk-text);
+  cursor: pointer; transition: all .12s;
 }
-.tuner-back:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
+.tuner-back:hover { border-color: var(--tk-green); color: var(--tk-green); }
 .tuner-back:active { transform: scale(.95); }
 .tuner-back svg { display: block; }
-.tuner-id { flex: 1; min-width: 0; line-height: 1.2; }
-.tuner-id-name { font-size: 19px; font-weight: 800; letter-spacing: -.3px; color: var(--tk-text); }
-.tuner-id-tuning { font-size: 12px; font-weight: 600; color: var(--tk-text-3); margin-top: 1px; }
-.tuner-a4 { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.tuner-a4-btn {
-  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-  border: 1px solid var(--tk-border); background: var(--tk-panel); color: var(--tk-text);
-  font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; transition: all .12s;
+.tuner-id { flex: 1; min-width: 0; line-height: 1.2; text-align: center; }
+.tuner-id-name { display: block; font-size: 15px; font-weight: 700; color: var(--tk-text); }
+.tuner-id-tuning { display: block; font-size: 11px; font-weight: 500; color: var(--tk-muted); margin-top: 1px; }
+.tuner-settings-toggle {
+  flex-shrink: 0; border: none; background: transparent; cursor: pointer;
+  color: var(--tk-muted); font-size: 15px; font-weight: 500; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 3px; padding: 8px 4px;
 }
-.tuner-a4-btn:hover:not(:disabled) { border-color: var(--tk-accent); color: var(--tk-accent); }
-.tuner-a4-btn:disabled { opacity: .35; cursor: default; }
-.tuner-a4-val { min-width: 60px; text-align: center; font-size: 13px; font-weight: 700; color: var(--tk-text-2); font-variant-numeric: tabular-nums; }
+.tuner-settings-toggle .chev { font-size: 17px; transition: transform .15s; }
+.tuner-settings-toggle[aria-expanded="true"] { color: var(--tk-text); }
+.tuner-settings-toggle[aria-expanded="true"] .chev { transform: rotate(90deg); }
 
-/* コントロール群 */
-.tuner-controls {
-  width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;
-  margin-top: 16px; flex-shrink: 0;
+/* 設定ドロワー */
+.tuner-settings {
+  flex: 0 0 auto; margin-top: 12px; padding: 14px; border-radius: 14px;
+  background: var(--tk-bg2); border: 1px solid var(--tk-border);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
-.tuner-instr {
-  display: inline-flex; padding: 4px;
-  background: var(--tk-panel); border: 1px solid var(--tk-border); border-radius: 999px;
-}
-.tuner-instr-btn {
-  border: none; background: transparent; cursor: pointer;
-  padding: 8px 22px; border-radius: 999px;
-  font-size: 14px; font-weight: 700; font-family: inherit; color: var(--tk-text-2);
-  transition: all .12s;
-}
-.tuner-instr-btn.active { background: var(--tk-accent); color: #fff; }
+.tuner-settings.hidden { display: none; }
+.tuner-instr { display: inline-flex; padding: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--tk-border); border-radius: 999px; }
+.tuner-instr-btn { border: none; background: transparent; cursor: pointer; padding: 7px 18px; border-radius: 999px; font-size: 13px; font-weight: 700; font-family: inherit; color: var(--tk-muted); transition: all .12s; }
+.tuner-instr-btn.active { background: var(--tk-green); color: #04230b; }
 .tuner-tuning { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-.tuner-tuning-select {
-  padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tk-border);
-  background: var(--tk-panel); color: var(--tk-text); font-family: inherit;
-  font-size: 14px; font-weight: 600; cursor: pointer;
-}
-.tuner-sweeten {
-  padding: 8px 14px; border-radius: 999px; border: 1px solid var(--tk-border);
-  background: var(--tk-panel); color: var(--tk-text-2); font-family: inherit;
-  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
-}
-.tuner-sweeten.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
+.tuner-tuning-select { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-text); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tuner-sweeten { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
+.tuner-sweeten.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
 .tuner-sweeten:disabled { opacity: .35; cursor: default; }
 .tuner-views { display: flex; justify-content: center; gap: 8px; }
-.tuner-view-btn {
-  padding: 7px 16px; border-radius: 999px; border: 1px solid var(--tk-border);
-  background: var(--tk-panel); color: var(--tk-text-2); font-family: inherit;
-  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s;
-}
-.tuner-view-btn.active { border-color: var(--tk-accent); background: var(--tk-accent); color: #fff; }
+.tuner-view-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
+.tuner-view-btn.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
 .tuner-view-btn:disabled { opacity: .35; cursor: default; }
+.tuner-a4 { display: inline-flex; align-items: center; gap: 8px; }
+.tuner-a4-label { font-size: 12px; font-weight: 700; color: var(--tk-muted); }
+.tuner-a4-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-text); font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.tuner-a4-btn:hover:not(:disabled) { border-color: var(--tk-green); color: var(--tk-green); }
+.tuner-a4-btn:disabled { opacity: .35; cursor: default; }
+.tuner-a4-val { min-width: 64px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tk-text); font-variant-numeric: tabular-nums; }
 
-/* メイン表示（メーター/ストロボ/ポリ。固定高さ＝モード切替で動かない） */
-.tuner-display {
-  width: 100%; flex: 1 0 auto; margin-top: 16px;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-}
-.tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly {
-  width: 100%; height: 224px; box-sizing: border-box;
-  border-radius: 16px; border: 1px solid var(--tk-border); background: var(--tk-panel-2);
-  overflow: hidden;
-}
+/* 音名行: ♭ ▶ G ◀ ♯ */
+.tuner-note-row { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; justify-items: center; gap: 4px; padding: 24px 20px 4px; }
+.tuner-acc { font-family: Georgia, "Times New Roman", serif; font-size: 28px; color: var(--tk-muted2); }
+.tuner-acc-flat { justify-self: start; }
+.tuner-acc-sharp { justify-self: end; }
+.tuner-arrow { width: 0; height: 0; }
+.tuner-arrow-left { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 14px solid var(--tk-muted2); margin-right: 8px; }
+.tuner-arrow-right { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid var(--tk-muted2); margin-left: 8px; }
+.tuner-arrow-left.on { border-left-color: var(--tk-green); filter: drop-shadow(0 0 6px rgba(70,227,91,0.5)); }
+.tuner-arrow-right.on { border-right-color: var(--tk-green); filter: drop-shadow(0 0 6px rgba(70,227,91,0.5)); }
+.tuner-note { font-size: 84px; font-weight: 800; line-height: 0.8; letter-spacing: -2px; min-width: 96px; text-align: center; color: var(--tk-text); transition: color .12s; }
+.tuner-note-row.in-tune .tuner-note { color: var(--tk-green); }
+.tuner-note-row.held { opacity: .5; }
 
-/* 針メーター */
-.tuner-graph-wrap { position: relative; }
-.tuner-graph { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.tuner-acc {
-  position: absolute; top: 14px; font-size: 30px; font-weight: 800; color: var(--tk-text-3);
-  pointer-events: none; opacity: .7;
-}
-.tuner-acc-flat { left: 18px; }
-.tuner-acc-sharp { right: 18px; }
-.tuner-digital {
-  position: absolute; left: 0; right: 0; bottom: 30px; text-align: center; pointer-events: none;
-}
-.tuner-note {
-  font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: 1px;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  color: var(--tk-text); transition: color .12s, text-shadow .12s; font-variant-numeric: tabular-nums;
-}
-.tuner-digital.in-tune .tuner-note { color: var(--tk-green); text-shadow: 0 0 18px rgba(47,210,122,.5); }
-.tuner-digital.held { opacity: .45; }
-.tuner-digital-sub { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 4px; }
-.tuner-cents {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 18px; font-weight: 700; color: var(--tk-text-2); font-variant-numeric: tabular-nums; min-width: 64px;
-}
-.tuner-digital.in-tune .tuner-cents { color: var(--tk-green); }
-.tuner-dir { font-size: 20px; font-weight: 700; color: #3a3f45; transition: color .12s; }
-.tuner-dir.on { color: var(--tk-accent); }
+/* ステージ（メーター/ストロボ/ポリを同じ高さで入れ替え） */
+.tuner-display { flex: 0 0 auto; position: relative; height: 108px; margin-top: 12px; }
+.tuner-meter { position: absolute; inset: 0; }
+.tuner-meter.hidden { display: none; }
+.tuner-baseline { position: absolute; top: 50%; left: 8px; right: 8px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.tuner-baseline .tk-tick { flex: 1 1 auto; height: 7px; border-radius: 4px; background: var(--tk-seg); }
+.tuner-center-mark { position: absolute; top: 16px; bottom: 16px; left: 50%; width: 2px; background: rgba(255,255,255,0.18); transform: translateX(-50%); }
+.tuner-bars { position: absolute; top: 50%; left: 50%; transform: translate(calc(-50% + var(--shift, 0px)), -50%); display: flex; align-items: center; gap: 5px; transition: transform 0.18s ease; }
+.tuner-bars .tk-bar { width: 13px; border-radius: 4px; transition: background .15s; }
 
 /* ストロボ */
+.tuner-strobe-wrap { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--tk-border); }
 .tuner-strobe-wrap.hidden { display: none; }
 .tuner-strobe { width: 100%; height: 100%; display: block; }
 
-/* ポリフォニック */
-.tuner-poly {
-  display: flex; flex-direction: column; justify-content: center; gap: 12px;
-  padding: 14px 18px; overflow-y: auto;
-}
+/* ポリ */
+.tuner-poly { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 6px 12px; overflow-y: auto; }
 .tuner-poly.hidden { display: none; }
-.tuner-poly-row { display: flex; align-items: center; gap: 12px; }
-.tuner-poly-name { width: 40px; flex-shrink: 0; font-size: 15px; font-weight: 800; color: var(--tk-text-2); font-variant-numeric: tabular-nums; text-align: right; }
-.tuner-poly-bar { position: relative; flex: 1; height: 14px; border-radius: 999px; background: var(--tk-bg); border: 1px solid var(--tk-border); overflow: hidden; }
-.tuner-poly-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--tk-line); transform: translateX(-1px); }
-.tuner-poly-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--tk-text-3); transform: translate(-50%, -50%); transition: left .1s, background .1s; }
+.tuner-poly-row { display: flex; align-items: center; gap: 10px; }
+.tuner-poly-name { width: 38px; flex-shrink: 0; font-size: 14px; font-weight: 800; color: var(--tk-muted); font-variant-numeric: tabular-nums; text-align: right; }
+.tuner-poly-bar { position: relative; flex: 1; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--tk-border); overflow: hidden; }
+.tuner-poly-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.2); transform: translateX(-1px); }
+.tuner-poly-dot { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; border-radius: 50%; background: var(--tk-muted); transform: translate(-50%, -50%); transition: left .1s, background .1s; }
 .tuner-poly-row.in-tune .tuner-poly-dot { background: var(--tk-green); }
-.tuner-poly-row.off .tuner-poly-dot { background: var(--tk-accent); }
+.tuner-poly-row.off .tuner-poly-dot { background: var(--tk-orange); }
 .tuner-poly-row.absent .tuner-poly-dot { opacity: .35; }
-.tuner-poly-cents { width: 52px; flex-shrink: 0; font-size: 14px; font-weight: 700; text-align: left; color: var(--tk-text-2); font-variant-numeric: tabular-nums; }
+.tuner-poly-cents { width: 48px; flex-shrink: 0; font-size: 13px; font-weight: 700; text-align: left; color: var(--tk-muted); font-variant-numeric: tabular-nums; }
 .tuner-poly-row.in-tune .tuner-poly-cents { color: var(--tk-green); }
-.tuner-poly-row.off .tuner-poly-cents { color: var(--tk-accent); }
-.tuner-poly-row.absent .tuner-poly-cents { color: var(--tk-text-3); }
+.tuner-poly-row.off .tuner-poly-cents { color: var(--tk-orange); }
 
-/* ヒント（ピル）＋周波数 */
-.tuner-hint-pill {
-  margin-top: 16px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px;
-  padding: 9px 18px; border-radius: 999px; background: var(--tk-panel); border: 1px solid var(--tk-border);
-  max-width: 100%;
-}
-.tuner-hint { font-size: 13px; font-weight: 600; color: var(--tk-text-2); text-align: center; }
-.tuner-freq { font-size: 12px; color: var(--tk-text-3); font-variant-numeric: tabular-nums; }
+/* セント */
+.tuner-cents-box { flex: 0 0 auto; text-align: center; margin-top: 8px; }
+.tuner-cents { font-size: 28px; font-weight: 700; letter-spacing: 4px; color: var(--tk-text); font-variant-numeric: tabular-nums; transition: color .12s; }
+.tuner-cents-box.in-tune .tuner-cents { color: var(--tk-green); }
+.tuner-cent-unit { font-size: 12px; color: var(--tk-muted); letter-spacing: 1px; margin-top: 1px; }
+
+/* 下部: 弦チップ + ルーラー */
+.tuner-lower { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.tuner-strings { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 0 10px 22px; min-height: 46px; }
+.tuner-string { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--tk-border); color: var(--tk-muted); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: default; transition: all .15s; }
+.tuner-string.target { border-color: var(--tk-text); color: var(--tk-text); }
+.tuner-string.in-tune { background: var(--tk-green); border-color: var(--tk-green); color: #04230b; }
+
+.tuner-ruler { position: relative; height: 84px; overflow: hidden; border-top: 1px solid rgba(255,255,255,0.06); }
+.tuner-ruler-strip { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; }
+.tuner-ruler-cell { width: 56px; flex: 0 0 56px; position: relative; height: 52px; }
+.tuner-ruler-cell .lbl { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 600; color: var(--tk-muted); }
+.tuner-ruler-cell .maj { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: 2px; height: 20px; background: rgba(255,255,255,0.30); }
+.tuner-ruler-cell .min { position: absolute; top: 32px; width: 1px; height: 11px; background: rgba(255,255,255,0.13); }
+.tuner-ruler-cell .min.a { left: 25%; }
+.tuner-ruler-cell .min.b { left: 75%; }
+.tuner-ruler-cell.cur .lbl { color: var(--tk-text); }
+.tuner-ruler-cell.cur .maj { background: rgba(255,255,255,0.55); }
+.tuner-ruler-needle { position: absolute; top: 14px; height: 52px; left: 50%; width: 2px; background: var(--tk-green); transform: translateX(-50%); box-shadow: 0 0 8px rgba(70,227,91,0.6); z-index: 3; transition: left .12s ease; }
+.tuner-ruler-needle::before { content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--tk-green); }
+
+/* ヒント / 再試行 */
+.tuner-hint-pill { flex: 0 0 auto; align-self: center; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--tk-bg2); border: 1px solid var(--tk-border); max-width: 100%; }
+.tuner-hint { font-size: 12px; font-weight: 600; color: var(--tk-muted); text-align: center; }
+.tuner-freq { font-size: 11px; color: var(--tk-muted2); font-variant-numeric: tabular-nums; }
 .tuner-freq:empty { display: none; }
-
-/* 開放弦（ヘッドストック風 3+3 / 2+2。空でも領域確保） */
-.tuner-strings {
-  width: 100%; display: flex; justify-content: center; align-items: center;
-  margin-top: 22px; flex-shrink: 0; min-height: 196px;
-}
-.tuner-hs {
-  display: grid; grid-template-columns: 1fr 56px 1fr; align-items: stretch; justify-items: center;
-  gap: 14px; width: 100%; max-width: 340px;
-}
-.tuner-hs-col { display: flex; flex-direction: column; justify-content: center; gap: 20px; }
-.tuner-hs-left { align-items: flex-start; }
-.tuner-hs-right { align-items: flex-end; }
-.tuner-hs-neck {
-  position: relative; width: 56px; align-self: stretch;
-  border-radius: 16px 16px 10px 10px;
-  background: linear-gradient(180deg, #2a2f35, #191d21);
-  border: 1px solid rgba(255,255,255,.07);
-  display: flex; justify-content: space-evenly; padding: 14px 11px;
-}
-.tuner-hs-string { width: 2px; border-radius: 1px; background: linear-gradient(180deg, #5f656c, #b9bec3 45%, #5f656c); }
-.tuner-string {
-  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  border: 1.5px solid var(--tk-border); background: var(--tk-panel);
-  font-size: 16px; font-weight: 800; color: var(--tk-text-2);
-  font-variant-numeric: tabular-nums; transition: all .12s;
-}
-.tuner-string.target { border-color: var(--tk-accent); color: #fff; background: var(--tk-accent); }
-.tuner-string.in-tune { border-color: var(--tk-green); color: #06210f; background: var(--tk-green); }
-
-.tuner-retry {
-  margin-top: 16px; padding: 10px 20px; flex-shrink: 0;
-  border: none; border-radius: 999px; background: var(--tk-accent); color: #fff;
-  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: filter .12s;
-}
+.tuner-retry { align-self: center; margin-top: 14px; padding: 10px 20px; border: none; border-radius: 999px; background: var(--tk-green); color: #04230b; font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; transition: filter .12s; }
 .tuner-retry:hover { filter: brightness(1.06); }
 .tuner-retry.hidden { display: none; }
 
 @media (max-width: 767px) {
-  .tuner-note { font-size: 56px; }
-  .tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 200px; }
-  .tuner-string { width: 48px; height: 48px; font-size: 15px; }
-  .tuner-strings { min-height: 180px; }
-  .tuner-hs { grid-template-columns: 1fr 48px 1fr; max-width: 300px; }
-  .tuner-hs-neck { width: 48px; }
+  .tuner-note { font-size: 76px; }
+  .tuner-string { width: 44px; height: 44px; font-size: 14px; }
+  .tuner-inner { padding: 12px 14px 20px; }
 }
 
 

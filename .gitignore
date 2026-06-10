@@ -48,3 +48,6 @@ public/pitchProcessor.worklet.js
 *.sln
 *.sw?
 神スケールトレーナー.pdf
+
+# design mock サンプル (ソースではない)
+tuner.zip

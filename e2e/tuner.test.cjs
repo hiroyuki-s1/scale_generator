@@ -54,6 +54,15 @@ async function openTuner(page) {
   await page.click('#moreTrigger');
   await page.click('[data-act="tuner"]');
   await page.waitForSelector('#tunerOverlay:not(.hidden)', { timeout: 3000 });
+  // 楽器/チューニング/モード/基準A は「設定」ドロワー内にあるので開く。
+  await page.click('#tunerSettingsToggle');
+  await page.waitForSelector('#tunerSettings:not(.hidden)', { timeout: 2000 });
+}
+
+// 検出された開放弦（target/in-tune ハイライト）のラベル一覧。
+function highlightedStrings(page) {
+  return page.$$eval('#tunerStrings .tuner-string.in-tune, #tunerStrings .tuner-string.target',
+    els => els.map(e => e.textContent.trim()));
 }
 
 async function runCase(tmpDir, c) {
@@ -79,30 +88,27 @@ async function runCase(tmpDir, c) {
                            : fail(`${c.label}: 基準ピッチ表示が不正 "${val}"`);
     }
 
-    // 検出が安定するまでポーリング
-    let detected = '', cents = '';
+    // 音名（大表示）はピッチクラス（例 E2→"E"）。string 楽器は弦チップのハイライトで弦も検証。
+    const expectPC = c.expect.replace(/[0-9]/g, '');
+    let noteLetter = '', cents = '', ok = false;
     for (let i = 0; i < 40; i++) {
-      detected = await page.$eval('#tunerNote', el => el.textContent.trim());
+      noteLetter = await page.$eval('#tunerNote', el => el.textContent.trim());
       cents = await page.$eval('#tunerCents', el => el.textContent.trim());
-      if (detected === c.expect) break;
+      if (c.instr === 'normal') {
+        if (noteLetter === expectPC) { ok = true; break; }
+      } else if ((await highlightedStrings(page)).includes(c.expect)) {
+        ok = true; break;
+      }
       await page.waitForTimeout(100);
     }
-    detected === c.expect
-      ? pass(`${c.label}: ${c.freq}Hz → ${detected} (${cents})`)
-      : fail(`${c.label}: ${c.freq}Hz → 期待 ${c.expect} / 実際 "${detected}" (${cents})`);
+    ok ? pass(`${c.label}: ${c.freq}Hz → ${c.instr === 'normal' ? noteLetter : c.expect} (${cents})`)
+       : fail(`${c.label}: ${c.freq}Hz → 期待 ${c.expect} / 音名 "${noteLetter}" (${cents})`);
 
-    // ピッチ推移グラフが描画されている（canvas に非透明ピクセルがある）こと
-    await page.waitForTimeout(300);
-    const graphDrawn = await page.evaluate(() => {
-      const cv = document.getElementById('tunerGraph');
-      if (!cv || !cv.width || !cv.height) return false;
-      const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
-      let n = 0;
-      for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) { if (++n > 50) return true; }
-      return false;
-    });
-    graphDrawn ? pass(`${c.label}: ピッチ推移グラフが描画されている`)
-               : fail(`${c.label}: グラフが描画されていない`);
+    // クロマチック・ルーラーが描画されている（セルがある）こと
+    await page.waitForTimeout(200);
+    const rulerOk = await page.$eval('#tunerRulerStrip', el => el.childElementCount >= 5);
+    rulerOk ? pass(`${c.label}: クロマチックルーラー描画`)
+            : fail(`${c.label}: ルーラー未描画`);
 
     await context.close();
   } finally {
@@ -176,14 +182,13 @@ async function runAlternateTuning(tmpDir) {
       els.map(e => e.textContent.trim()));
     sixth.includes('D2') ? pass(`Drop D: 6弦ラベル D2 [${sixth.join(' ')}]`)
                          : fail(`Drop D: 6弦ラベルが D2 でない [${sixth.join(' ')}]`);
-    let detected = '';
+    let ok = false;
     for (let i = 0; i < 40; i++) {
-      detected = await page.$eval('#tunerNote', el => el.textContent.trim());
-      if (detected === 'D2') break;
+      if ((await highlightedStrings(page)).includes('D2')) { ok = true; break; }
       await page.waitForTimeout(100);
     }
-    detected === 'D2' ? pass('Drop D: 73.42Hz → D2')
-                      : fail(`Drop D: 73.42Hz → 期待 D2 / 実際 "${detected}"`);
+    ok ? pass('Drop D: 73.42Hz → D2（弦ハイライト）')
+       : fail('Drop D: 73.42Hz → D2 が検出されない');
     await context.close();
   } finally { await browser.close(); }
 }
@@ -200,12 +205,12 @@ async function runSweetened(tmpDir) {
     const page = await context.newPage();
     await openTuner(page);
     await page.click('.tuner-instr-btn[data-instr="guitar"]');
-    // 標準: B3 ≈ ±0¢
+    // 標準: B3 ≈ ±0¢（大表示はピッチクラス "B"）
     let centsStd = '';
     for (let i = 0; i < 40; i++) {
       const n = await page.$eval('#tunerNote', el => el.textContent.trim());
       centsStd = await page.$eval('#tunerCents', el => el.textContent.trim());
-      if (n === 'B3') break;
+      if (n === 'B') break;
       await page.waitForTimeout(100);
     }
     // 甘い調弦 ON → B3 の目標が -4¢ 下がるので同じ音が +側に

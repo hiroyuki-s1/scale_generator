@@ -1,4 +1,4 @@
-import { freqToNote, midiToFreq } from '../domain/pitch.js';
+import { freqToNote, midiToFreq, noteLabelFromMidi } from '../domain/pitch.js';
 import { createPitchEngine, isPitchEngineSupported } from '../audio/pitchEngine.js';
 import {
   tuningsFor, findTuning, labelsForMidi, nearestStringWithOffset, tuningRange,
@@ -68,12 +68,15 @@ export function initTuner(store) {
   const tuningSel = document.getElementById('tunerTuning');
   const sweetenBtn= document.getElementById('tunerSweeten');
   const viewTabs  = document.getElementById('tunerViewTabs');
-  const digitalEl = document.getElementById('tunerDigital');
+  const settingsToggle = document.getElementById('tunerSettingsToggle');
+  const settingsPanel = document.getElementById('tunerSettings');
+  const noteRow   = document.getElementById('tunerNoteRow');
   const noteEl    = document.getElementById('tunerNote');
+  const arrowL    = document.getElementById('tunerArrowL');
+  const arrowR    = document.getElementById('tunerArrowR');
   const freqEl    = document.getElementById('tunerFreq');
   const centsEl   = document.getElementById('tunerCents');
-  const dirFlatEl = document.getElementById('tunerDirFlat');
-  const dirSharpEl= document.getElementById('tunerDirSharp');
+  const centsBox  = centsEl ? centsEl.parentElement : null;
   const stringsEl = document.getElementById('tunerStrings');
   const hintEl    = document.getElementById('tunerHint');
   const retryBtn  = document.getElementById('tunerRetryBtn');
@@ -82,13 +85,28 @@ export function initTuner(store) {
   const a4UpBtn   = document.getElementById('tunerA4Up');
   const instrNameEl = document.getElementById('tunerInstrName');
   const tuningNameEl = document.getElementById('tunerTuningName');
-  const graphWrap = document.getElementById('tunerGraphWrap');
-  const graphCanvas = document.getElementById('tunerGraph');
-  const gctx = graphCanvas ? graphCanvas.getContext('2d') : null;
+  const meterEl   = document.getElementById('tunerMeter');
+  const barsEl    = document.getElementById('tunerBars');
+  const baselineEl= document.getElementById('tunerBaseline');
+  const rulerStrip= document.getElementById('tunerRulerStrip');
+  const rulerNeedle = document.getElementById('tunerRulerNeedle');
   const strobeWrap = document.getElementById('tunerStrobeWrap');
   const strobeCanvas = document.getElementById('tunerStrobe');
   const sctx = strobeCanvas ? strobeCanvas.getContext('2d') : null;
   const polyEl = document.getElementById('tunerPoly');
+
+  // バーメーターの基準目盛 + バーを一度だけ生成。
+  const BAR_HEIGHTS = [26, 42, 60, 72, 56];
+  const barEls = [];
+  function buildMeterDom() {
+    if (baselineEl && !baselineEl.childElementCount) {
+      for (let i = 0; i < 25; i++) { const t = document.createElement('div'); t.className = 'tk-tick'; baselineEl.appendChild(t); }
+    }
+    if (barsEl && !barsEl.childElementCount) {
+      for (const h of BAR_HEIGHTS) { const b = document.createElement('div'); b.className = 'tk-bar'; b.style.height = `${h}px`; barsEl.appendChild(b); barEls.push(b); }
+    }
+  }
+  const CHROM = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const openTrigger = document.querySelector('[data-act="tuner"]');
   if (!overlay || !openTrigger) return;
 
@@ -104,8 +122,6 @@ export function initTuner(store) {
   let engine = null, mediaStream = null;
   let rafId = 0, active = false;
   let lastResult = null, lastResultT = 0;
-  let meterCents = null;   // 針メーターの現在のズレ（cents）。null=無信号
-  let gW = 0, gH = 0;
   // ストロボ
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
   let sW = 0, sH = 0;
@@ -199,37 +215,18 @@ export function initTuner(store) {
     syncEngine();
   }
 
-  // ── 開放弦（ヘッドストック風 3+3 / 2+2。実機ヘッドストックと同じ左右配置） ──
-  // 左列 = 低音側（高index）を上→下、右列 = 高音側（低index）を上→下。中央に簡易ネック。
-  // 領域は CSS の min-height で全楽器ぶん予約（ノーマルは空）→ 楽器切替で位置がずれない。
+  // ── 弦チップ（横並び。演奏順 低音→高音で左→右。ノーマルは空で領域のみ予約） ──
   function renderStrings() {
     if (!stringsEl) return;
     stringsEl.innerHTML = '';
-    stringsEl.style.display = '';
     if (!isStringInstr()) return;
-    const N = currentLabels.length;
-    const mid = Math.floor(N / 2);
-    const leftIdx = [];   // mid..N-1（上→下）
-    for (let i = mid; i < N; i++) leftIdx.push(i);
-    const rightIdx = [];  // mid-1..0（上→下）
-    for (let i = mid - 1; i >= 0; i--) rightIdx.push(i);
-
-    const mkPeg = (i) => {
-      const p = document.createElement('div');
-      p.className = 'tuner-string';
-      p.dataset.index = String(i);
-      p.textContent = currentLabels[i];
-      return p;
-    };
-    const hs = document.createElement('div'); hs.className = 'tuner-hs';
-    const colL = document.createElement('div'); colL.className = 'tuner-hs-col tuner-hs-left';
-    const colR = document.createElement('div'); colR.className = 'tuner-hs-col tuner-hs-right';
-    leftIdx.forEach(i => colL.appendChild(mkPeg(i)));
-    rightIdx.forEach(i => colR.appendChild(mkPeg(i)));
-    const neck = document.createElement('div'); neck.className = 'tuner-hs-neck'; neck.setAttribute('aria-hidden', 'true');
-    for (let s = 0; s < N; s++) { const ln = document.createElement('span'); ln.className = 'tuner-hs-string'; neck.appendChild(ln); }
-    hs.appendChild(colL); hs.appendChild(neck); hs.appendChild(colR);
-    stringsEl.appendChild(hs);
+    for (let i = currentLabels.length - 1; i >= 0; i--) {
+      const chip = document.createElement('div');
+      chip.className = 'tuner-string';
+      chip.dataset.index = String(i);
+      chip.textContent = currentLabels[i];
+      stringsEl.appendChild(chip);
+    }
   }
   function clearStringHighlight() {
     stringsEl?.querySelectorAll('.tuner-string').forEach(el => el.classList.remove('target', 'in-tune'));
@@ -313,15 +310,14 @@ export function initTuner(store) {
     if (view === 'poly' && !isStringInstr()) view = 'needle';
     viewMode = view; saveView(view);
     updateViewTabs();
-    graphWrap?.classList.toggle('hidden', view !== 'needle');
+    // ステージの3表示（メーター/ストロボ/ポリ）を同枠で入れ替え。音名行/セント/弦/ルーラーは常時表示。
+    meterEl?.classList.toggle('hidden', view !== 'needle');
     strobeWrap?.classList.toggle('hidden', view !== 'strobe');
     polyEl?.classList.toggle('hidden', view !== 'poly');
-    // デジタル表示・弦ピルは全モードで常時表示（位置固定）。可視化スロットだけ中身が入れ替わる。
-    renderStrings();
     resetStrobe();
-    if (view === 'poly') showIdle('ジャラーンと弾いてください');
+    if (view === 'poly') showIdle();
     syncEngine();
-    if (isOpen()) { resizeGraph(); resizeStrobe(); }
+    if (isOpen()) resizeStrobe();
   }
 
   // ── エンジン同期（レンジ/目標/モード） ──
@@ -340,61 +336,103 @@ export function initTuner(store) {
 
   function showIdle(message) {
     noteEl.textContent = '–';
-    digitalEl?.classList.remove('in-tune', 'held');
-    freqEl.textContent = message ?? '音を鳴らしてください';
+    noteRow?.classList.remove('in-tune', 'held');
+    centsBox?.classList.remove('in-tune');
+    freqEl.textContent = message ?? '';
     centsEl.textContent = '--';
-    dirFlatEl?.classList.remove('on');
-    dirSharpEl?.classList.remove('on');
+    arrowL?.classList.remove('on');
+    arrowR?.classList.remove('on');
     strobePresent = false;
-    meterCents = null;
+    updateMeter(null);
     clearStringHighlight();
   }
 
-  /** mono 検出結果を表示（メーター/ストロボ共通の数値・弦ハイライト・ストロボ目標）。 */
+  // セントを "-05" / "+12" / " 00" 形式へ（モック準拠）。
+  function formatCents(c) {
+    const sign = c > 0 ? '+' : c < 0 ? '-' : '';
+    return sign + String(Math.abs(c)).padStart(2, '0');
+  }
+
+  /** mono 検出結果を表示（音名/矢印/バーメーター/ルーラー/弦ハイライト/ストロボ目標）。 */
   function render(result, held) {
     if (!result) { showIdle(); return; }
-    let label, cents, nearIndex = -1, target;
+    let cents, nearIndex = -1, target, noteName;
 
     if (isStringInstr()) {
       const near = nearestStringWithOffset(result.hz, currentMidi, { a4, offsets });
       if (!near) { showIdle(); return; }
       nearIndex = near.index;
       cents = Math.round(near.cents);
-      label = currentLabels[near.index];
+      noteName = noteLabelFromMidi(near.midi).noteName;
       target = near.targetHz;
     } else {
       const note = freqToNote(result.hz, a4);
       if (!note) { showIdle(); return; }
       cents = note.cents;
-      label = note.label;
+      noteName = note.noteName;
       target = midiToFreq(note.midi, a4);
     }
 
     const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
-    meterCents = cents;
     strobeDetectedHz = result.hz; strobeTargetHz = target; strobePresent = true;
 
-    noteEl.textContent = label;
-    centsEl.textContent = cents === 0 ? '±0¢' : `${cents > 0 ? '+' : ''}${cents}¢`;
+    noteEl.textContent = noteName;
+    centsEl.textContent = formatCents(cents);
     freqEl.textContent = `${result.hz.toFixed(1)} Hz`;
-    digitalEl?.classList.toggle('in-tune', inTune && !held);
-    digitalEl?.classList.toggle('held', !!held);
-    dirFlatEl?.classList.toggle('on', cents < -IN_TUNE_CENTS);
-    dirSharpEl?.classList.toggle('on', cents > IN_TUNE_CENTS);
+    noteRow?.classList.toggle('in-tune', inTune && !held);
+    noteRow?.classList.toggle('held', !!held);
+    centsBox?.classList.toggle('in-tune', inTune && !held);
+    // 矢印: ♭側(低い)=左 / ♯側(高い)=右 を緑点灯。合致時は消灯。
+    arrowL?.classList.toggle('on', cents < -IN_TUNE_CENTS);
+    arrowR?.classList.toggle('on', cents > IN_TUNE_CENTS);
+
+    updateMeter(cents);
+    renderRuler(noteName, cents);
 
     clearStringHighlight();
     if (isStringInstr() && nearIndex >= 0 && Math.abs(cents) < 50) {
-      const pill = stringsEl?.querySelector(`.tuner-string[data-index="${nearIndex}"]`);
-      if (pill) { pill.classList.add('target'); pill.classList.toggle('in-tune', inTune); }
+      const chip = stringsEl?.querySelector(`.tuner-string[data-index="${nearIndex}"]`);
+      if (chip) { chip.classList.add('target'); chip.classList.toggle('in-tune', inTune); }
     }
   }
 
-  // rAF はアクティブな表示の再描画専用（検出はオーディオスレッド）。
+  // バーメーター: クラスタを cents ぶん左右シフト＋近さで色付け。
+  function updateMeter(cents) {
+    if (!barsEl) return;
+    if (cents == null) {
+      barsEl.style.setProperty('--shift', '0px');
+      for (const b of barEls) b.style.background = 'var(--tk-muted2)';
+      return;
+    }
+    const cl = Math.max(-50, Math.min(50, cents));
+    barsEl.style.setProperty('--shift', `${(cl / 50) * 70}px`);
+    const a = Math.abs(cents);
+    const col = a <= IN_TUNE_CENTS ? 'var(--tk-green)' : a <= 18 ? 'var(--tk-yellow)' : 'var(--tk-orange)';
+    for (const b of barEls) b.style.background = col;
+  }
+
+  // クロマチック・ルーラー: 現在音を中央セルに、ニードルを cents ぶんオフセット。
+  function renderRuler(noteName, cents) {
+    if (!rulerStrip) return;
+    let base = CHROM.indexOf(noteName);
+    if (base < 0) base = 0;
+    let html = '';
+    for (let k = -4; k <= 4; k++) {
+      const n = CHROM[(((base + k) % 12) + 12) % 12];
+      html += `<div class="tuner-ruler-cell${k === 0 ? ' cur' : ''}">`
+        + `<div class="lbl">${n}</div><div class="maj"></div><div class="min a"></div><div class="min b"></div></div>`;
+    }
+    rulerStrip.innerHTML = html;
+    if (rulerNeedle) {
+      const cl = Math.max(-50, Math.min(50, cents || 0));
+      rulerNeedle.style.left = `calc(50% + ${(cl / 50) * 28}px)`;
+    }
+  }
+
+  // rAF はストロボ表示のアニメ専用（メーター/ポリは DOM 更新で十分）。
   function loop(ts) {
     rafId = requestAnimationFrame(loop);
-    const now = ts || 0;
-    if (viewMode === 'needle') drawMeter();
-    else if (viewMode === 'strobe') drawStrobe(now);
+    if (viewMode === 'strobe') drawStrobe(ts || 0);
   }
 
   // mono サンプル（≈66Hz）。poly モードでは届かない（worklet が mono を出さない）。
@@ -427,61 +465,7 @@ export function initTuner(store) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return [rect.width, rect.height];
   }
-  function resizeGraph() { [gW, gH] = resizeCanvas(graphCanvas, gctx); }
   function resizeStrobe() { [sW, sH] = resizeCanvas(strobeCanvas, sctx); }
-
-  function cssVar(name, fallback) {
-    const v = getComputedStyle(document.documentElement).getPropertyValue(name);
-    return (v && v.trim()) || fallback;
-  }
-
-  // 針メーター: グリッド + 中央ガイド + ±50¢ 目盛 + 円形ニードル（左=♭ / 右=♯）。
-  function drawMeter() {
-    if (!gctx) return;
-    if (gW === 0) { resizeGraph(); if (gW === 0) return; }
-    gctx.clearRect(0, 0, gW, gH);
-    const cx = gW / 2;
-    const topY = Math.round(gH * 0.30); // ニードルの行（音名表示と重ならない上寄り）
-    const span = gW * 0.40;             // ±50¢ に対応する半幅
-    const line = 'rgba(255,255,255,0.06)';
-    const faint = 'rgba(255,255,255,0.10)';
-    const accent = cssVar('--accent', '#c0511f');
-    const green = '#2fd27a';
-
-    // 背景グリッド
-    gctx.strokeStyle = line; gctx.lineWidth = 1;
-    for (let gx = cx % 40; gx < gW; gx += 40) { gctx.beginPath(); gctx.moveTo(gx, 0); gctx.lineTo(gx, gH); gctx.stroke(); }
-    for (let gy = 0; gy < gH; gy += 40) { gctx.beginPath(); gctx.moveTo(0, gy); gctx.lineTo(gW, gy); gctx.stroke(); }
-
-    // 中央ガイド（縦）
-    gctx.strokeStyle = faint; gctx.lineWidth = 1;
-    gctx.beginPath(); gctx.moveTo(cx, 6); gctx.lineTo(cx, gH - 6); gctx.stroke();
-
-    // ±50/±25 目盛（ニードル行）
-    gctx.strokeStyle = faint;
-    [-50, -25, 25, 50].forEach(c => {
-      const x = cx + (c / 50) * span;
-      gctx.beginPath(); gctx.moveTo(x, topY - 8); gctx.lineTo(x, topY + 8); gctx.stroke();
-    });
-
-    // ニードル
-    const r = Math.min(20, gH * 0.10);
-    if (meterCents == null) {
-      gctx.strokeStyle = 'rgba(255,255,255,0.5)'; gctx.lineWidth = 2.5;
-      gctx.beginPath(); gctx.arc(cx, topY, r, 0, Math.PI * 2); gctx.stroke();
-    } else {
-      const cl = Math.max(-50, Math.min(50, meterCents));
-      const x = cx + (cl / 50) * span;
-      const inTune = Math.abs(meterCents) <= IN_TUNE_CENTS;
-      const col = inTune ? green : accent;
-      gctx.strokeStyle = 'rgba(255,255,255,0.18)'; gctx.lineWidth = 2;
-      gctx.beginPath(); gctx.moveTo(cx, topY); gctx.lineTo(x, topY); gctx.stroke();
-      gctx.fillStyle = col;
-      gctx.beginPath(); gctx.arc(x, topY, r, 0, Math.PI * 2); gctx.fill();
-      gctx.fillStyle = 'rgba(255,255,255,0.92)';
-      gctx.beginPath(); gctx.arc(x, topY, Math.max(2.5, r * 0.18), 0, Math.PI * 2); gctx.fill();
-    }
-  }
 
   // ストロボ: 合っていれば縞が静止、ずれていれば流れる（右=高い/左=低い）。
   function drawStrobe(now) {
@@ -503,7 +487,7 @@ export function initTuner(store) {
     strobePhase = advanceStrobePhase(strobePhase, strobeDetectedHz, strobeTargetHz, dt);
     const cents = 1200 * Math.log2(strobeDetectedHz / strobeTargetHz);
     const locked = Math.abs(cents) <= IN_TUNE_CENTS;
-    const bar = locked ? '#2fd27a' : cssVar('--accent', '#c0511f');
+    const bar = locked ? '#46e35b' : '#ff7a3a';
     const off = strobePhase * STROBE_PERIOD_PX;
     sctx.fillStyle = bar;
     for (let x = -STROBE_PERIOD_PX; x < sW + STROBE_PERIOD_PX; x += STROBE_PERIOD_PX) {
@@ -512,8 +496,9 @@ export function initTuner(store) {
   }
 
   function resetGraph() {
-    meterCents = null;
-    if (gctx && gW > 0) gctx.clearRect(0, 0, gW, gH);
+    updateMeter(null);
+    if (rulerStrip) rulerStrip.innerHTML = '';
+    if (rulerNeedle) rulerNeedle.style.left = '50%';
   }
   function resetStrobe() {
     strobePhase = 0; strobeLastT = 0; strobeDetectedHz = 0; strobeTargetHz = 0; strobePresent = false;
@@ -604,12 +589,14 @@ export function initTuner(store) {
 
   function open() {
     if (isOpen()) return;
+    buildMeterDom();
     setInstrument(store.get().edit?.instrument === 'bass' ? 'bass' : 'guitar');
     renderA4();
     setView(viewMode); // 保存モードを復元（表示の出し分け）
     overlay.classList.remove('hidden');
     resetGraph(); resetStrobe();
-    resizeGraph(); resizeStrobe();
+    renderRuler(currentLabels.length ? noteLabelFromMidi(currentMidi[currentMidi.length - 1]).noteName : 'A', 0);
+    resizeStrobe();
     track('tuner_open', { instrument: instr }); // [removable-analytics]
     start();
   }
@@ -638,10 +625,16 @@ export function initTuner(store) {
     const btn = e.target.closest('.tuner-view-btn');
     if (btn && !btn.disabled) setView(btn.dataset.view);
   });
+  settingsToggle?.addEventListener('click', () => {
+    const open = settingsPanel?.classList.toggle('hidden') === false;
+    settingsToggle.setAttribute('aria-expanded', String(open));
+    if (isOpen()) resizeStrobe();
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) close(); });
-  window.addEventListener('resize', () => { if (isOpen()) { resizeGraph(); resizeStrobe(); } });
+  window.addEventListener('resize', () => { if (isOpen()) resizeStrobe(); });
 
   // 初期描画。
+  buildMeterDom();
   setInstrument(instr);
   setView(viewMode);
   renderA4();

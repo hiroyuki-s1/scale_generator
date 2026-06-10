@@ -477,24 +477,20 @@
 <!-- ── チューナー ─────────────────────────────────────────────────── -->
 <div class="tuner-overlay hidden" id="tunerOverlay" role="dialog" aria-modal="true" aria-label="チューナー">
   <div class="tuner-inner">
-    <!-- ヘッダ: 戻る / 楽器・チューニング名 / 基準ピッチA -->
-    <div class="tuner-hdr">
+    <!-- 上部バー: 戻る（左） / 設定（右） -->
+    <div class="tuner-topbar">
       <button class="tuner-back" id="tunerBackBtn" type="button" aria-label="戻る">
         <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
       </button>
       <div class="tuner-id">
-        <div class="tuner-id-name" id="tunerInstrName">ギター 6弦</div>
-        <div class="tuner-id-tuning" id="tunerTuningName">スタンダード</div>
+        <span class="tuner-id-name" id="tunerInstrName">ギター 6弦</span>
+        <span class="tuner-id-tuning" id="tunerTuningName">スタンダード</span>
       </div>
-      <div class="tuner-a4" aria-label="基準ピッチ A">
-        <button class="tuner-a4-btn" id="tunerA4Down" type="button" aria-label="基準ピッチを下げる">−</button>
-        <span class="tuner-a4-val" id="tunerA4Val">440 Hz</span>
-        <button class="tuner-a4-btn" id="tunerA4Up" type="button" aria-label="基準ピッチを上げる">＋</button>
-      </div>
+      <button class="tuner-settings-toggle" id="tunerSettingsToggle" type="button" aria-expanded="false">設定 <span class="chev">›</span></button>
     </div>
 
-    <!-- コントロール: 楽器 / チューニング(オルタネート)+甘い調弦 / 表示モード -->
-    <div class="tuner-controls">
+    <!-- 設定ドロワー（既定で閉。楽器/チューニング/甘い調弦/表示モード/基準A） -->
+    <div class="tuner-settings hidden" id="tunerSettings">
       <div class="tuner-instr" id="tunerInstr" role="tablist" aria-label="楽器">
         <button class="tuner-instr-btn active" data-instr="guitar" role="tab" aria-selected="true">ギター</button>
         <button class="tuner-instr-btn" data-instr="bass" role="tab" aria-selected="false">ベース</button>
@@ -510,43 +506,55 @@
         <button class="tuner-view-btn" data-view="strobe" role="tab" aria-selected="false">ストロボ</button>
         <button class="tuner-view-btn" data-view="poly" role="tab" aria-selected="false">ポリ</button>
       </div>
+      <div class="tuner-a4" aria-label="基準ピッチ A">
+        <span class="tuner-a4-label">基準 A</span>
+        <button class="tuner-a4-btn" id="tunerA4Down" type="button" aria-label="基準ピッチを下げる">−</button>
+        <span class="tuner-a4-val" id="tunerA4Val">440 Hz</span>
+        <button class="tuner-a4-btn" id="tunerA4Up" type="button" aria-label="基準ピッチを上げる">＋</button>
+      </div>
     </div>
 
-    <!-- メイン表示（メーター/ストロボ/ポリ。全モード同じ枠で中身だけ入れ替え） -->
-    <div class="tuner-display">
-      <!-- 針メーター: グリッド + ♭/♯ + 円形ニードル + 中央に音名/セント -->
-      <div class="tuner-graph-wrap" id="tunerGraphWrap">
-        <span class="tuner-acc tuner-acc-flat" aria-hidden="true">♭</span>
-        <span class="tuner-acc tuner-acc-sharp" aria-hidden="true">♯</span>
-        <canvas class="tuner-graph" id="tunerGraph"></canvas>
-        <div class="tuner-digital" id="tunerDigital">
-          <div class="tuner-note" id="tunerNote">–</div>
-          <div class="tuner-digital-sub">
-            <span class="tuner-dir tuner-dir-flat" id="tunerDirFlat" aria-hidden="true">♭</span>
-            <span class="tuner-cents" id="tunerCents">--</span>
-            <span class="tuner-dir tuner-dir-sharp" id="tunerDirSharp" aria-hidden="true">♯</span>
-          </div>
-        </div>
-      </div>
+    <!-- 音名表示: ♭ ▶ G ◀ ♯ -->
+    <div class="tuner-note-row" id="tunerNoteRow">
+      <span class="tuner-acc tuner-acc-flat" aria-hidden="true">♭</span>
+      <span class="tuner-arrow tuner-arrow-left" id="tunerArrowL" aria-hidden="true"></span>
+      <span class="tuner-note" id="tunerNote">–</span>
+      <span class="tuner-arrow tuner-arrow-right" id="tunerArrowR" aria-hidden="true"></span>
+      <span class="tuner-acc tuner-acc-sharp" aria-hidden="true">♯</span>
+    </div>
 
-      <!-- ストロボ（高精度）: 合っていれば縞が静止・ずれていれば流れる -->
+    <!-- ステージ: バーメーター / ストロボ / ポリ（同枠で入れ替え） -->
+    <div class="tuner-display">
+      <div class="tuner-meter" id="tunerMeter">
+        <div class="tuner-baseline" id="tunerBaseline" aria-hidden="true"></div>
+        <div class="tuner-center-mark" aria-hidden="true"></div>
+        <div class="tuner-bars" id="tunerBars" aria-hidden="true"></div>
+      </div>
       <div class="tuner-strobe-wrap hidden" id="tunerStrobeWrap">
         <canvas class="tuner-strobe" id="tunerStrobe"></canvas>
       </div>
-
-      <!-- ポリフォニック: ジャラーンと1回で全弦の過不足 -->
       <div class="tuner-poly hidden" id="tunerPoly"></div>
     </div>
 
-    <!-- ヒント（ピル）＋周波数 -->
+    <!-- セント -->
+    <div class="tuner-cents-box">
+      <div class="tuner-cents" id="tunerCents">--</div>
+      <div class="tuner-cent-unit">CENT</div>
+    </div>
+
+    <!-- 下部: 弦チップ + クロマチック・ルーラー -->
+    <div class="tuner-lower">
+      <div class="tuner-strings" id="tunerStrings"></div>
+      <div class="tuner-ruler">
+        <div class="tuner-ruler-strip" id="tunerRulerStrip" aria-hidden="true"></div>
+        <div class="tuner-ruler-needle" id="tunerRulerNeedle" aria-hidden="true"></div>
+      </div>
+    </div>
+
     <div class="tuner-hint-pill">
       <span class="tuner-hint" id="tunerHint">弦を弾いてチューニングを開始</span>
       <span class="tuner-freq" id="tunerFreq"></span>
     </div>
-
-    <!-- 開放弦（ヘッドストック風 3+3 / 2+2。ノーマルは空で領域のみ予約） -->
-    <div class="tuner-strings" id="tunerStrings"></div>
-
     <button class="tuner-retry hidden" id="tunerRetryBtn" type="button">マイクを許可して再試行</button>
   </div>
 </div>

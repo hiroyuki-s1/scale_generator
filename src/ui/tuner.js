@@ -128,6 +128,7 @@ export function initTuner(store) {
   let engine = null, mediaStream = null;
   let rafId = 0, active = false;
   let lastResult = null, lastResultT = 0;
+  let wasLocked = false; // チューニング合致エフェクトの立ち上がり検出
   // ストロボ
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
   let sW = 0, sH = 0;
@@ -397,6 +398,8 @@ export function initTuner(store) {
     arrowL?.classList.remove('on');
     arrowR?.classList.remove('on');
     strobePresent = false;
+    overlay.classList.remove('is-locked');
+    wasLocked = false;
     updateMeter(null);
     clearStringHighlight();
   }
@@ -442,6 +445,16 @@ export function initTuner(store) {
 
     updateMeter(cents);
     renderRuler(noteName, cents);
+
+    // チューニング合致エフェクト（緑）。立ち上がりでポップを1回再生。
+    const locked = inTune && !held;
+    overlay.classList.toggle('is-locked', locked);
+    if (locked && !wasLocked) {
+      overlay.classList.remove('lock-pulse');
+      void overlay.offsetWidth; // reflow でアニメ再start
+      overlay.classList.add('lock-pulse');
+    }
+    wasLocked = locked;
 
     clearStringHighlight();
     if (isStringInstr() && nearIndex >= 0 && Math.abs(cents) < 50) {

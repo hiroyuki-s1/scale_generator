@@ -1629,9 +1629,28 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 }
 .tuner-overlay.hidden { display: none; }
 .tuner-inner {
+  position: relative; z-index: 1; /* ロック発光レイヤーの上に内容を描く */
   flex: 1; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column; align-items: stretch;
   width: 100%; max-width: 460px; margin: 0 auto; padding: 12px 20px 22px;
+}
+
+/* チューニング合致エフェクト（緑）: 合致中は緑のアンビエント発光、合致した瞬間にポップ */
+.tuner-lock-glow {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+  transition: opacity .3s ease;
+  background: radial-gradient(ellipse 78% 46% at 50% 30%, rgba(70,227,91,0.22), transparent 70%);
+}
+.tuner-overlay.is-locked .tuner-lock-glow { opacity: 1; }
+.tuner-overlay.lock-pulse .tuner-lock-glow { animation: tunerLockFlash .55s ease; }
+@keyframes tunerLockFlash { 0% { opacity: .15; } 35% { opacity: 1; } 100% { opacity: 1; } }
+.tuner-overlay.lock-pulse .tuner-note { animation: tunerNotePop .5s ease; }
+@keyframes tunerNotePop { 0% { transform: scale(1); } 32% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.tuner-overlay.is-locked .tuner-bars .tk-bar { box-shadow: 0 0 10px rgba(70,227,91,.55); }
+.tuner-overlay.is-locked .tuner-id-name { text-shadow: 0 0 14px rgba(70,227,91,.35); }
+@media (prefers-reduced-motion: reduce) {
+  .tuner-overlay.lock-pulse .tuner-lock-glow,
+  .tuner-overlay.lock-pulse .tuner-note { animation: none; }
 }
 
 /* 上部バー */

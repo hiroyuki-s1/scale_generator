@@ -59,7 +59,7 @@ function updateRestoreBtn() {
   if (restoreEl) restoreEl.classList.toggle('hidden', !localStorage.getItem(WARN_KEY));
 }
 
-export function initSavedTab(container, store, openFullscreen, onEditMode = null, onColorEdit = null) {
+export function initSavedTab(container, store, openFullscreen, onEditMode = null, onColorEdit = null, onPractice = null) {
   const emptyEl = document.getElementById('savedEmpty');
   // 直前に描画した saved 配列（位置ごとの参照で再描画要否を判定）
   let lastRendered = [];
@@ -162,7 +162,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   // ── タッチイベント (iOS/Android): touchmove+preventDefault でスクロール抑制 ──
   container.addEventListener('touchstart', e => {
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
+    if (e.target.closest('.btn-edit-saved, .btn-practice-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     const t = e.changedTouches[0];
@@ -230,7 +230,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse') return;
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
+    if (e.target.closest('.btn-edit-saved, .btn-practice-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     dragState = {
@@ -284,7 +284,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
     lastRendered = [...saved];
     saved.forEach(snap => {
       try {
-        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId, onColorEdit));
+        container.appendChild(renderCard(snap, store, openFullscreen, onEditMode, () => currentEditingId, onColorEdit, onPractice));
       } catch (e) {
         console.warn('savedTab: failed to render card', snap.id, e);
       }
@@ -393,7 +393,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   return { applyEditingHighlight, highlightNewCard, clearNewlyAdded, scrollToCard };
 }
 
-function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onColorEdit) {
+function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onColorEdit, onPractice) {
   const snapId = snap.id;
   // colorOnlyUpdate パスはカードを再生成しないため、クリック時に常に最新 snap を参照する
   const liveSnap = () => store.get().saved.find(s => s.id === snapId) ?? snap;
@@ -424,6 +424,14 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/>
   </svg>編集`;
   editBtn.addEventListener('click', () => onEditMode?.(liveSnap()));
+
+  const practiceBtn = document.createElement('button');
+  practiceBtn.className = 'btn-practice-saved';
+  practiceBtn.title = 'このスケールで練習（マイクで判定）';
+  practiceBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+    <path d="M8 1a2 2 0 0 0-2 2v6a2 2 0 1 0 4 0V3a2 2 0 0 0-2-2zM3.5 6.5A.5.5 0 0 1 4 7v2a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v2a5 5 0 0 1-4.5 4.975V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.025A5 5 0 0 1 3 9V7a.5.5 0 0 1 .5-.5z"/>
+  </svg>練習`;
+  practiceBtn.addEventListener('click', () => onPractice?.(liveSnap()));
 
   const imageBtn = document.createElement('button');
   imageBtn.className = 'btn-image-saved';
@@ -470,6 +478,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   });
 
   hdr.appendChild(editBtn);
+  hdr.appendChild(practiceBtn);
   hdr.appendChild(colorBtn);
   hdr.appendChild(imageBtn);
   hdr.appendChild(del);

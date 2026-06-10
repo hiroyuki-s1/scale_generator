@@ -26,6 +26,7 @@ import { initInstrumentPicker } from './ui/instrumentPicker.js';
 import { initInstallPrompt }    from './ui/installPrompt.js';
 import { initReleaseNotes }      from './ui/releaseNotesModal.js';
 import { initTuner }             from './ui/tuner.js';
+import { initScaleTrainer }      from './ui/scaleTrainer.js';
 import { exportAllScalesPng }    from './ui/imageExport.js';
 import { showToast }             from './ui/toast.js';
 import { initAuthButton }        from './ui/authButton.js';
@@ -494,12 +495,14 @@ document.getElementById('editorModeCancel').addEventListener('click', () => {
 });
 
 const colorModal = initColorModal(store);
+const scaleTrainer = initScaleTrainer(store);
 const savedTab = initSavedTab(
   document.getElementById('savedGrid'),
   store,
   (state, title) => openFbFullscreen(state, title),
   loadSnapToEditor,
   (id) => colorModal.openForSaved(id),
+  (snap) => scaleTrainer.open(snap),
 );
 
 initRegisterBtn(store, document.getElementById('registerBtn'), titleInputEl, {

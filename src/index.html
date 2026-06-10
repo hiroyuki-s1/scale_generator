@@ -567,6 +567,34 @@
   </div>
 </div>
 
+<!-- ── スケール練習（全画面オーバーレイ） ──────────────────────────── -->
+<div class="strainer-overlay hidden" id="strainerOverlay" role="dialog" aria-modal="true" aria-label="スケール練習">
+  <div class="strainer-inner">
+    <div class="strainer-hdr">
+      <button class="strainer-back" id="strainerBackBtn" type="button" aria-label="戻る">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+      </button>
+      <div class="strainer-id">
+        <span class="strainer-title" id="strainerTitle">スケール練習</span>
+        <span class="strainer-sub" id="strainerSub">スケールの音を弾いて練習</span>
+      </div>
+    </div>
+
+    <!-- 判定表示: 音名 + 度数 + ○/✕ -->
+    <div class="strainer-readout" id="strainerReadout">
+      <div class="strainer-note" id="strainerNote">–</div>
+      <div class="strainer-deg" id="strainerDeg"></div>
+    </div>
+    <div class="strainer-verdict" id="strainerVerdict" aria-live="polite"></div>
+
+    <!-- ピアノ鍵盤（JSで生成） -->
+    <div class="strainer-piano" id="strainerPiano" aria-hidden="true"></div>
+
+    <div class="strainer-hint" id="strainerHint">スケールの音を1音ずつ弾いてみよう（外れた音はバツ）</div>
+    <button class="strainer-retry hidden" id="strainerRetryBtn" type="button">マイクを許可して再試行</button>
+  </div>
+</div>
+
 <!-- ── スケール / コード選択モーダル ──────────────────────────────── -->
 <div class="modal-overlay" id="scalePickerModal" role="dialog" aria-modal="true" aria-labelledby="scalePickerTitle">
   <div class="instr-modal-box scale-modal-wide">

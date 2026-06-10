@@ -340,6 +340,48 @@ async function runTheme(tmpDir) {
   } finally { await browser.close(); }
 }
 
+// スケール練習: C メジャーを inject → 練習ボタン → E(M3)=○ / F#(外)=✕。
+const SCALE_STATE = JSON.stringify({
+  edit: { rootIndex: 0, activeDegrees: [0, 2, 4, 5, 7, 9, 11], presetName: 'Ionian', mode: 'scale', mask: { enabled: false, min: 0, max: 24 }, degreeColors: {}, instrument: 'guitar', visiblePositions: null },
+  saved: [{ id: 1, title: 'C メジャー', rootIndex: 0, activeDegrees: [0, 2, 4, 5, 7, 9, 11], presetName: 'Ionian', mode: 'scale', mask: { enabled: false, min: 0, max: 24 }, degreeColors: {}, instrument: 'guitar', visiblePositions: null }],
+  layout: { orientation: 'landscape', cols: 2, rows: 3 }, activeTab: 'saved', nextId: 2, songfileTitle: '', songfileSource: null,
+});
+
+async function onePractice(tmpDir, freq, expectNote, expectVerdict, label) {
+  const wav = path.join(tmpDir, `tr-${freq}.wav`);
+  writeToneWav(wav, freq, { seconds: 4 });
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    await context.addInitScript((s) => { try { localStorage.setItem('sg.v1.state', s); } catch { /* noop */ } }, SCALE_STATE);
+    const page = await context.newPage();
+    await page.goto(URL, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.getElementById('alphaNotice')?.classList.add('hidden'));
+    await page.click('[data-tab="saved"]').catch(() => {});
+    await page.waitForSelector('.btn-practice-saved', { timeout: 4000 });
+    await page.click('.btn-practice-saved');
+    await page.waitForSelector('#strainerOverlay:not(.hidden)', { timeout: 3000 });
+    let note = '', verdict = '';
+    for (let i = 0; i < 50; i++) {
+      note = await page.$eval('#strainerNote', e => e.textContent.trim());
+      verdict = await page.$eval('#strainerVerdict', e => e.textContent.trim());
+      if (note === expectNote && verdict === expectVerdict) break;
+      await page.waitForTimeout(100);
+    }
+    (note === expectNote && verdict === expectVerdict)
+      ? pass(`スケール練習 ${label}: ${note} ${verdict}`)
+      : fail(`スケール練習 ${label}: 期待 ${expectNote}${expectVerdict} / 実際 "${note}""${verdict}"`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
+async function runScaleTrainer(tmpDir) {
+  console.log('--- スケール練習: 正解/バツ ---');
+  await onePractice(tmpDir, 329.63, 'E', '○', 'E=M3→正解');   // E は C メジャー内
+  await onePractice(tmpDir, 369.99, 'F#', '✕', 'F#=外→バツ'); // F# は C メジャー外
+}
+
 async function main() {
   console.log('チューナー E2E（fake audio capture シミュレータ）\n');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuner-wav-'));
@@ -359,6 +401,8 @@ async function main() {
     catch (e) { fail(`オフセット編集: 例外 ${e.message}`); }
     try { await runTheme(tmpDir); }
     catch (e) { fail(`テーマ: 例外 ${e.message}`); }
+    try { await runScaleTrainer(tmpDir); }
+    catch (e) { fail(`スケール練習: 例外 ${e.message}`); }
     try { await runPolyphonic(tmpDir); }
     catch (e) { fail(`ポリフォニック: 例外 ${e.message}`); }
   } finally {

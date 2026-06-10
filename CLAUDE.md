@@ -180,6 +180,9 @@ main.js → orchestrates all
 - `src/domain/dsp/{fft,downsample,autocorr}.js` — FFT/IFFT・ダウンサンプル・FFT自己相関 (pure)
 - `src/domain/{tunings,polyphonic,strobe}.js` — チューニング/オフセット・ポリフォニック検出・ストロボ位相 (pure)
 - `src/domain/noteDetect.js` — 音名分類 + `StableNoteTracker`（安定音検出・再利用/クイズ用、pure）
+- `src/domain/scalePractice.js` — スケール内ピッチクラス集合/判定（`classifyAgainstScale`・pure）
+- `src/ui/scaleTrainer.js` — スケール練習モード（saved 1件→ピアノ鍵盤UI・弾いた音を○/✕判定）。
+  savedTab の「練習」ボタン→`initScaleTrainer(store).open(snap)`。`PitchEngine`＋`StableNoteTracker` を流用。
 - `src/audio/{pitchEngine,pitchProcessor.worklet,workletUrl}.js` — `PitchEngine` クラス(mono/poly・再利用可)
 - `src/state/tunerOffsets.js` — 甘い調弦の弦ごと±¢（local + D1 同期。pure な sanitize/clamp 同梱）
 - `src/state/tunerTheme.js` — チューナー表示テーマ('dark'暖色/'light'本体一致)。local + D1 同期。

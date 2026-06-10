@@ -1273,6 +1273,14 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
   flex-shrink: 0; transition: all .12s;
 }
 .btn-edit-saved:hover { background: var(--accent); color: #fff; }
+.btn-practice-saved {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1.5px solid var(--green);
+  border-radius: 7px; background: #eafaf0; color: var(--green);
+  font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer;
+  flex-shrink: 0; transition: all .12s;
+}
+.btn-practice-saved:hover { background: var(--green); color: #fff; }
 .btn-image-saved {
   display: flex; align-items: center; gap: 4px;
   padding: 4px 10px; border: 1.5px solid var(--border);
@@ -1846,6 +1854,91 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tuner-offset-val { min-width: 54px; font-size: 15px; }
   .tuner-offset-name { font-size: 15px; }
   .tuner-settings { gap: 14px; padding: 16px; }
+}
+
+/* ===== スケール練習（全画面・本体ライトに合わせる） ===== */
+.strainer-overlay {
+  position: fixed; inset: 0; z-index: 321; background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; animation: fadeUp .18s ease both;
+}
+.strainer-overlay.hidden { display: none; }
+.strainer-inner {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: stretch;
+  width: 100%; max-width: 560px; margin: 0 auto; padding: 14px 18px 28px;
+}
+.strainer-hdr { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.strainer-back {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
+  cursor: pointer; transition: all .12s;
+}
+.strainer-back:hover { border-color: var(--accent); color: var(--accent); }
+.strainer-back:active { transform: scale(.95); }
+.strainer-id { flex: 1; min-width: 0; line-height: 1.25; }
+.strainer-title { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.3px; color: var(--text); }
+.strainer-sub { display: block; font-size: 12px; font-weight: 600; color: var(--text-3); margin-top: 1px; }
+
+.strainer-readout { text-align: center; margin-top: 22px; flex-shrink: 0; }
+.strainer-note {
+  font-size: 68px; font-weight: 800; line-height: 1; letter-spacing: 1px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color: var(--text-3); font-variant-numeric: tabular-nums; transition: color .12s;
+}
+.strainer-note.correct { color: var(--green); }
+.strainer-note.wrong { color: #d1342b; }
+.strainer-deg { font-size: 14px; font-weight: 700; color: var(--text-2); margin-top: 6px; min-height: 18px; }
+.strainer-verdict { text-align: center; font-size: 52px; font-weight: 800; line-height: 1; min-height: 60px; flex-shrink: 0; transition: color .1s; }
+.strainer-verdict.ok { color: var(--green); }
+.strainer-verdict.ng { color: #d1342b; }
+
+/* ピアノ鍵盤 */
+.strainer-piano {
+  position: relative; width: 100%; max-width: 520px; margin: 8px auto 0; height: 180px;
+  display: flex; user-select: none; flex-shrink: 0;
+}
+.strainer-key { box-sizing: border-box; cursor: default; }
+.strainer-key.white {
+  flex: 1; background: var(--surface); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 8px 8px; position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8px;
+  transition: background .1s;
+}
+.strainer-key.black {
+  position: absolute; top: 0; width: 9%; height: 62%; background: #2a2520; border-radius: 0 0 6px 6px; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 6px;
+  transition: background .1s;
+}
+.strainer-key .skey-lbl { font-size: 12px; font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.strainer-key.black .skey-lbl { font-size: 10px; color: rgba(255,255,255,.55); }
+.strainer-key .skey-mark { font-size: 11px; font-weight: 800; color: var(--accent); margin-bottom: 2px; }
+.strainer-key.black .skey-mark { color: #ffb27a; font-size: 9px; }
+/* スケール内（常時ハイライト） */
+.strainer-key.in-scale.white { background: var(--accent-dim); }
+.strainer-key.in-scale.black { background: #4a3322; }
+.strainer-key.root.white { box-shadow: inset 0 0 0 2px var(--accent); }
+.strainer-key.root.black { box-shadow: inset 0 0 0 2px var(--accent); }
+/* 弾いた瞬間の点灯 */
+.strainer-key.lit.correct.white { background: var(--green); color: #fff; }
+.strainer-key.lit.correct.black { background: var(--green); }
+.strainer-key.lit.correct .skey-lbl, .strainer-key.lit.correct .skey-mark { color: #fff; }
+.strainer-key.lit.wrong.white { background: #d1342b; }
+.strainer-key.lit.wrong.black { background: #d1342b; }
+.strainer-key.lit.wrong .skey-lbl, .strainer-key.lit.wrong .skey-mark { color: #fff; }
+
+.strainer-hint { margin-top: 20px; font-size: 13px; color: var(--text-3); text-align: center; min-height: 18px; flex-shrink: 0; }
+.strainer-retry {
+  align-self: center; margin-top: 14px; padding: 10px 20px; border: none; border-radius: 999px;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: filter .12s;
+}
+.strainer-retry:hover { filter: brightness(1.06); }
+.strainer-retry.hidden { display: none; }
+
+@media (max-width: 767px) {
+  .strainer-note { font-size: 60px; }
+  .strainer-piano { height: 160px; }
+  .strainer-key .skey-lbl { font-size: 11px; }
 }
 
 

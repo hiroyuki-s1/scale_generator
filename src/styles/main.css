@@ -1674,7 +1674,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 /* メイン表示 */
 .tuner-display {
   width: 100%; flex: 1 0 auto; /* 縮まない＝中身が views 行へはみ出して重ならない（短い画面は inner がスクロール） */
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; /* 上揃え＝モード切替で再センタリングしない */
   gap: 18px;
 }
 
@@ -1719,6 +1719,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-string.in-tune { border-color: var(--green); color: #fff; background: var(--green); }
 
 /* ピッチ推移グラフ */
+/* 可視化スロット（グラフ/ストロボ/ポリ）は全モード同一の固定高さ＝モード切替で周囲が動かない */
+.tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 178px; box-sizing: border-box; }
 .tuner-graph-wrap { width: 100%; margin-top: 22px; }
 .tuner-graph {
   width: 100%; height: 150px; display: block;
@@ -1765,8 +1767,11 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
 }
 
-/* ポリフォニック（全弦同時） */
-.tuner-poly { width: 100%; margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+/* ポリフォニック（全弦同時）。固定高さ内で縦中央寄せ・必要ならスクロール */
+.tuner-poly {
+  width: 100%; margin-top: 22px; display: flex; flex-direction: column;
+  justify-content: center; gap: 10px; overflow-y: auto;
+}
 .tuner-poly.hidden { display: none; }
 .tuner-poly-row { display: flex; align-items: center; gap: 12px; }
 .tuner-poly-name {
@@ -1809,6 +1814,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   .tuner-instr-btn { padding: 10px 18px; font-size: 14px; }
   .tuner-string { min-width: 48px; padding: 11px 12px; font-size: 14px; }
   .tuner-graph, .tuner-strobe { height: 120px; }
+  .tuner-graph-wrap, .tuner-strobe-wrap, .tuner-poly { height: 148px; }
   .tuner-view-btn, .tuner-sweeten { padding: 9px 14px; font-size: 13px; }
 }
 

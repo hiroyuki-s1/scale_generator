@@ -186,7 +186,8 @@ export function initTuner(store) {
   function renderStrings() {
     if (!stringsEl) return;
     stringsEl.innerHTML = '';
-    if (!isStringInstr() || viewMode === 'poly') { stringsEl.style.display = 'none'; return; }
+    // 弦ピルは全モードで常時表示（ポリでも位置固定。ハイライトは mono のみ）。ノーマルのみ非表示。
+    if (!isStringInstr()) { stringsEl.style.display = 'none'; return; }
     stringsEl.style.display = '';
     for (let i = currentLabels.length - 1; i >= 0; i--) {
       const pill = document.createElement('div');
@@ -281,8 +282,8 @@ export function initTuner(store) {
     graphWrap?.classList.toggle('hidden', view !== 'needle');
     strobeWrap?.classList.toggle('hidden', view !== 'strobe');
     polyEl?.classList.toggle('hidden', view !== 'poly');
-    digitalEl?.classList.toggle('hidden', view === 'poly');
-    renderStrings(); // poly では隠す
+    // デジタル表示・弦ピルは全モードで常時表示（位置固定）。可視化スロットだけ中身が入れ替わる。
+    renderStrings();
     resetStrobe();
     if (view === 'poly') showIdle('ジャラーンと弾いてください');
     syncEngine();

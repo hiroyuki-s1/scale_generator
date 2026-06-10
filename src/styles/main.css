@@ -1672,6 +1672,23 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-sweeten { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
 .tuner-sweeten.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
 .tuner-sweeten:disabled { opacity: .35; cursor: default; }
+
+/* 弦ごとオフセット・エディタ（甘い調弦） */
+.tuner-offset-editor { width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.tuner-offset-editor.hidden { display: none; }
+.tuner-offset-title { font-size: 11px; color: var(--tk-muted); text-align: center; }
+.tuner-offset-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.tuner-offset-name { width: 40px; flex-shrink: 0; font-size: 14px; font-weight: 800; color: var(--tk-text); font-variant-numeric: tabular-nums; text-align: right; }
+.tuner-offset-btn {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+  border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-text);
+  font-size: 18px; font-weight: 700; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all .12s;
+}
+.tuner-offset-btn:hover { border-color: var(--tk-green); color: var(--tk-green); }
+.tuner-offset-btn:active { transform: scale(.92); }
+.tuner-offset-val { min-width: 48px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tk-muted); font-variant-numeric: tabular-nums; }
+
 .tuner-views { display: flex; justify-content: center; gap: 8px; }
 .tuner-view-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--tk-border); background: var(--tk-bg); color: var(--tk-muted); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .12s; }
 .tuner-view-btn.active { border-color: var(--tk-green); background: var(--tk-green); color: #04230b; }
@@ -1764,8 +1781,21 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 @media (max-width: 767px) {
   .tuner-note { font-size: 76px; }
-  .tuner-string { width: 44px; height: 44px; font-size: 14px; }
   .tuner-inner { padding: 12px 14px 20px; }
+  /* スマホはタップ目標を大きく（最低 ~48px） */
+  .tuner-string { width: 52px; height: 52px; font-size: 16px; }
+  .tuner-instr-btn { padding: 11px 22px; font-size: 15px; }
+  .tuner-view-btn { padding: 11px 20px; font-size: 14px; }
+  .tuner-sweeten { padding: 11px 20px; font-size: 14px; }
+  .tuner-tuning-select { padding: 12px 14px; font-size: 15px; }
+  .tuner-a4-btn { width: 40px; height: 40px; font-size: 20px; }
+  .tuner-a4-val { min-width: 72px; font-size: 15px; }
+  .tuner-back { width: 44px; height: 44px; }
+  .tuner-settings-toggle { padding: 11px 6px; font-size: 16px; }
+  .tuner-offset-btn { width: 42px; height: 42px; font-size: 20px; }
+  .tuner-offset-val { min-width: 54px; font-size: 15px; }
+  .tuner-offset-name { font-size: 15px; }
+  .tuner-settings { gap: 14px; padding: 16px; }
 }
 
 

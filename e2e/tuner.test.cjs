@@ -265,6 +265,49 @@ async function runPolyphonic(tmpDir) {
   } finally { await browser.close(); }
 }
 
+// 弦ごとオフセット編集: B3 を −で下げると、同じ B3 入力の cents が +側へ動く。永続も確認。
+async function runOffsetEditor(tmpDir) {
+  console.log('--- オフセット編集: 弦ごと ±¢ ---');
+  const wav = path.join(tmpDir, 'tone-b3o.wav');
+  writeToneWav(wav, 246.94, { seconds: 3 }); // 平均律 B3
+  const browser = await launchWith(wav);
+  try {
+    const context = await browser.newContext();
+    await context.grantPermissions(['microphone'], { origin: URL });
+    const page = await context.newPage();
+    await openTuner(page);
+    await page.click('.tuner-instr-btn[data-instr="guitar"]');
+    await page.click('#tunerSweeten'); // 甘い調弦 ON → エディタ出現
+    await page.waitForSelector('#tunerOffsetEditor:not(.hidden)', { timeout: 2000 });
+
+    // B3 (data-index=1) を 3 回下げる（−3¢）。値表示が更新されること。
+    const before = await page.$eval('.tuner-offset-val[data-vi="1"]', el => el.textContent.trim());
+    for (let i = 0; i < 3; i++) await page.click('.tuner-offset-btn[data-i="1"][data-off="-1"]');
+    const after = await page.$eval('.tuner-offset-val[data-vi="1"]', el => el.textContent.trim());
+    (before !== after) ? pass(`オフセット: B3 値が変化 ${before} → ${after}`)
+                       : fail(`オフセット: B3 値が変わらない ${before}`);
+
+    // localStorage に保存されている
+    const saved = await page.evaluate(() => localStorage.getItem('sg.v1.tunerOffsets'));
+    (saved && JSON.parse(saved).guitar[1] <= -3)
+      ? pass('オフセット: localStorage に保存')
+      : fail(`オフセット: localStorage 未保存 ${saved}`);
+
+    // 同じ B3 入力の cents がより + 側へ（目標が下がったぶん高く見える）
+    let cents = '';
+    const num = s => { const n = parseInt(String(s).replace(/[^\-0-9]/g, ''), 10); return Number.isNaN(n) ? -99 : n; };
+    for (let i = 0; i < 40; i++) {
+      const n = await page.$eval('#tunerNote', el => el.textContent.trim());
+      cents = await page.$eval('#tunerCents', el => el.textContent.trim());
+      if (n === 'B' && num(cents) >= 2) break;
+      await page.waitForTimeout(100);
+    }
+    num(cents) >= 2 ? pass(`オフセット: B3 補正で cents が +側 ${cents}`)
+                    : fail(`オフセット: cents が +側に動かない ${cents}`);
+    await context.close();
+  } finally { await browser.close(); }
+}
+
 async function main() {
   console.log('チューナー E2E（fake audio capture シミュレータ）\n');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuner-wav-'));
@@ -280,6 +323,8 @@ async function main() {
     catch (e) { fail(`オルタネート: 例外 ${e.message}`); }
     try { await runSweetened(tmpDir); }
     catch (e) { fail(`甘い調弦: 例外 ${e.message}`); }
+    try { await runOffsetEditor(tmpDir); }
+    catch (e) { fail(`オフセット編集: 例外 ${e.message}`); }
     try { await runPolyphonic(tmpDir); }
     catch (e) { fail(`ポリフォニック: 例外 ${e.message}`); }
   } finally {

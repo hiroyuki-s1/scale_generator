@@ -189,6 +189,18 @@ export async function setProfile(displayName) {
   }));
 }
 
+// ── ユーザー設定（D1 user_settings の汎用 JSON）─────────────────────────
+/** 現在の設定オブジェクトを取得（未保存はサーバ既定）。未ログイン/失敗は throw。 */
+export async function getSettings() {
+  return asJsonOrThrow(await authedFetch('api/settings'));
+}
+/** 設定オブジェクト全体を保存（upsert・置換）。部分更新は呼び出し側で get→merge→put する。 */
+export async function putSettings(obj) {
+  return asJsonOrThrow(await authedFetch('api/settings', {
+    method: 'PUT', body: JSON.stringify(obj),
+  }));
+}
+
 // ── 行動記録 (起動イベント・migration 0004) ─────────────────────────
 const ANON_ID_KEY = 'sg.v1.anonId';
 const LAUNCH_SENT_KEY = 'sg.v1.launchSentAt';

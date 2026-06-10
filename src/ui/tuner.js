@@ -2,9 +2,13 @@ import { freqToNote, midiToFreq, noteLabelFromMidi } from '../domain/pitch.js';
 import { createPitchEngine, isPitchEngineSupported } from '../audio/pitchEngine.js';
 import {
   tuningsFor, findTuning, labelsForMidi, nearestStringWithOffset, tuningRange,
-  targetsHz, SWEETENED, zeroOffsets,
+  targetsHz, zeroOffsets,
 } from '../domain/tunings.js';
 import { advanceStrobePhase } from '../domain/strobe.js';
+import {
+  loadOffsets, saveOffsetsLocal, pullOffsets, pushOffsets, clampOffset,
+} from '../state/tunerOffsets.js';
+import { onAuthChange } from '../state/cloudSync.js';
 import { track } from '../state/track.js'; // [removable-analytics] 後で消す前提（migrations/0006）
 
 /**
@@ -67,6 +71,7 @@ export function initTuner(store) {
   const tuningRow = document.getElementById('tunerTuningRow');
   const tuningSel = document.getElementById('tunerTuning');
   const sweetenBtn= document.getElementById('tunerSweeten');
+  const offsetEditor = document.getElementById('tunerOffsetEditor');
   const viewTabs  = document.getElementById('tunerViewTabs');
   const settingsToggle = document.getElementById('tunerSettingsToggle');
   const settingsPanel = document.getElementById('tunerSettings');
@@ -118,6 +123,7 @@ export function initTuner(store) {
   let currentMidi = null;   // ギター/ベース時の弦 MIDI 配列（ノーマルは null）
   let currentLabels = [];
   let offsets = [];
+  let customOffsets = loadOffsets(); // {guitar:[6], bass:[4]} 甘い調弦の弦ごと ±cents
 
   let engine = null, mediaStream = null;
   let rafId = 0, active = false;
@@ -150,7 +156,7 @@ export function initTuner(store) {
       if (tuningIds[instr] !== t.id) tuningIds = { ...tuningIds, [instr]: t.id };
       currentMidi = t.midi;
       currentLabels = labelsForMidi(t.midi);
-      offsets = sweeten ? (SWEETENED[instr] || zeroOffsets(t.midi.length)) : zeroOffsets(t.midi.length);
+      offsets = sweeten ? (customOffsets[instr] || zeroOffsets(t.midi.length)) : zeroOffsets(t.midi.length);
     } else {
       currentMidi = null; currentLabels = []; offsets = [];
     }
@@ -193,13 +199,59 @@ export function initTuner(store) {
     sweetenBtn.classList.toggle('active', sweeten && isStringInstr());
     sweetenBtn.setAttribute('aria-pressed', String(sweeten && isStringInstr()));
     sweetenBtn.disabled = !isStringInstr();
+    renderOffsetEditor();
+  }
+
+  // 弦ごと ±cents 編集UI（甘い調弦 ON かつ string 楽器のときだけ表示）。低音→高音 並び。
+  function renderOffsetEditor() {
+    if (!offsetEditor) return;
+    const show = sweeten && isStringInstr();
+    offsetEditor.classList.toggle('hidden', !show);
+    if (!show) { offsetEditor.innerHTML = ''; return; }
+    const arr = customOffsets[instr] || [];
+    let html = '<div class="tuner-offset-title">弦ごとの補正（¢・甘い調弦に適用）</div>';
+    for (let i = currentLabels.length - 1; i >= 0; i--) {
+      const v = clampOffset(arr[i] ?? 0);
+      const txt = v > 0 ? `+${v}` : `${v}`;
+      html += `<div class="tuner-offset-row">`
+        + `<span class="tuner-offset-name">${currentLabels[i]}</span>`
+        + `<button class="tuner-offset-btn" type="button" data-off="-1" data-i="${i}" aria-label="${currentLabels[i]} を下げる">−</button>`
+        + `<span class="tuner-offset-val" data-vi="${i}">${txt}¢</span>`
+        + `<button class="tuner-offset-btn" type="button" data-off="1" data-i="${i}" aria-label="${currentLabels[i]} を上げる">＋</button>`
+        + `</div>`;
+    }
+    offsetEditor.innerHTML = html;
+  }
+
+  // 弦 i のオフセットを delta だけ変更 → ローカル保存 + クラウド同期 + 反映。
+  function setOffset(i, delta) {
+    if (!isStringInstr()) return;
+    const arr = (customOffsets[instr] || []).slice();
+    arr[i] = clampOffset((arr[i] ?? 0) + delta);
+    customOffsets = { ...customOffsets, [instr]: arr };
+    saveOffsetsLocal(customOffsets);
+    pushOffsets(customOffsets);            // ログイン中なら D1 へ（失敗は無視）
+    recomputeTuning();                     // offsets（甘いON時）を更新
+    renderOffsetEditor();
+    resetGraph();
+    lastResult = null; showIdle();
+    syncEngine();
+  }
+
+  // クラウドから取得した値で上書き（ログイン直後など）。
+  function adoptCloudOffsets(map) {
+    if (!map) return;
+    customOffsets = map;
+    saveOffsetsLocal(customOffsets);
+    if (sweeten) { recomputeTuning(); syncEngine(); }
+    renderOffsetEditor();
   }
 
   function setTuning(id) {
     if (!isStringInstr()) return;
     tuningIds = { ...tuningIds, [instr]: id }; saveTuningIds(tuningIds);
     recomputeTuning();
-    renderStrings(); renderPolyScaffold();
+    renderStrings(); renderPolyScaffold(); renderOffsetEditor();
     resetGraph(); resetStrobe();
     lastResult = null;
     showIdle(); // 旧チューニングの音名が一瞬残らないよう即クリア（次サンプルで再表示）
@@ -621,6 +673,15 @@ export function initTuner(store) {
   });
   tuningSel?.addEventListener('change', e => setTuning(e.target.value));
   sweetenBtn?.addEventListener('click', () => setSweeten(!sweeten));
+  offsetEditor?.addEventListener('click', e => {
+    const btn = e.target.closest('.tuner-offset-btn');
+    if (btn) setOffset(Number(btn.dataset.i), Number(btn.dataset.off));
+  });
+  // ログイン状態が変わったら（=ログイン時）サーバ保存のオフセットを取り込む。
+  onAuthChange(user => {
+    if (!user) return;
+    pullOffsets().then(adoptCloudOffsets).catch(() => {});
+  });
   viewTabs?.addEventListener('click', e => {
     const btn = e.target.closest('.tuner-view-btn');
     if (btn && !btn.disabled) setView(btn.dataset.view);

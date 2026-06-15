@@ -37,6 +37,8 @@ const IN_TUNE_CENTS = 5;      // ±これ以内で「合っている（緑）」
 const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
 const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
+const GRAPH_WIN_MS = 6000;    // ピッチ推移グラフの横軸（直近6秒）
+const GRAPH_SPAN = 50;        // ピッチ推移グラフの縦軸（±50 cents）
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
@@ -98,8 +100,8 @@ export function initTuner(store) {
   const meterEl   = document.getElementById('tunerMeter');
   const barsEl    = document.getElementById('tunerBars');
   const baselineEl= document.getElementById('tunerBaseline');
-  const rulerStrip= document.getElementById('tunerRulerStrip');
-  const rulerNeedle = document.getElementById('tunerRulerNeedle');
+  const graph2Canvas = document.getElementById('tunerGraph2');
+  const g2ctx = graph2Canvas ? graph2Canvas.getContext('2d') : null;
   const strobeWrap = document.getElementById('tunerStrobeWrap');
   const strobeCanvas = document.getElementById('tunerStrobe');
   const sctx = strobeCanvas ? strobeCanvas.getContext('2d') : null;
@@ -116,7 +118,6 @@ export function initTuner(store) {
       for (const h of BAR_HEIGHTS) { const b = document.createElement('div'); b.className = 'tk-bar'; b.style.height = `${h}px`; barsEl.appendChild(b); barEls.push(b); }
     }
   }
-  const CHROM = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const openTrigger = document.querySelector('[data-act="tuner"]');
   if (!overlay || !openTrigger) return;
 
@@ -139,6 +140,9 @@ export function initTuner(store) {
   // ストロボ
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
   let sW = 0, sH = 0;
+  // ピッチ推移グラフ
+  let graphHist = [];   // { t:ms, cents:number|null }
+  let g2W = 0, g2H = 0;
 
   const isOpen = () => !overlay.classList.contains('hidden');
   const isStringInstr = () => instr !== 'normal';
@@ -379,7 +383,7 @@ export function initTuner(store) {
     resetStrobe();
     if (view === 'poly') showIdle();
     syncEngine();
-    if (isOpen()) resizeStrobe();
+    if (isOpen()) { resizeStrobe(); resizeGraph2(); }
   }
 
   // ── テーマ（ライト/ダーク） ──
@@ -424,6 +428,7 @@ export function initTuner(store) {
     overlay.classList.remove('is-locked');
     wasLocked = false;
     updateMeter(null);
+    pushGraph(null); // 無音区間は線を切る
     clearStringHighlight();
   }
 
@@ -478,7 +483,7 @@ export function initTuner(store) {
     arrowR?.classList.toggle('on', cents > IN_TUNE_CENTS);
 
     updateMeter(cents);
-    renderRuler(noteName, cents);
+    pushGraph(cents);
 
     // チューニング合致エフェクト（緑）。立ち上がりでポップ＋「Perfect!」を1回再生。
     const locked = inTune && !held;
@@ -520,28 +525,20 @@ export function initTuner(store) {
     barEls.forEach((b, i) => { b.style.background = colors[i]; });
   }
 
-  // クロマチック・ルーラー: 現在音を中央セルに、ニードルを cents ぶんオフセット。
-  function renderRuler(noteName, cents) {
-    if (!rulerStrip) return;
-    let base = CHROM.indexOf(noteName);
-    if (base < 0) base = 0;
-    let html = '';
-    for (let k = -4; k <= 4; k++) {
-      const n = CHROM[(((base + k) % 12) + 12) % 12];
-      html += `<div class="tuner-ruler-cell${k === 0 ? ' cur' : ''}">`
-        + `<div class="lbl">${n}</div><div class="maj"></div><div class="min a"></div><div class="min b"></div></div>`;
-    }
-    rulerStrip.innerHTML = html;
-    if (rulerNeedle) {
-      const cl = Math.max(-50, Math.min(50, cents || 0));
-      rulerNeedle.style.left = `calc(50% + ${(cl / 50) * 28}px)`;
-    }
+  // ピッチ推移グラフ: cents 値を時系列に積む（無音は null=線を切る）。
+  function pushGraph(cents) {
+    const t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    graphHist.push({ t, cents: cents == null ? null : Math.max(-GRAPH_SPAN, Math.min(GRAPH_SPAN, cents)) });
+    const cutoff = t - GRAPH_WIN_MS - 500;
+    while (graphHist.length && graphHist[0].t < cutoff) graphHist.shift();
   }
 
-  // rAF はストロボ表示のアニメ専用（メーター/ポリは DOM 更新で十分）。
+  // rAF はストロボのアニメ＋ピッチ推移グラフの再描画。
   function loop(ts) {
     rafId = requestAnimationFrame(loop);
-    if (viewMode === 'strobe') drawStrobe(ts || 0);
+    const now = ts || 0;
+    if (viewMode === 'strobe') drawStrobe(now);
+    drawGraph2(now); // poly では canvas が display:none（幅0）→ 自動スキップ
   }
 
   // mono サンプル（≈66Hz）。poly モードでは届かない（worklet が mono を出さない）。
@@ -605,10 +602,53 @@ export function initTuner(store) {
     }
   }
 
+  function resizeGraph2() { [g2W, g2H] = resizeCanvas(graph2Canvas, g2ctx); }
+
+  // ピッチ推移グラフ: 横=時間（直近6秒）/ 縦=±cents。右に目盛・中央=0・緑の推移線。
+  function drawGraph2(now) {
+    if (!g2ctx) return;
+    if (g2W === 0) { resizeGraph2(); if (g2W === 0) return; }
+    const light = theme === 'light';
+    g2ctx.fillStyle = light ? '#f3ede3' : '#16191d';
+    g2ctx.fillRect(0, 0, g2W, g2H);
+
+    const axisW = 30;                 // 右側の目盛ぶん
+    const plotW = Math.max(0, g2W - axisW);
+    const gridCol = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.09)';
+    const zeroCol = light ? 'rgba(0,0,0,.28)' : 'rgba(255,255,255,.32)';
+    const txtCol  = light ? 'rgba(0,0,0,.45)' : 'rgba(255,255,255,.5)';
+    const yOf = (c) => {
+      const cl = Math.max(-GRAPH_SPAN, Math.min(GRAPH_SPAN, c));
+      return g2H / 2 - (cl / GRAPH_SPAN) * (g2H / 2 - 8);
+    };
+    g2ctx.lineWidth = 1; g2ctx.font = '9px sans-serif'; g2ctx.textAlign = 'left'; g2ctx.textBaseline = 'middle';
+    [40, 20, 0, -20, -40].forEach((c) => {
+      const y = yOf(c);
+      g2ctx.strokeStyle = c === 0 ? zeroCol : gridCol;
+      g2ctx.beginPath(); g2ctx.moveTo(0, y); g2ctx.lineTo(plotW, y); g2ctx.stroke();
+      g2ctx.fillStyle = txtCol;
+      g2ctx.fillText(c > 0 ? `+${c}` : `${c}`, plotW + 4, y);
+    });
+
+    const xOf = (t) => plotW * (1 - (now - t) / GRAPH_WIN_MS);
+    g2ctx.strokeStyle = light ? '#16a34a' : '#46e35b';
+    g2ctx.lineWidth = 2; g2ctx.lineJoin = 'round'; g2ctx.lineCap = 'round';
+    g2ctx.beginPath();
+    let pen = false;
+    for (const s of graphHist) {
+      if (s.cents == null) { pen = false; continue; }
+      const x = xOf(s.t);
+      if (x < 0) { pen = false; continue; }
+      const y = yOf(s.cents);
+      if (!pen) { g2ctx.moveTo(x, y); pen = true; } else g2ctx.lineTo(x, y);
+    }
+    g2ctx.stroke();
+  }
+
   function resetGraph() {
     updateMeter(null);
-    if (rulerStrip) rulerStrip.innerHTML = '';
-    if (rulerNeedle) rulerNeedle.style.left = '50%';
+    graphHist = [];
+    if (g2ctx && g2W > 0) g2ctx.clearRect(0, 0, g2W, g2H);
   }
   function resetStrobe() {
     strobePhase = 0; strobeLastT = 0; strobeDetectedHz = 0; strobeTargetHz = 0; strobePresent = false;
@@ -706,8 +746,7 @@ export function initTuner(store) {
     setView(viewMode); // 保存モードを復元（表示の出し分け）
     overlay.classList.remove('hidden');
     resetGraph(); resetStrobe();
-    renderRuler(currentLabels.length ? noteLabelFromMidi(currentMidi[currentMidi.length - 1]).noteName : 'A', 0);
-    resizeStrobe();
+    resizeStrobe(); resizeGraph2();
     track('tuner_open', { instrument: instr }); // [removable-analytics]
     start();
   }
@@ -754,10 +793,10 @@ export function initTuner(store) {
   settingsToggle?.addEventListener('click', () => {
     const open = settingsPanel?.classList.toggle('hidden') === false;
     settingsToggle.setAttribute('aria-expanded', String(open));
-    if (isOpen()) resizeStrobe();
+    if (isOpen()) { resizeStrobe(); resizeGraph2(); }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen()) close(); });
-  window.addEventListener('resize', () => { if (isOpen()) resizeStrobe(); });
+  window.addEventListener('resize', () => { if (isOpen()) { resizeStrobe(); resizeGraph2(); } });
 
   // 初期描画。
   buildMeterDom();

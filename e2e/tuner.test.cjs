@@ -104,11 +104,18 @@ async function runCase(tmpDir, c) {
     ok ? pass(`${c.label}: ${c.freq}Hz → ${c.instr === 'normal' ? noteLetter : c.expect} (${cents})`)
        : fail(`${c.label}: ${c.freq}Hz → 期待 ${c.expect} / 音名 "${noteLetter}" (${cents})`);
 
-    // クロマチック・ルーラーが描画されている（セルがある）こと
-    await page.waitForTimeout(200);
-    const rulerOk = await page.$eval('#tunerRulerStrip', el => el.childElementCount >= 5);
-    rulerOk ? pass(`${c.label}: クロマチックルーラー描画`)
-            : fail(`${c.label}: ルーラー未描画`);
+    // ピッチ推移グラフ（canvas）に描画があること
+    await page.waitForTimeout(400);
+    const graphOk = await page.evaluate(() => {
+      const cv = document.getElementById('tunerGraph2');
+      if (!cv || !cv.width || !cv.height) return false;
+      const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) { if (++n > 100) return true; }
+      return false;
+    });
+    graphOk ? pass(`${c.label}: ピッチ推移グラフ描画`)
+            : fail(`${c.label}: グラフ未描画`);
 
     await context.close();
   } finally {

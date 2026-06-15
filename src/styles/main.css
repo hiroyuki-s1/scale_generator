@@ -1862,7 +1862,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 /* ポリ専用フルエリア・レイアウト: 音名/セント/ルーラーを隠し、6弦一覧を広く出す */
 .tuner-overlay.is-poly .tuner-note-row,
 .tuner-overlay.is-poly .tuner-cents-box,
-.tuner-overlay.is-poly .tuner-ruler { display: none; }
+.tuner-overlay.is-poly .tuner-graph2-wrap { display: none; }
 .tuner-overlay.is-poly .tuner-display { position: static; height: auto; flex: 1 1 auto; min-height: 0; display: flex; margin-top: 18px; }
 .tuner-overlay.is-poly .tuner-poly { position: static; flex: 1 1 auto; height: auto; min-height: 0; padding: 16px 16px; gap: 14px; }
 .tuner-overlay.is-poly .tuner-poly-bar { height: 12px; }
@@ -1881,18 +1881,9 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 .tuner-string.target { border-color: var(--tk-text); color: var(--tk-text); }
 .tuner-string.in-tune { background: var(--tk-green); border-color: var(--tk-green); color: #04230b; }
 
-.tuner-ruler { position: relative; height: 84px; overflow: hidden; border-top: 1px solid rgba(255,255,255,0.06); }
-.tuner-ruler-strip { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; }
-.tuner-ruler-cell { width: 56px; flex: 0 0 56px; position: relative; height: 52px; }
-.tuner-ruler-cell .lbl { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 600; color: var(--tk-muted); }
-.tuner-ruler-cell .maj { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: 2px; height: 20px; background: rgba(255,255,255,0.30); }
-.tuner-ruler-cell .min { position: absolute; top: 32px; width: 1px; height: 11px; background: rgba(255,255,255,0.13); }
-.tuner-ruler-cell .min.a { left: 25%; }
-.tuner-ruler-cell .min.b { left: 75%; }
-.tuner-ruler-cell.cur .lbl { color: var(--tk-text); }
-.tuner-ruler-cell.cur .maj { background: rgba(255,255,255,0.55); }
-.tuner-ruler-needle { position: absolute; top: 14px; height: 52px; left: 50%; width: 2px; background: var(--tk-green); transform: translateX(-50%); box-shadow: 0 0 8px rgba(70,227,91,0.6); z-index: 3; transition: left .12s ease; }
-.tuner-ruler-needle::before { content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--tk-green); }
+/* ピッチ推移グラフ（横=時間 / 縦=±cents） */
+.tuner-graph2-wrap { position: relative; padding-top: 10px; border-top: 1px solid var(--tk-border); }
+.tuner-graph2 { width: 100%; height: 96px; display: block; border-radius: 10px; border: 1px solid var(--tk-border); }
 
 /* ヒント / 再試行 */
 .tuner-hint-pill { flex: 0 0 auto; align-self: center; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--tk-bg2); border: 1px solid var(--tk-border); max-width: 100%; }

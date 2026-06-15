@@ -38,8 +38,8 @@ const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
 const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 const GRAPH_WIN_MS = 6000;    // ピッチ推移グラフの横軸（直近6秒）
-const GRAPH_SPAN = 100;       // ピッチ推移グラフの縦軸（±100 cents）
-const GRAPH_GRID = [80, 60, 40, 20, 0, -20, -40, -60, -80]; // 横グリッド線（cents）
+// ピッチ推移グラフの縦軸＝音名（12キー）。下=C → 上=B、その上でCに戻る（1オクターブ）。
+const GRAPH_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
@@ -484,7 +484,7 @@ export function initTuner(store) {
     arrowR?.classList.toggle('on', cents > IN_TUNE_CENTS);
 
     updateMeter(cents);
-    pushGraph(cents);
+    pushGraph(result.hz);
 
     // チューニング合致エフェクト（緑）。立ち上がりでポップ＋「Perfect!」を1回再生。
     const locked = inTune && !held;
@@ -526,10 +526,15 @@ export function initTuner(store) {
     barEls.forEach((b, i) => { b.style.background = colors[i]; });
   }
 
-  // ピッチ推移グラフ: cents 値を時系列に積む（無音は null=線を切る）。
-  function pushGraph(cents) {
+  // ピッチ推移グラフ: 検出周波数を連続ピッチクラス(0..12, C..C)へ変換して時系列に積む（無音は null=線を切る）。
+  function pushGraph(hz) {
     const t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-    graphHist.push({ t, cents: cents == null ? null : Math.max(-GRAPH_SPAN, Math.min(GRAPH_SPAN, cents)) });
+    let pc = null;
+    if (hz != null && hz > 0) {
+      const midi = 69 + 12 * Math.log2(hz / a4);
+      pc = ((midi % 12) + 12) % 12; // 0=C .. <12（B付近）。上端12でCに戻る
+    }
+    graphHist.push({ t, pc });
     const cutoff = t - GRAPH_WIN_MS - 500;
     while (graphHist.length && graphHist[0].t < cutoff) graphHist.shift();
   }
@@ -605,7 +610,7 @@ export function initTuner(store) {
 
   function resizeGraph2() { [g2W, g2H] = resizeCanvas(graph2Canvas, g2ctx); }
 
-  // ピッチ推移グラフ: 横=時間（直近6秒）/ 縦=±cents。右に目盛・中央=0・緑の推移線。
+  // ピッチ推移グラフ: 横=時間（直近6秒）/ 縦=音名（C..B の12キー）。右に音名目盛・緑の推移線。
   function drawGraph2(now) {
     if (!g2ctx) return;
     if (g2W === 0) { resizeGraph2(); if (g2W === 0) return; }
@@ -613,35 +618,39 @@ export function initTuner(store) {
     g2ctx.fillStyle = light ? '#f3ede3' : '#16191d';
     g2ctx.fillRect(0, 0, g2W, g2H);
 
-    const axisW = 30;                 // 右側の目盛ぶん
+    const axisW = 24;                 // 右側の音名目盛ぶん
     const plotW = Math.max(0, g2W - axisW);
-    const gridCol = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.09)';
-    const zeroCol = light ? 'rgba(0,0,0,.28)' : 'rgba(255,255,255,.32)';
-    const txtCol  = light ? 'rgba(0,0,0,.45)' : 'rgba(255,255,255,.5)';
-    const yOf = (c) => {
-      const cl = Math.max(-GRAPH_SPAN, Math.min(GRAPH_SPAN, c));
-      return g2H / 2 - (cl / GRAPH_SPAN) * (g2H / 2 - 8);
-    };
+    const pad = 6;
+    const gridCol = light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.08)';
+    const aCol    = light ? 'rgba(0,0,0,.22)' : 'rgba(255,255,255,.26)'; // A=基準を少し強調
+    const txtCol  = light ? 'rgba(0,0,0,.5)'  : 'rgba(255,255,255,.55)';
+    // pc 0(下=C) .. 12(上=C)。高い音ほど上。
+    const yOf = (pc) => (g2H - pad) - (pc / 12) * (g2H - 2 * pad);
+
     g2ctx.lineWidth = 1; g2ctx.font = '9px sans-serif'; g2ctx.textAlign = 'left'; g2ctx.textBaseline = 'middle';
-    GRAPH_GRID.forEach((c) => {
-      const y = yOf(c);
-      g2ctx.strokeStyle = c === 0 ? zeroCol : gridCol;
+    for (let pc = 0; pc <= 12; pc++) {
+      const name = GRAPH_NOTE_NAMES[pc % 12];
+      const y = yOf(pc);
+      g2ctx.strokeStyle = name === 'A' ? aCol : gridCol;
       g2ctx.beginPath(); g2ctx.moveTo(0, y); g2ctx.lineTo(plotW, y); g2ctx.stroke();
       g2ctx.fillStyle = txtCol;
-      g2ctx.fillText(c > 0 ? `+${c}` : `${c}`, plotW + 4, y);
-    });
+      g2ctx.fillText(name, plotW + 4, y);
+    }
 
     const xOf = (t) => plotW * (1 - (now - t) / GRAPH_WIN_MS);
     g2ctx.strokeStyle = light ? '#16a34a' : '#46e35b';
     g2ctx.lineWidth = 2; g2ctx.lineJoin = 'round'; g2ctx.lineCap = 'round';
     g2ctx.beginPath();
-    let pen = false;
+    let pen = false, prevPc = null;
     for (const s of graphHist) {
-      if (s.cents == null) { pen = false; continue; }
+      if (s.pc == null) { pen = false; prevPc = null; continue; }
       const x = xOf(s.t);
-      if (x < 0) { pen = false; continue; }
-      const y = yOf(s.cents);
+      if (x < 0) { pen = false; prevPc = null; continue; }
+      // オクターブ跨ぎ（pc が大きく飛ぶ）は線を切って縦断を防ぐ
+      if (prevPc != null && Math.abs(s.pc - prevPc) > 6) pen = false;
+      const y = yOf(s.pc);
       if (!pen) { g2ctx.moveTo(x, y); pen = true; } else g2ctx.lineTo(x, y);
+      prevPc = s.pc;
     }
     g2ctx.stroke();
   }

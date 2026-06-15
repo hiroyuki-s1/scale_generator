@@ -1883,7 +1883,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* ピッチ推移グラフ（横=時間 / 縦=±cents） */
 .tuner-graph2-wrap { position: relative; padding-top: 10px; border-top: 1px solid var(--tk-border); }
-.tuner-graph2 { width: 100%; height: 96px; display: block; border-radius: 10px; border: 1px solid var(--tk-border); }
+.tuner-graph2 { width: 100%; height: 150px; display: block; border-radius: 10px; border: 1px solid var(--tk-border); }
 
 /* ヒント / 再試行 */
 .tuner-hint-pill { flex: 0 0 auto; align-self: center; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--tk-bg2); border: 1px solid var(--tk-border); max-width: 100%; }

@@ -222,7 +222,7 @@ body {
 }
 
 /* ── ソングファイル上部: タイトル入力 + クラウド保存 ── */
-.songfile-top { max-width: 760px; margin: 12px auto 4px; display: flex; gap: 8px; align-items: center; }
+.songfile-top { width: 100%; max-width: 760px; min-width: 0; margin: 12px auto 4px; display: flex; gap: 8px; align-items: center; box-sizing: border-box; }
 .songfile-title-input {
   flex: 1; min-width: 0; padding: 11px 14px; border: 1px solid var(--border); border-radius: 11px;
   background: var(--surface); color: var(--text); font-size: 14.5px; font-weight: 700; font-family: inherit;
@@ -249,6 +249,13 @@ body {
 }
 .btn-songfile-new:hover { border-color: var(--accent); color: var(--accent); background: var(--bg); }
 .btn-songfile-new:active { transform: scale(.98); }
+/* スマホ: 1行に収まらず保存ボタンがはみ出すので、タイトル入力を上段(全幅)・ボタン2つを下段で2分割。
+   ※base の .songfile-title-input{flex:1} 等を上書きするため、必ず base 定義より後に置く（同詳細度=ソース順勝ち） */
+@media (max-width: 767px) {
+  .songfile-top { flex-wrap: wrap; }
+  .songfile-title-input { order: -1; flex: 1 1 100%; }
+  .btn-songfile-new, .btn-save-songbook { flex: 1 1 0; min-width: 0; padding-left: 10px; padding-right: 10px; }
+}
 .songbook-hdr-hint { font-size: 11px; color: var(--text-3); text-align: right; line-height: 1.4; }
 
 /* ── ソングブック（クラウド保存）タブ ── */

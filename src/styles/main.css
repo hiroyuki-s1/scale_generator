@@ -1090,8 +1090,8 @@ body {
 /* 各カードの通し番号（1始まり）。DOM 順に自動採番 → ドラッグ並べ替えにも追従。 */
 .saved-card { counter-increment: savedcard; min-width: 0; }
 .saved-card-num {
-  position: absolute; top: 6px; left: 6px; z-index: 3;
-  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  flex: 0 0 auto;
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
   font-variant-numeric: tabular-nums; box-shadow: var(--shadow-sm); pointer-events: none;

@@ -359,8 +359,10 @@ async function onePractice(tmpDir, freq, expectNote, expectVerdict, label) {
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.getElementById('alphaNotice')?.classList.add('hidden'));
     await page.click('[data-tab="saved"]').catch(() => {});
-    await page.waitForSelector('.btn-practice-saved', { timeout: 4000 });
-    await page.click('.btn-practice-saved');
+    await page.waitForSelector('.btn-settings-saved', { timeout: 4000 });
+    await page.click('.saved-card .btn-settings-saved'); // 設定メニューを開く
+    await page.waitForSelector('.card-menu', { timeout: 2000 });
+    await page.locator('.card-menu-item', { hasText: '練習' }).click();
     await page.waitForSelector('#strainerOverlay:not(.hidden)', { timeout: 3000 });
     let note = '', verdict = '';
     for (let i = 0; i < 50; i++) {

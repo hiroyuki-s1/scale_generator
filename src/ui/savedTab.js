@@ -59,6 +59,70 @@ function updateRestoreBtn() {
   if (restoreEl) restoreEl.classList.toggle('hidden', !localStorage.getItem(WARN_KEY));
 }
 
+// ── カード操作メニュー（「設定」ボタンから開くドロップダウン・共有1インスタンス） ──
+let cardMenuEl = null;
+function closeCardMenu() {
+  if (!cardMenuEl) return;
+  cardMenuEl.remove();
+  cardMenuEl = null;
+  document.removeEventListener('click', onCardMenuDocClick, true);
+  document.removeEventListener('keydown', onCardMenuEsc);
+  window.removeEventListener('scroll', closeCardMenu, true);
+  window.removeEventListener('resize', closeCardMenu);
+}
+function onCardMenuDocClick(e) { if (cardMenuEl && !cardMenuEl.contains(e.target)) closeCardMenu(); }
+function onCardMenuEsc(e) { if (e.key === 'Escape') closeCardMenu(); }
+
+/**
+ * カードの操作メニューを開く。
+ * @param {HTMLElement} anchorEl 「設定」ボタン
+ * @param {string} title スケール名
+ * @param {{label:string, icon?:string, danger?:boolean, onClick:Function}[]} items
+ */
+function openCardMenu(anchorEl, title, items) {
+  closeCardMenu();
+  const menu = document.createElement('div');
+  menu.className = 'card-menu';
+  menu.setAttribute('role', 'menu');
+  const head = document.createElement('div');
+  head.className = 'card-menu-title';
+  head.textContent = title || 'スケール';
+  menu.appendChild(head);
+  items.forEach((it) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card-menu-item' + (it.danger ? ' danger' : '');
+    b.innerHTML = `${it.icon || ''}<span>${it.label}</span>`;
+    b.addEventListener('click', (e) => { e.stopPropagation(); closeCardMenu(); it.onClick(); });
+    menu.appendChild(b);
+  });
+  document.body.appendChild(menu);
+
+  // 位置: アンカーの下・画面内に収める（position:fixed）。
+  const r = anchorEl.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let left = Math.min(r.left, window.innerWidth - mw - 8);
+  left = Math.max(8, left);
+  let top = r.bottom + 6;
+  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  cardMenuEl = menu;
+  setTimeout(() => {
+    document.addEventListener('click', onCardMenuDocClick, true);
+    document.addEventListener('keydown', onCardMenuEsc);
+    window.addEventListener('scroll', closeCardMenu, true);
+    window.addEventListener('resize', closeCardMenu);
+  }, 0);
+}
+
+// メニュー項目のアイコン（11px）。
+const ICON_EDIT = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/></svg>';
+const ICON_PRACTICE = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 0-2 2v6a2 2 0 1 0 4 0V3a2 2 0 0 0-2-2zM3.5 6.5A.5.5 0 0 1 4 7v2a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v2a5 5 0 0 1-4.5 4.975V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.025A5 5 0 0 1 3 9V7a.5.5 0 0 1 .5-.5z"/></svg>';
+const ICON_COLOR = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 2.5 2.5 0 0 0 0-5 .5.5 0 0 1 0-1h.01A9 9 0 0 0 12 3zM3 12a9 9 0 0 1 9-9 9 9 0 1 1-9 9zm5-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>';
+const ICON_IMAGE = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/></svg>';
+const ICON_DELETE = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.5V1h3v1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/></svg>';
+
 export function initSavedTab(container, store, openFullscreen, onEditMode = null, onColorEdit = null, onPractice = null) {
   const emptyEl = document.getElementById('savedEmpty');
   // 直前に描画した saved 配列（位置ごとの参照で再描画要否を判定）
@@ -162,7 +226,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   // ── タッチイベント (iOS/Android): touchmove+preventDefault でスクロール抑制 ──
   container.addEventListener('touchstart', e => {
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-practice-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
+    if (e.target.closest('.btn-settings-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     const t = e.changedTouches[0];
@@ -230,7 +294,7 @@ export function initSavedTab(container, store, openFullscreen, onEditMode = null
   container.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse') return;
     if (dragState) return;
-    if (e.target.closest('.btn-edit-saved, .btn-practice-saved, .btn-delete, .btn-image-saved, .btn-color-saved')) return;
+    if (e.target.closest('.btn-settings-saved')) return;
     const card = e.target.closest('.saved-card');
     if (!card) return;
     dragState = {
@@ -423,54 +487,12 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   </svg>`;
   hdr.appendChild(dragHandle);
 
-  const editBtn = document.createElement('button');
-  editBtn.className = 'btn-edit-saved';
-  editBtn.title = '編集エリアに読み込む';
-  editBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/>
-  </svg>編集`;
-  editBtn.addEventListener('click', () => onEditMode?.(liveSnap()));
-
-  const practiceBtn = document.createElement('button');
-  practiceBtn.className = 'btn-practice-saved';
-  practiceBtn.title = 'このスケールで練習（マイクで判定）';
-  practiceBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M8 1a2 2 0 0 0-2 2v6a2 2 0 1 0 4 0V3a2 2 0 0 0-2-2zM3.5 6.5A.5.5 0 0 1 4 7v2a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v2a5 5 0 0 1-4.5 4.975V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.025A5 5 0 0 1 3 9V7a.5.5 0 0 1 .5-.5z"/>
-  </svg>練習`;
-  practiceBtn.addEventListener('click', () => onPractice?.(liveSnap()));
-
-  const imageBtn = document.createElement('button');
-  imageBtn.className = 'btn-image-saved';
-  imageBtn.title = '画像 (PNG) で書き出す';
-  imageBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-    <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
-  </svg>画像`;
-  imageBtn.addEventListener('click', async () => {
-    imageBtn.disabled = true;
-    try {
-      await exportSavedScalePng(liveSnap());
-    } catch (e) {
-      console.error('画像の出力に失敗しました:', e);
-      showToast('画像の出力に失敗しました');
-    } finally {
-      imageBtn.disabled = false;
-    }
-  });
-
-  const colorBtn = document.createElement('button');
-  colorBtn.className = 'btn-color-saved';
-  colorBtn.title = 'このスケールの色を編集';
-  colorBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 2.5 2.5 0 0 0 0-5 .5.5 0 0 1 0-1h.01A9 9 0 0 0 12 3zM3 12a9 9 0 0 1 9-9 9 9 0 1 1-9 9zm5-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>色`;
-  colorBtn.addEventListener('click', () => onColorEdit?.(snapId));
-
-  const del = document.createElement('button');
-  del.className = 'btn-delete';
-  del.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.5V1h3v1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
-  </svg>削除`;
-  del.addEventListener('click', async () => {
+  // 操作（編集/練習/色/画像出力/削除）は「設定」メニューに集約。
+  async function doImage() {
+    try { await exportSavedScalePng(liveSnap()); }
+    catch (e) { console.error('画像の出力に失敗しました:', e); showToast('画像の出力に失敗しました'); }
+  }
+  async function doDelete() {
     if (snap.id === getEditingId?.()) {
       alert('編集中のスケールは削除できません。\n一度編集を終了してください。');
       return;
@@ -481,13 +503,24 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
     }
     const ok = await confirmDelete(`「${snap.title}」を削除しますか？`);
     if (ok) store.set(state => ({ ...state, saved: state.saved.filter(s => s.id !== snap.id) }));
+  }
+
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className = 'btn-settings-saved';
+  settingsBtn.title = '操作メニュー';
+  settingsBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>設定`;
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openCardMenu(settingsBtn, snap.title, [
+      { label: '編集', icon: ICON_EDIT, onClick: () => onEditMode?.(liveSnap()) },
+      { label: '練習', icon: ICON_PRACTICE, onClick: () => onPractice?.(liveSnap()) },
+      { label: '色', icon: ICON_COLOR, onClick: () => onColorEdit?.(snapId) },
+      { label: '画像出力', icon: ICON_IMAGE, onClick: () => doImage() },
+      { label: '削除', icon: ICON_DELETE, danger: true, onClick: () => doDelete() },
+    ]);
   });
 
-  hdr.appendChild(editBtn);
-  hdr.appendChild(practiceBtn);
-  hdr.appendChild(colorBtn);
-  hdr.appendChild(imageBtn);
-  hdr.appendChild(del);
+  hdr.appendChild(settingsBtn);
   card.appendChild(hdr);
 
   // ── 印刷専用タイトル (画面では非表示、印刷時のみ指板の上に印字) ──

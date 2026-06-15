@@ -86,6 +86,7 @@ export function initTuner(store) {
   const freqEl    = document.getElementById('tunerFreq');
   const centsEl   = document.getElementById('tunerCents');
   const centsBox  = centsEl ? centsEl.parentElement : null;
+  const perfectEl = document.getElementById('tunerPerfect');
   const stringsEl = document.getElementById('tunerStrings');
   const hintEl    = document.getElementById('tunerHint');
   const retryBtn  = document.getElementById('tunerRetryBtn');
@@ -134,6 +135,7 @@ export function initTuner(store) {
   let rafId = 0, active = false;
   let lastResult = null, lastResultT = 0;
   let wasLocked = false; // チューニング合致エフェクトの立ち上がり検出
+  let lastPerfectT = 0;  // Perfect! ポップの連発防止クールダウン
   // ストロボ
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
   let sW = 0, sH = 0;
@@ -425,6 +427,17 @@ export function initTuner(store) {
     clearStringHighlight();
   }
 
+  // 合致した瞬間に「Perfect!」をポップ。境界での点滅連発を防ぐクールダウン付き。
+  function showPerfect() {
+    if (!perfectEl) return;
+    const t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    if (t - lastPerfectT < 1500) return;
+    lastPerfectT = t;
+    perfectEl.classList.remove('show');
+    void perfectEl.offsetWidth; // reflow でアニメ再start
+    perfectEl.classList.add('show');
+  }
+
   // セントを "-05" / "+12" / " 00" 形式へ（モック準拠）。
   function formatCents(c) {
     const sign = c > 0 ? '+' : c < 0 ? '-' : '';
@@ -467,13 +480,14 @@ export function initTuner(store) {
     updateMeter(cents);
     renderRuler(noteName, cents);
 
-    // チューニング合致エフェクト（緑）。立ち上がりでポップを1回再生。
+    // チューニング合致エフェクト（緑）。立ち上がりでポップ＋「Perfect!」を1回再生。
     const locked = inTune && !held;
     overlay.classList.toggle('is-locked', locked);
     if (locked && !wasLocked) {
       overlay.classList.remove('lock-pulse');
       void overlay.offsetWidth; // reflow でアニメ再start
       overlay.classList.add('lock-pulse');
+      showPerfect();
     }
     wasLocked = locked;
 
@@ -709,6 +723,7 @@ export function initTuner(store) {
   // ── イベント配線 ──
   openTrigger.addEventListener('click', open);
   backBtn?.addEventListener('click', close);
+  perfectEl?.addEventListener('animationend', () => perfectEl.classList.remove('show'));
   retryBtn?.addEventListener('click', () => { if (!active) start(); });
   a4DownBtn?.addEventListener('click', () => setA4(a4 - 1));
   a4UpBtn?.addEventListener('click', () => setA4(a4 + 1));

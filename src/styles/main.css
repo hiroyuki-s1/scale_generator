@@ -1098,14 +1098,10 @@ body {
 #savedGrid.screen-grid .fb-title { font-size: var(--card-title-size); }
 #savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; overflow: hidden; }
 /* モバイルも 2 列表示（ユーザー要望）。svg.fb は viewBox に従い width:100% で自動縮尺。
-   細い列に収めるため操作ボタン行は折返し＋コンパクトに。 */
+   操作は「設定」1ボタンに集約済みなので細い列でもはみ出さない。 */
 @media (max-width: 767px) {
   #savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .saved-card-header { flex-wrap: wrap; gap: 4px; justify-content: flex-start; }
   .saved-card-header .drag-handle { display: none; }
-  .btn-edit-saved, .btn-practice-saved, .btn-color-saved, .btn-image-saved, .btn-delete {
-    padding: 4px 7px; font-size: 10px; gap: 3px;
-  }
 }
 
 .fb-header {
@@ -1288,6 +1284,40 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
   flex-shrink: 0; transition: all .12s;
 }
 .btn-edit-saved:hover { background: var(--accent); color: #fff; }
+
+/* 操作集約「設定」ボタン（編集/練習/色/画像出力/削除をメニューで選ぶ） */
+.btn-settings-saved {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.btn-settings-saved:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.btn-settings-saved svg { display: block; }
+
+/* カード操作ドロップダウン */
+.card-menu {
+  position: fixed; z-index: 400; min-width: 160px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-md); animation: fadeUp .12s ease both;
+}
+.card-menu-title {
+  padding: 6px 10px 8px; font-size: 12px; font-weight: 800; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+  border-bottom: 1px solid var(--border-2); margin-bottom: 4px;
+}
+.card-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 10px; border: none; border-radius: 8px; background: transparent;
+  color: var(--text); font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+  text-align: left; transition: background .1s;
+}
+.card-menu-item svg { flex-shrink: 0; color: var(--text-2); }
+.card-menu-item:hover { background: var(--accent-dim); }
+.card-menu-item:hover svg { color: var(--accent); }
+.card-menu-item.danger { color: #d1342b; }
+.card-menu-item.danger svg { color: #d1342b; }
+.card-menu-item.danger:hover { background: #fdeceb; }
 .btn-practice-saved {
   display: flex; align-items: center; gap: 4px;
   padding: 4px 10px; border: 1.5px solid var(--green);
@@ -1689,6 +1719,28 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .tuner-overlay.lock-pulse .tuner-lock-glow,
   .tuner-overlay.lock-pulse .tuner-note { animation: none; }
+}
+
+/* 合致時の「Perfect!」ポップアップ（合った瞬間に1回・自動で消える） */
+.tuner-perfect {
+  position: absolute; left: 50%; top: 30%; z-index: 6; pointer-events: none;
+  transform: translate(-50%, -50%) scale(.4); opacity: 0;
+  font-size: 56px; font-weight: 900; letter-spacing: -1.5px; white-space: nowrap;
+  color: var(--tk-green); text-shadow: 0 6px 28px rgba(70,227,91,.5);
+  font-family: inherit; font-style: italic;
+}
+.tuner-perfect.show { animation: tunerPerfectPop 1.15s cubic-bezier(.18,1.25,.4,1) both; }
+@keyframes tunerPerfectPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(-7deg); }
+  16%  { opacity: 1; transform: translate(-50%, -50%) scale(1.18) rotate(3deg); }
+  30%  { transform: translate(-50%, -50%) scale(1) rotate(0); }
+  70%  { opacity: 1; transform: translate(-50%, -56%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -84%) scale(.95); }
+}
+@media (max-width: 767px) { .tuner-perfect { font-size: 46px; } }
+@media (prefers-reduced-motion: reduce) {
+  .tuner-perfect.show { animation: tunerPerfectFade .9s ease both; }
+  @keyframes tunerPerfectFade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(1); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1); } }
 }
 
 /* 上部バー */

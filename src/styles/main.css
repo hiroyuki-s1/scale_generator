@@ -252,7 +252,7 @@ body {
 /* スマホ: 1行に収まらず保存ボタンがはみ出すので、タイトル入力を上段(全幅)・ボタン2つを下段で2分割。
    ※base の .songfile-title-input{flex:1} 等を上書きするため、必ず base 定義より後に置く（同詳細度=ソース順勝ち） */
 @media (max-width: 767px) {
-  .songfile-top { flex-wrap: wrap; }
+  .songfile-top { flex-wrap: wrap; padding: 0 12px; row-gap: 10px; }
   .songfile-title-input { order: -1; flex: 1 1 100%; }
   .btn-songfile-new, .btn-save-songbook { flex: 1 1 0; min-width: 0; padding-left: 10px; padding-right: 10px; }
 }

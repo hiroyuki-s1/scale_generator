@@ -1079,7 +1079,17 @@ body {
 .saved-empty-icon { font-size: 36px; opacity: .5; }
 .saved-empty-title { font-size: 14px; font-weight: 600; color: var(--text-2); }
 .saved-empty-hint { font-size: 12px; }
-#savedGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
+#savedGrid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; counter-reset: savedcard; }
+/* 各カードの通し番号（1始まり）。DOM 順に自動採番 → ドラッグ並べ替えにも追従。 */
+.saved-card { counter-increment: savedcard; min-width: 0; }
+.saved-card-num {
+  position: absolute; top: 6px; left: 6px; z-index: 3;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  font-variant-numeric: tabular-nums; box-shadow: var(--shadow-sm); pointer-events: none;
+}
+.saved-card-num::before { content: counter(savedcard); }
 /* 画面表示用の登録スケール一覧グリッド (常に2列) — 印刷用とは別管理。
    インライン style にせず CSS で持つことで、@media print のレイアウト指定が
    詳細度で勝てるようにする。 */
@@ -1087,10 +1097,15 @@ body {
 #savedGrid.screen-grid svg.fb { min-width: 0 !important; width: 100% !important; height: auto !important; }
 #savedGrid.screen-grid .fb-title { font-size: var(--card-title-size); }
 #savedGrid.screen-grid .fb-wrap { padding: 10px 10px 6px; overflow: hidden; }
-/* モバイル: 2 列だと指板が縮みすぎて読めないので 1 列にしてフル幅で縮尺。
-   svg.fb は viewBox に従って width:100% で自動縮尺 (これでスマホに必ず収まる)。 */
+/* モバイルも 2 列表示（ユーザー要望）。svg.fb は viewBox に従い width:100% で自動縮尺。
+   細い列に収めるため操作ボタン行は折返し＋コンパクトに。 */
 @media (max-width: 767px) {
-  #savedGrid.screen-grid { grid-template-columns: 1fr; gap: 10px; }
+  #savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .saved-card-header { flex-wrap: wrap; gap: 4px; justify-content: flex-start; }
+  .saved-card-header .drag-handle { display: none; }
+  .btn-edit-saved, .btn-practice-saved, .btn-color-saved, .btn-image-saved, .btn-delete {
+    padding: 4px 7px; font-size: 10px; gap: 3px;
+  }
 }
 
 .fb-header {

@@ -402,6 +402,12 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   card.className = 'saved-card';
   card.dataset.id = snap.id;
 
+  // 通し番号バッジ（左上・1始まり）。番号は CSS counter で DOM 順に自動採番（並べ替えにも追従）。
+  const numBadge = document.createElement('span');
+  numBadge.className = 'saved-card-num screen-only';
+  numBadge.setAttribute('aria-hidden', 'true');
+  card.appendChild(numBadge);
+
   // ── ヘッダー (ドラッグハンドル / 編集 / 削除ボタン) ──
   const hdr = document.createElement('div');
   hdr.className = 'saved-card-header';

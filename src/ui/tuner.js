@@ -105,7 +105,7 @@ export function initTuner(store) {
   const polyEl = document.getElementById('tunerPoly');
 
   // バーメーターの基準目盛 + バーを一度だけ生成。
-  const BAR_HEIGHTS = [26, 42, 60, 72, 56];
+  const BAR_HEIGHTS = [40, 62, 76, 62, 40]; // 左右対称の山型（中央が最高）＝中央線に対し偏らない
   const barEls = [];
   function buildMeterDom() {
     if (baselineEl && !baselineEl.childElementCount) {

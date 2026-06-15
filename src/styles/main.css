@@ -1724,18 +1724,18 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 /* 合致時の「Perfect!」ポップアップ（合った瞬間に1回・自動で消える） */
 .tuner-perfect {
   position: absolute; left: 50%; top: 56%; z-index: 6; pointer-events: none;
-  transform: translate(-50%, -50%) scale(.4); opacity: 0;
+  transform: translate(-50%, -50%); opacity: 0;
   font-size: 56px; font-weight: 900; letter-spacing: -1.5px; white-space: nowrap;
   color: var(--tk-green); text-shadow: 0 6px 28px rgba(70,227,91,.5);
   font-family: inherit; font-style: italic;
 }
-.tuner-perfect.show { animation: tunerPerfectPop 1.15s cubic-bezier(.18,1.25,.4,1) both; }
-@keyframes tunerPerfectPop {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(-7deg); }
-  16%  { opacity: 1; transform: translate(-50%, -50%) scale(1.18) rotate(3deg); }
-  30%  { transform: translate(-50%, -50%) scale(1) rotate(0); }
-  70%  { opacity: 1; transform: translate(-50%, -56%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -84%) scale(.95); }
+/* 下からフェードイン → 少し保持 → 上へ消える */
+.tuner-perfect.show { animation: tunerPerfectRise 1.25s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes tunerPerfectRise {
+  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 40px)); }
+  24%  { opacity: 1; transform: translate(-50%, -50%); }
+  72%  { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% - 16px)); }
 }
 @media (max-width: 767px) { .tuner-perfect { font-size: 46px; } }
 @media (prefers-reduced-motion: reduce) {

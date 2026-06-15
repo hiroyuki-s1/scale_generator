@@ -38,7 +38,8 @@ const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
 const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 const GRAPH_WIN_MS = 6000;    // ピッチ推移グラフの横軸（直近6秒）
-const GRAPH_SPAN = 50;        // ピッチ推移グラフの縦軸（±50 cents）
+const GRAPH_SPAN = 100;       // ピッチ推移グラフの縦軸（±100 cents）
+const GRAPH_GRID = [80, 60, 40, 20, 0, -20, -40, -60, -80]; // 横グリッド線（cents）
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
@@ -622,7 +623,7 @@ export function initTuner(store) {
       return g2H / 2 - (cl / GRAPH_SPAN) * (g2H / 2 - 8);
     };
     g2ctx.lineWidth = 1; g2ctx.font = '9px sans-serif'; g2ctx.textAlign = 'left'; g2ctx.textBaseline = 'middle';
-    [40, 20, 0, -20, -40].forEach((c) => {
+    GRAPH_GRID.forEach((c) => {
       const y = yOf(c);
       g2ctx.strokeStyle = c === 0 ? zeroCol : gridCol;
       g2ctx.beginPath(); g2ctx.moveTo(0, y); g2ctx.lineTo(plotW, y); g2ctx.stroke();

@@ -40,6 +40,8 @@ const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 const GRAPH_WIN_MS = 6000;    // ピッチ推移グラフの横軸（直近6秒）
 // ピッチ推移グラフの縦軸＝一番近い音を中心に上下1音ずつ（計3キー）を表示する半幅（半音）。
 const GRAPH_HALF = 1.5;
+// 中心音の切替ヒステリシス（半音）。境界(±0.5)を GRAPH_HYST ぶん越えるまで中心を保持＝ちらつき防止。
+const GRAPH_HYST = 0.2;
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
@@ -534,7 +536,10 @@ export function initTuner(store) {
     let midi = null;
     if (hz != null && hz > 0) {
       midi = 69 + 12 * Math.log2(hz / a4);
-      graphCenterMidi = Math.round(midi);
+      // 初回は即決。以降は境界(±0.5)をヒステリシスぶん越えたときだけ中心を切り替える。
+      if (graphCenterMidi == null || Math.abs(midi - graphCenterMidi) > 0.5 + GRAPH_HYST) {
+        graphCenterMidi = Math.round(midi);
+      }
     }
     graphHist.push({ t, midi });
     const cutoff = t - GRAPH_WIN_MS - 500;

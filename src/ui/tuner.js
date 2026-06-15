@@ -38,8 +38,8 @@ const HOP_MS = 15;            // mono エンジンの検出間隔（≈66Hz）
 const HOLD_MS = 3000;         // 音が途切れても表示を維持する時間
 const STROBE_PERIOD_PX = 56;  // ストロボ縞の1周期px
 const GRAPH_WIN_MS = 6000;    // ピッチ推移グラフの横軸（直近6秒）
-// ピッチ推移グラフの縦軸＝音名（12キー）。下=C → 上=B、その上でCに戻る（1オクターブ）。
-const GRAPH_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// ピッチ推移グラフの縦軸＝一番近い音を中心に上下1音ずつ（計3キー）を表示する半幅（半音）。
+const GRAPH_HALF = 1.5;
 
 const A4_DEFAULT = 440, A4_MIN = 430, A4_MAX = 450;
 const A4_KEY = 'sg.v1.tunerA4';
@@ -142,7 +142,8 @@ export function initTuner(store) {
   let strobePhase = 0, strobeLastT = 0, strobeDetectedHz = 0, strobeTargetHz = 0, strobePresent = false;
   let sW = 0, sH = 0;
   // ピッチ推移グラフ
-  let graphHist = [];   // { t:ms, cents:number|null }
+  let graphHist = [];   // { t:ms, midi:number|null } 連続MIDI（音名換算前）
+  let graphCenterMidi = null; // 一番近い音（整数MIDI）＝縦軸の中心
   let g2W = 0, g2H = 0;
 
   const isOpen = () => !overlay.classList.contains('hidden');
@@ -526,15 +527,16 @@ export function initTuner(store) {
     barEls.forEach((b, i) => { b.style.background = colors[i]; });
   }
 
-  // ピッチ推移グラフ: 検出周波数を連続ピッチクラス(0..12, C..C)へ変換して時系列に積む（無音は null=線を切る）。
+  // ピッチ推移グラフ: 検出周波数を連続MIDIへ変換して時系列に積む（無音は null=線を切る）。
+  // 縦軸の中心は最新の有効サンプルの「一番近い音」（整数MIDI）に追従する。
   function pushGraph(hz) {
     const t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-    let pc = null;
+    let midi = null;
     if (hz != null && hz > 0) {
-      const midi = 69 + 12 * Math.log2(hz / a4);
-      pc = ((midi % 12) + 12) % 12; // 0=C .. <12（B付近）。上端12でCに戻る
+      midi = 69 + 12 * Math.log2(hz / a4);
+      graphCenterMidi = Math.round(midi);
     }
-    graphHist.push({ t, pc });
+    graphHist.push({ t, midi });
     const cutoff = t - GRAPH_WIN_MS - 500;
     while (graphHist.length && graphHist[0].t < cutoff) graphHist.shift();
   }
@@ -610,7 +612,7 @@ export function initTuner(store) {
 
   function resizeGraph2() { [g2W, g2H] = resizeCanvas(graph2Canvas, g2ctx); }
 
-  // ピッチ推移グラフ: 横=時間（直近6秒）/ 縦=音名（C..B の12キー）。右に音名目盛・緑の推移線。
+  // ピッチ推移グラフ: 横=時間（直近6秒）/ 縦=音名。一番近い音を中央に、上下1音ずつ（計3キー）表示。
   function drawGraph2(now) {
     if (!g2ctx) return;
     if (g2W === 0) { resizeGraph2(); if (g2W === 0) return; }
@@ -618,39 +620,42 @@ export function initTuner(store) {
     g2ctx.fillStyle = light ? '#f3ede3' : '#16191d';
     g2ctx.fillRect(0, 0, g2W, g2H);
 
-    const axisW = 24;                 // 右側の音名目盛ぶん
-    const plotW = Math.max(0, g2W - axisW);
-    const pad = 6;
-    const gridCol = light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.08)';
-    const aCol    = light ? 'rgba(0,0,0,.22)' : 'rgba(255,255,255,.26)'; // A=基準を少し強調
-    const txtCol  = light ? 'rgba(0,0,0,.5)'  : 'rgba(255,255,255,.55)';
-    // pc 0(下=C) .. 12(上=C)。高い音ほど上。
-    const yOf = (pc) => (g2H - pad) - (pc / 12) * (g2H - 2 * pad);
+    const center = graphCenterMidi;   // 中心＝一番近い音（整数MIDI）
+    if (center == null) return;       // まだ一度も検出していない
 
-    g2ctx.lineWidth = 1; g2ctx.font = '9px sans-serif'; g2ctx.textAlign = 'left'; g2ctx.textBaseline = 'middle';
-    for (let pc = 0; pc <= 12; pc++) {
-      const name = GRAPH_NOTE_NAMES[pc % 12];
-      const y = yOf(pc);
-      g2ctx.strokeStyle = name === 'A' ? aCol : gridCol;
+    const axisW = 28;                 // 右側の音名目盛ぶん
+    const plotW = Math.max(0, g2W - axisW);
+    const pad = 8;
+    const gridCol = light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.08)';
+    const ctrCol  = light ? 'rgba(0,0,0,.30)' : 'rgba(255,255,255,.34)'; // 中心音=合わせる目標
+    const txtCol  = light ? 'rgba(0,0,0,.5)'  : 'rgba(255,255,255,.55)';
+    const ctrTxt  = light ? 'rgba(0,0,0,.78)' : 'rgba(255,255,255,.85)';
+    // 中心±GRAPH_HALF 半音を表示域に。高い音ほど上。
+    const yOf = (m) => (g2H - pad) - ((m - (center - GRAPH_HALF)) / (2 * GRAPH_HALF)) * (g2H - 2 * pad);
+
+    g2ctx.font = '10px sans-serif'; g2ctx.textAlign = 'left'; g2ctx.textBaseline = 'middle';
+    for (let d = -1; d <= 1; d++) {   // 中心と上下1音＝3キー
+      const m = center + d;
+      const y = yOf(m);
+      g2ctx.lineWidth = d === 0 ? 1.4 : 1;
+      g2ctx.strokeStyle = d === 0 ? ctrCol : gridCol;
       g2ctx.beginPath(); g2ctx.moveTo(0, y); g2ctx.lineTo(plotW, y); g2ctx.stroke();
-      g2ctx.fillStyle = txtCol;
-      g2ctx.fillText(name, plotW + 4, y);
+      g2ctx.fillStyle = d === 0 ? ctrTxt : txtCol;
+      g2ctx.fillText(noteLabelFromMidi(m).noteName, plotW + 4, y);
     }
 
     const xOf = (t) => plotW * (1 - (now - t) / GRAPH_WIN_MS);
     g2ctx.strokeStyle = light ? '#16a34a' : '#46e35b';
     g2ctx.lineWidth = 2; g2ctx.lineJoin = 'round'; g2ctx.lineCap = 'round';
     g2ctx.beginPath();
-    let pen = false, prevPc = null;
+    let pen = false;
     for (const s of graphHist) {
-      if (s.pc == null) { pen = false; prevPc = null; continue; }
+      // 表示域（中心±半幅を少し超える範囲）外は線を切る
+      if (s.midi == null || Math.abs(s.midi - center) > GRAPH_HALF + 0.4) { pen = false; continue; }
       const x = xOf(s.t);
-      if (x < 0) { pen = false; prevPc = null; continue; }
-      // オクターブ跨ぎ（pc が大きく飛ぶ）は線を切って縦断を防ぐ
-      if (prevPc != null && Math.abs(s.pc - prevPc) > 6) pen = false;
-      const y = yOf(s.pc);
+      if (x < 0) { pen = false; continue; }
+      const y = yOf(s.midi);
       if (!pen) { g2ctx.moveTo(x, y); pen = true; } else g2ctx.lineTo(x, y);
-      prevPc = s.pc;
     }
     g2ctx.stroke();
   }
@@ -658,6 +663,7 @@ export function initTuner(store) {
   function resetGraph() {
     updateMeter(null);
     graphHist = [];
+    graphCenterMidi = null;
     if (g2ctx && g2W > 0) g2ctx.clearRect(0, 0, g2W, g2H);
   }
   function resetStrobe() {

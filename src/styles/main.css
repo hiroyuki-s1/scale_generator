@@ -1723,7 +1723,7 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
 
 /* 合致時の「Perfect!」ポップアップ（合った瞬間に1回・自動で消える） */
 .tuner-perfect {
-  position: absolute; left: 50%; top: 30%; z-index: 6; pointer-events: none;
+  position: absolute; left: 50%; top: 56%; z-index: 6; pointer-events: none;
   transform: translate(-50%, -50%) scale(.4); opacity: 0;
   font-size: 56px; font-weight: 900; letter-spacing: -1.5px; white-space: nowrap;
   color: var(--tk-green); text-shadow: 0 6px 28px rgba(70,227,91,.5);

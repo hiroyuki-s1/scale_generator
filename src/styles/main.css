@@ -1091,10 +1091,10 @@ body {
 .saved-card { counter-increment: savedcard; min-width: 0; }
 .saved-card-num {
   flex: 0 0 auto;
-  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+  min-width: 16px; height: 18px; padding: 0 3px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
-  font-variant-numeric: tabular-nums; box-shadow: var(--shadow-sm); pointer-events: none;
+  background: none; color: var(--text-3); font-size: 12px; font-weight: 600;
+  font-variant-numeric: tabular-nums; pointer-events: none;
 }
 .saved-card-num::before { content: counter(savedcard); }
 /* 画面表示用の登録スケール一覧グリッド (常に2列) — 印刷用とは別管理。

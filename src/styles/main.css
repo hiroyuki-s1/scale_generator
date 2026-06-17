@@ -281,8 +281,13 @@ body {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
 }
-.songbook-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .02em; }
+.songbook-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .02em; white-space: nowrap; flex: 0 0 auto; }
 .songbook-title::before { content: '🎶 '; }
+/* スマホ: タイトルとヒントを横並びにすると「ソングブック」が改行で割れるので縦積みに */
+@media (max-width: 767px) {
+  .songbook-hdr { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .songbook-hdr-hint { text-align: left; }
+}
 .btn-songbook-save {
   display: flex; align-items: center; gap: 5px;
   padding: 9px 16px; border: none; border-radius: 10px;

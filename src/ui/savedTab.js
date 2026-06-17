@@ -472,20 +472,10 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   numBadge.className = 'saved-card-num screen-only';
   numBadge.setAttribute('aria-hidden', 'true');
 
-  // ── ヘッダー (ドラッグハンドル / 編集 / 削除ボタン) ──
+  // ── ヘッダー (通し番号 / 設定ボタン) ──
+  // ドラッグハンドル(⋮⋮)は廃止。カード全体がドラッグ対象なので見た目の掴みどころは不要（ユーザー要望）。
   const hdr = document.createElement('div');
   hdr.className = 'saved-card-header';
-
-  const dragHandle = document.createElement('span');
-  dragHandle.className = 'drag-handle';
-  dragHandle.title = 'ドラッグして並べ替え';
-  dragHandle.setAttribute('aria-hidden', 'true');
-  dragHandle.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-    <circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/>
-    <circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/>
-    <circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/>
-  </svg>`;
-  hdr.appendChild(dragHandle);
 
   // 操作（編集/練習/色/画像出力/削除）は「設定」メニューに集約。
   async function doImage() {

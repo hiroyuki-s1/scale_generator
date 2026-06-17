@@ -1108,7 +1108,6 @@ body {
    操作は「設定」1ボタンに集約済みなので細い列でもはみ出さない。 */
 @media (max-width: 767px) {
   #savedGrid.screen-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .saved-card-header .drag-handle { display: none; }
 }
 
 .fb-header {
@@ -1487,14 +1486,6 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   user-select: none;
   -webkit-touch-callout: none;
 }
-.drag-handle {
-  margin-right: auto;            /* ハンドルは左、ボタンは右 */
-  display: flex; align-items: center;
-  color: var(--text-3); cursor: grab; padding: 6px 8px;
-  border-radius: 5px; transition: color .12s, background .12s;
-}
-.drag-handle:active { cursor: grabbing; }
-.drag-handle:hover { color: var(--text-2); background: var(--bg); }
 .btn-delete {
   display: flex; align-items: center; gap: 4px;
   padding: 5px 10px; border: 1px solid var(--border);

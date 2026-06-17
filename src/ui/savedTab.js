@@ -466,8 +466,8 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   card.className = 'saved-card';
   card.dataset.id = snap.id;
 
-  // 通し番号バッジ（1始まり）。番号は CSS counter で DOM 順に自動採番（並べ替えにも追従）。
-  // 「設定」ボタンの隣（ヘッダー内）に配置（左上だと NEW! バッジと重なるため）。
+  // 通し番号（1始まり）。番号は CSS counter で DOM 順に自動採番（並べ替えにも追従）。
+  // 指板画像の左下にグレーでさり気なくオーバーレイ（後で wrap に追加）。
   const numBadge = document.createElement('span');
   numBadge.className = 'saved-card-num screen-only';
   numBadge.setAttribute('aria-hidden', 'true');
@@ -510,7 +510,6 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
     ]);
   });
 
-  hdr.appendChild(numBadge);
   hdr.appendChild(settingsBtn);
   card.appendChild(hdr);
 
@@ -530,6 +529,7 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
   svg.setAttribute('viewBox', `0 0 ${SVG.W} ${SVG.H}`);
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   wrap.appendChild(svg);
+  wrap.appendChild(numBadge); // 指板画像の左下にオーバーレイ
   card.appendChild(wrap);
 
   // 全画面クリック — liveSnap() で最新の degreeColors を取得（色変更後に古い色が出るバグ対策）

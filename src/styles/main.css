@@ -1090,10 +1090,8 @@ body {
 /* 各カードの通し番号（1始まり）。DOM 順に自動採番 → ドラッグ並べ替えにも追従。 */
 .saved-card { counter-increment: savedcard; min-width: 0; }
 .saved-card-num {
-  flex: 0 0 auto;
-  min-width: 16px; height: 18px; padding: 0 3px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: none; color: var(--text-3); font-size: 12px; font-weight: 600;
+  position: absolute; left: 7px; bottom: 5px; z-index: 2;
+  color: var(--text-3); font-size: 12px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums; pointer-events: none;
 }
 .saved-card-num::before { content: counter(savedcard); }
@@ -1368,7 +1366,7 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
 }
 .btn-image-bulk:hover { background: var(--accent); color: #fff; }
 .btn-image-bulk:disabled { opacity: .5; cursor: default; }
-.saved-fb-wrap { cursor: pointer; }
+.saved-fb-wrap { cursor: pointer; position: relative; }
 .saved-fb-wrap:hover { border-color: #c8bfb5; }
 /* ── 楽器未選択ヒント (ボタン下に表示) ── */
 @keyframes hint-fade-in {

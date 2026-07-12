@@ -1,0 +1,86 @@
+name: Deploy to Production (Cloudflare Pages)
+
+# 本番 (kami-scale-trainer / kami_db / https://kami-scale-trainer.org/) へ「手動」デプロイする。
+#
+# ⚠️ 安全設計（事故防止・docs/DEPLOYMENT.md の趣旨を維持）:
+#   ・トリガーは workflow_dispatch のみ。**push では絶対に発火しない**。
+#   ・起動には確認入力 confirm = "deploy" を必須にする（誤クリック防止）。
+#   ・本番 D1 (kami_db) へのマイグレーション適用は opt-in（既定 OFF）。
+#     普段のコード更新は build + deploy だけで済む。スキーマ変更を伴う時だけ ON にする。
+#
+# 使い方:
+#   GitHub → Actions → "Deploy to Production (Cloudflare Pages)" → Run workflow
+#     → confirm に「deploy」と入力
+#     → （D1 スキーマ変更を含む時のみ）apply_migrations にチェック
+#     → Run workflow
+#
+# 必要な GitHub シークレット（staging と共用・設定済みのはず）:
+#   CLOUDFLARE_API_TOKEN  … 権限: Account > Cloudflare Pages > Edit ＋ Account > D1 > Edit
+#   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
+#
+# 補足:
+#   ・本番の wrangler.toml は既に本番 (kami-scale-trainer / kami_db) を指すため、staging の
+#     ような config 差し替えは不要（そのまま使う）。
+#   ・Clerk publishable key 等はビルドに焼き込まず実行時に /api/public-config から取得するため、
+#     ビルド時の env は BASE_PATH='/' のみでよい（本番 Clerk/env は Cloudflare Pages 側で設定）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: '本番公開する場合は「deploy」と入力（誤操作防止）'
+        required: true
+        default: ''
+      apply_migrations:
+        description: '本番 D1 (kami_db) にマイグレーションを適用する（スキーマ変更を含む時だけ ON）'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    # confirm に「deploy」と入力された時だけ実行する（誤クリックでは何も起きない）。
+    if: ${{ inputs.confirm == 'deploy' }}
+    runs-on: ubuntu-latest
+    environment:
+      # GitHub の Environments に "production" 保護ルール（必須レビュアー等）を後付けできる。
+      name: production
+      url: https://kami-scale-trainer.org/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - name: Build (Cloudflare Pages base '/')
+        run: npm run build
+        env:
+          # GitHub Actions は GITHUB_ACTIONS=true を自動設定し vite が base を /scale_generator/
+          # （Pages ミラー用）にしてしまう。予約変数 GITHUB_* は上書き不可なので、非予約の
+          # BASE_PATH を明示して Cloudflare 本番用の base '/' を強制する（staging.yml と同じ）。
+          BASE_PATH: '/'
+      - name: Apply D1 migrations (production) — opt-in
+        # apply_migrations にチェックが入った時だけ本番 D1 (kami_db) へ適用する。
+        # wrangler.toml が本番 DB を指すので --config は不要。追加が無ければ no-op。
+        if: ${{ inputs.apply_migrations }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply kami_db --remote
+      - name: Deploy to Cloudflare Pages (production)
+        # --branch main（= 本番ブランチ）なので本番デプロイになる。
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name kami-scale-trainer --branch main --commit-dirty=true

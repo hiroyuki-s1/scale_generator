@@ -503,7 +503,8 @@ function renderCard(snap, store, openFullscreen, onEditMode, getEditingId, onCol
     e.stopPropagation();
     openCardMenu(settingsBtn, snap.title, [
       { label: '編集', icon: ICON_EDIT, onClick: () => onEditMode?.(liveSnap()) },
-      { label: '練習', icon: ICON_PRACTICE, onClick: () => onPractice?.(liveSnap()) },
+      // 練習機能（ピアノ鍵盤で1音ずつ弾く）は一旦無効化。再開時はこの行を戻す。
+      // { label: '練習', icon: ICON_PRACTICE, onClick: () => onPractice?.(liveSnap()) },
       { label: '色', icon: ICON_COLOR, onClick: () => onColorEdit?.(snapId) },
       { label: '画像出力', icon: ICON_IMAGE, onClick: () => doImage() },
       { label: '削除', icon: ICON_DELETE, danger: true, onClick: () => doDelete() },

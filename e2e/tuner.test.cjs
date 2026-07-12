@@ -450,8 +450,10 @@ async function main() {
     catch (e) { fail(`オフセット編集: 例外 ${e.message}`); }
     try { await runTheme(tmpDir); }
     catch (e) { fail(`テーマ: 例外 ${e.message}`); }
-    try { await runScaleTrainer(tmpDir); }
-    catch (e) { fail(`スケール練習: 例外 ${e.message}`); }
+    // 練習機能（ピアノ鍵盤）は一旦無効化中（savedTab の「練習」メニューをコメントアウト）。
+    // 再開時はこの2行を戻す。
+    // try { await runScaleTrainer(tmpDir); }
+    // catch (e) { fail(`スケール練習: 例外 ${e.message}`); }
     try { await runScaleTrainGame(tmpDir); }
     catch (e) { fail(`スケールトレーニング: 例外 ${e.message}`); }
     try { await runPolyphonic(tmpDir); }

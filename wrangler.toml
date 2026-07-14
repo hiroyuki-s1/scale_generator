@@ -13,3 +13,13 @@ pages_build_output_dir = "dist"
 binding = "DB"
 database_name = "kami_db"
 database_id = "f6d363a6-92b6-405d-ab0f-36874b47f0ce"   # `wrangler d1 create kami_db` で発行
+
+# --- Clerk（本番 Production インスタンス）---
+# どちらも公開情報なので [vars] に直書きでよい（staging の wrangler.staging.toml と同じ方式）。
+# ・CLERK_ISSUER … JWT 検証(JWKS)の発行者。Frontend API の独自ドメイン。
+# ・CLERK_PUBLISHABLE_KEY … /api/public-config が配る公開鍵（フロントの Clerk 初期化用）。
+# SECRET(sk_live_) はうちのコードでは未使用（JWKS 方式）なので置かない。
+# ※ ダッシュボードは「env は wrangler.toml 管理・Secret のみ UI 可」と表示するため、ここが一次ソース。
+[vars]
+CLERK_ISSUER = "https://clerk.kami-scale-trainer.org"
+CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsua2FtaS1zY2FsZS10cmFpbmVyLm9yZyQ"

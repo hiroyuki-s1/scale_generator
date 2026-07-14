@@ -217,6 +217,14 @@
         <input class="fb-title-input" id="fbTitleInput" placeholder="スケール名を入力..." autocomplete="off" spellcheck="false" maxlength="60">
       </div>
 
+      <!-- ポジション編集バー: posmode 中だけスケール上部(指板の直上)に出す。
+           下の操作行を触らないので「ポジション編集」ボタンが reflow で動かない。 -->
+      <div class="posmode-bar hidden" id="posModeBar">
+        <button class="posmode-done" id="posDoneBtn" title="ポジション編集を終了">✓ 完了</button>
+        <button class="posmode-reset" id="posResetBtn" title="全ポジションを表示に戻す">リセット</button>
+        <span class="posmode-hint" id="posModeHint">ドットをタップで表示/非表示</span>
+      </div>
+
       <!-- 指板 -->
       <div class="fb-scroll-outer">
         <div class="fb-scroll-ind fb-scroll-ind--left"  id="fbScrollLeft"></div>
@@ -247,12 +255,6 @@
               <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="2.4"/><circle cx="12" cy="8" r="2.4" opacity=".35"/></svg>
               ポジション編集
             </button>
-            <!-- posmode 中に出る操作群。専用行(flex-basis:100%)に分離して「ポジション編集」ボタンを動かさない -->
-            <div class="posmode-actions hidden" id="posModeActions">
-              <button class="posmode-done" id="posDoneBtn" title="ポジション編集を終了">✓ 完了</button>
-              <button class="posmode-reset" id="posResetBtn" title="全ポジションを表示に戻す">リセット</button>
-              <span class="posmode-hint" id="posModeHint">ドットをタップで表示/非表示</span>
-            </div>
           </div>
         </div>
       </div>

@@ -1164,9 +1164,13 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
 }
 .posmode-reset:hover { border-color: var(--accent); color: var(--accent); }
 .posmode-hint { font-size: 11px; color: var(--text-3); }
-/* posmode の操作群は専用行(flex-basis:100%)に置く。
-   → 出現しても「ポジション編集」ボタンが同じ行に留まり、位置が動かない。 */
-.posmode-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-basis: 100%; }
+/* posmode の操作群はスケール上部(指板の直上)にバーとして出す。
+   → 下の操作行を触らないので「ポジション編集」ボタンが reflow で動かない。 */
+.posmode-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 8px; padding: 8px 10px;
+  border: 1.5px solid var(--accent); border-radius: 8px; background: var(--surface);
+}
 .posmode-done {
   padding: 6px 14px; border: 1.5px solid var(--accent); border-radius: 8px;
   background: var(--accent); color: #fff;
@@ -2333,6 +2337,8 @@ svg.fb { display: block; min-width: 640px; width: 100%; height: auto; }
   #savedGrid svg.fb { min-width: 0 !important; width: 100% !important; }
   .fb-title-input { font-size: 16px; }
   .deg-picker-btn { min-height: 44px; font-size: 14px; padding: 10px 16px; }
+  /* posmode バーのボタンもモバイルで押しやすいサイズに */
+  .posmode-done, .posmode-reset { min-height: 44px; padding: 10px 16px; font-size: 14px; }
 
   /* ── Modal inputs: 16px to suppress iOS auto-zoom on focus ── */
   .modal-input { font-size: 16px; padding: 12px 14px; }

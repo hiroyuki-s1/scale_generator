@@ -287,7 +287,7 @@ if (fbZoomBtn) fbZoomBtn.addEventListener('click', toggleMobileZoom);
 let posEditMode = false;
 const posModeBtn     = document.getElementById('posModeBtn');
 const posResetBtn    = document.getElementById('posResetBtn');
-const posModeActions = document.getElementById('posModeActions');
+const posModeBar     = document.getElementById('posModeBar');
 const posDoneBtn     = document.getElementById('posDoneBtn');
 
 let zoomBeforePosEdit = null;
@@ -295,7 +295,7 @@ function setPosEditMode(on) {
   posEditMode = on;
   posModeBtn?.classList.toggle('active', on);
   posModeBtn?.setAttribute('aria-pressed', String(on));
-  posModeActions?.classList.toggle('hidden', !on);
+  posModeBar?.classList.toggle('hidden', !on);
   editFbWrapEl.classList.toggle('posmode', on);
   // posmode 中はモバイルでも必ず「拡大」表示に強制する。
   // 理由: 全体表示だとドットが小さすぎてタップが当てづらく操作にならない

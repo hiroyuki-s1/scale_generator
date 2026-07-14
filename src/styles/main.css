@@ -1164,6 +1164,15 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
 }
 .posmode-reset:hover { border-color: var(--accent); color: var(--accent); }
 .posmode-hint { font-size: 11px; color: var(--text-3); }
+/* posmode の操作群は専用行(flex-basis:100%)に置く。
+   → 出現しても「ポジション編集」ボタンが同じ行に留まり、位置が動かない。 */
+.posmode-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-basis: 100%; }
+.posmode-done {
+  padding: 6px 14px; border: 1.5px solid var(--accent); border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .12s;
+}
+.posmode-done:hover { filter: brightness(1.05); }
 /* posmode 中はドットがタップ対象だと分かるようカーソルを変える */
 .fb-wrap.posmode { cursor: crosshair; }
 .fb-wrap.posmode svg.fb { cursor: crosshair; }

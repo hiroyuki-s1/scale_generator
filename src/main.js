@@ -285,17 +285,17 @@ if (fbZoomBtn) fbZoomBtn.addEventListener('click', toggleMobileZoom);
 // ── 表示ポジション編集モード ──────────────────────────────────────────
 // ON 時: 指板のドットをタップで表示/非表示トグル。OFF 時: 通常操作（タップで全画面）。
 let posEditMode = false;
-const posModeBtn  = document.getElementById('posModeBtn');
-const posResetBtn = document.getElementById('posResetBtn');
-const posModeHint = document.getElementById('posModeHint');
+const posModeBtn     = document.getElementById('posModeBtn');
+const posResetBtn    = document.getElementById('posResetBtn');
+const posModeActions = document.getElementById('posModeActions');
+const posDoneBtn     = document.getElementById('posDoneBtn');
 
 let zoomBeforePosEdit = null;
 function setPosEditMode(on) {
   posEditMode = on;
   posModeBtn?.classList.toggle('active', on);
   posModeBtn?.setAttribute('aria-pressed', String(on));
-  posResetBtn?.classList.toggle('hidden', !on);
-  posModeHint?.classList.toggle('hidden', !on);
+  posModeActions?.classList.toggle('hidden', !on);
   editFbWrapEl.classList.toggle('posmode', on);
   // posmode 中はモバイルでも必ず「拡大」表示に強制する。
   // 理由: 全体表示だとドットが小さすぎてタップが当てづらく操作にならない
@@ -323,6 +323,7 @@ function setPosEditMode(on) {
   }
 }
 posModeBtn?.addEventListener('click', () => setPosEditMode(!posEditMode));
+posDoneBtn?.addEventListener('click', () => setPosEditMode(false));
 posResetBtn?.addEventListener('click', () => {
   // 現在アクティブな全ポジションで再構築（全表示に戻す）
   store.updateEdit({ visiblePositions: allActivePositionKeys(store.get().edit) });
